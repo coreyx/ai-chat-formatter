@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../src/core/references-protocol";
 import { extractCopilotReferences, installCopilotPageScript } from "../src/page/copilot";
+import { copilotAdapter, parseReferencesAttribute } from "../src/sites/copilot";
 import { CitationCollector, renderCitations, sourceDomain } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
@@ -214,6 +215,76 @@ check("page script: answers a request event by writing the list to the reply", (
   installCopilotPageScript(empty.document);
   empty.reply.dispatchEvent(new empty.document.defaultView!.CustomEvent(REFERENCES_EVENT, { bubbles: true }));
   assert.equal(empty.reply.hasAttribute(REFERENCES_ATTRIBUTE), false);
+});
+
+// ---------------------------------------------------------------------------
+// Copilot adapter: reading references through the page script
+// ---------------------------------------------------------------------------
+
+/**
+ * The 0.1.0 Copilot fixture with the first chip turned into a two-source chip
+ * ("photovault+1"), and a fake React fiber carrying the references fixture on the
+ * reply. `withPageScript` installs the page script's listener, as the
+ * extension's page-world script would.
+ */
+function copilotFixtureWithReferences(withPageScript: boolean) {
+  const document = new JSDOM(readFileSync("scratch/fixtures/copilot-message.html", "utf8")).window.document;
+  const chip = document.querySelector("button[data-grouped-citations]")!;
+  chip.setAttribute(
+    "data-grouped-citations",
+    JSON.stringify([
+      { index: "1-0a0b0c", occurrence: 1, url: "https://photovault.example/", name: "photovault.example" },
+      { index: "2-41a9be", occurrence: 1, url: "https://github.com/photovault/photovault", name: "github.com" },
+    ]),
+  );
+  chip.setAttribute("aria-label", "Citation: photovault — PhotoVault plus 1 more");
+  const reply = document.querySelector('[data-testid="markdown-reply"]')!;
+  let fiber: Record<string, unknown> | null = { memoizedProps: { response: { references: RAW_REFERENCES } }, return: null };
+  for (let i = 0; i < 4; i++) fiber = { memoizedProps: {}, return: fiber };
+  (reply as unknown as Record<string, unknown>)["__reactFiber$fixture"] = fiber;
+  if (withPageScript) installCopilotPageScript(document);
+  return { document, reply, message: document.querySelectorAll(copilotAdapter.messageSelector)[0] };
+}
+
+check("copilot: readReferences gets the list from the page script and cleans up", () => {
+  const { reply, message } = copilotFixtureWithReferences(true);
+  const references = copilotAdapter.readReferences!(message)!;
+  assert.equal(references.length, 6, "the hidden and non-web entries are left out");
+  assert.deepEqual(references[4], { url: "https://www.example-blog.com/photovault", title: "PhotoVault Backups · Example Blog", domain: "example-blog.com", cited: false });
+  assert.equal(reply.hasAttribute(REFERENCES_ATTRIBUTE), false);
+  assert.equal(copilotAdapter.readReferences!(copilotFixtureWithReferences(false).message), null, "no page script, no list");
+});
+
+check("copilot: parseReferencesAttribute rejects malformed data", () => {
+  assert.equal(parseReferencesAttribute(null), null);
+  assert.equal(parseReferencesAttribute("{not json"), null);
+  assert.equal(parseReferencesAttribute('{"url":"https://a.example"}'), null);
+  assert.equal(parseReferencesAttribute('[{"url":"https://a.example","title":"A"}]'), null, "missing cited");
+  assert.deepEqual(parseReferencesAttribute('[{"url":"ftp://a.example","title":"A","cited":true,"hidden":false}]'), []);
+});
+
+check("copilot: a multi-source chip gets every title from the source list", () => {
+  const { message } = copilotFixtureWithReferences(true);
+  const references = copilotAdapter.readReferences!(message);
+  const out = convertMessage(copilotAdapter, message, { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references });
+  assert.ok(out.includes("The main changes include:[^1][^2]"), "both sources of the chip are cited");
+  assert.ok(out.includes("[^1]: [PhotoVault](https://photovault.example/) — photovault.example\n"));
+  assert.ok(out.includes("[^2]: [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com\n"));
+  const moreSection = out.split("## More sources\n\n")[1].split("\n\n")[0];
+  // Copilot flags example-user/photovault-fork as cited, so it isn't a More source even though this fixture has no chip for it.
+  assert.deepEqual(moreSection.split("\n"), [
+    "- [PhotoVault: A Complete Setup Guide](https://guides.example.net/photovault) — guides.example.net",
+    "- [PhotoVault Backups · Example Blog](https://www.example-blog.com/photovault) — example-blog.com",
+    "- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example",
+  ]);
+});
+
+check("copilot: without a source list a multi-source chip falls back to source names", () => {
+  const { message } = copilotFixtureWithReferences(false);
+  const out = convertMessage(copilotAdapter, message, { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: null });
+  assert.ok(out.includes("[^1]: [photovault.example](https://photovault.example/)\n"), "a title that's just the domain isn't repeated");
+  assert.ok(out.includes("[^2]: [github.com](https://github.com/photovault/photovault)\n"));
+  assert.ok(!out.includes("More sources"));
 });
 
 // ---------------------------------------------------------------------------

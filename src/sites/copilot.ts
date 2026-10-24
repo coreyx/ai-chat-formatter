@@ -1,13 +1,17 @@
 import type TurndownService from "turndown";
-import { parseCitationTitle } from "../core/citations";
+import { parseCitationTitle, sourceDomain } from "../core/citations";
+import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT, type RawReference } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import { ConversionError, type ConversionContext, type SiteAdapter } from "../core/types";
+import { ConversionError, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
 
 /*
  * Microsoft Copilot (consumer). Every selector here comes from copilot.com's
  * rendered page as inspected on 2026-10-24; none of it is a documented API.
  * When Copilot changes its markup, this is the file to update.
  */
+
+/** The reply body inside each assistant message. */
+const REPLY_SELECTOR = '[data-testid="markdown-reply"]';
 
 /** Copilot's code viewer labels, mapped to fence info strings where the label isn't already one. */
 const LANGUAGE_IDS: Record<string, string> = {
@@ -71,10 +75,12 @@ interface GroupedCitation {
 /**
  * Turndown rule for Copilot's citation chips: `<button data-grouped-citations>`
  * holding a JSON array of the sources the chip stands for. Each source is
- * registered and replaced by its placeholder. The chip's `aria-label` names the
- * page title, but only for a chip with a single source; a chip grouping several
- * falls back to each source's name. A chip whose JSON can't be read keeps its
- * visible text rather than failing the whole copy.
+ * registered and replaced by its placeholder. Its title comes from the reply's
+ * source list when the caller read one. Otherwise the chip's `aria-label`
+ * names the page title, but only for a chip with a single source; a chip
+ * grouping several ("photovault+1", labeled "PhotoVault plus 1 more") falls back to
+ * each source's name. A chip whose JSON can't be read keeps its visible text
+ * rather than failing the whole copy.
  */
 function citationChipRule(context: ConversionContext): TurndownService.Rule {
   return {
@@ -93,11 +99,51 @@ function citationChipRule(context: ConversionContext): TurndownService.Rule {
       return sources
         .map((source) => {
           const name = typeof source.name === "string" ? source.name : "";
-          return context.registerCitation({ url: source.url, title: parseCitationTitle(label, name, source.url), sourceName: name });
+          const title = context.findReference(source.url)?.title.trim() || parseCitationTitle(label, name, source.url);
+          return context.registerCitation({ url: source.url, title, sourceName: name });
         })
         .join("");
     },
   };
+}
+
+/**
+ * Validates the JSON the page script wrote and turns it into source
+ * references, leaving out sources Copilot itself hides. Returns null for
+ * anything malformed, so a surprise in the data falls back to chip-only
+ * citations rather than producing wrong ones.
+ */
+export function parseReferencesAttribute(json: string | null): SourceReference[] | null {
+  if (!json) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed)) return null;
+  const references: SourceReference[] = [];
+  for (const entry of parsed as Partial<RawReference>[]) {
+    if (typeof entry?.url !== "string" || typeof entry.title !== "string" || typeof entry.cited !== "boolean") return null;
+    if (!/^https?:\/\//i.test(entry.url) || entry.hidden === true) continue;
+    references.push({ url: entry.url, title: entry.title, domain: sourceDomain(entry.url), cited: entry.cited });
+  }
+  return references;
+}
+
+/**
+ * Asks the page script (src/page/copilot.ts) for `message`'s source list.
+ * Synchronous: the page script answers while the event is being dispatched.
+ * Returns null when the page script isn't there or found nothing.
+ */
+function readCopilotReferences(message: Element): SourceReference[] | null {
+  const reply = message.matches(REPLY_SELECTOR) ? message : message.querySelector(REPLY_SELECTOR);
+  if (!reply) return null;
+  reply.removeAttribute(REFERENCES_ATTRIBUTE);
+  reply.dispatchEvent(new (reply.ownerDocument.defaultView ?? window).CustomEvent(REFERENCES_EVENT, { bubbles: true }));
+  const json = reply.getAttribute(REFERENCES_ATTRIBUTE);
+  reply.removeAttribute(REFERENCES_ATTRIBUTE);
+  return parseReferencesAttribute(json);
 }
 
 export const copilotAdapter: SiteAdapter = {
@@ -106,7 +152,7 @@ export const copilotAdapter: SiteAdapter = {
   matches: ["https://copilot.microsoft.com/*", "https://copilot.com/*"],
   // User prompts are articles too; only replies contain a markdown-reply body.
   messageSelector: 'div[role="article"]:has([data-testid="markdown-reply"])',
-  contentSelector: '[data-testid="markdown-reply"]',
+  contentSelector: REPLY_SELECTOR,
   nativeCopyButtonSelector: 'button[data-testid="CopyButtonTestId"]',
   // Directly after the native Copy button, which shares a flex row with the feedback buttons.
   findButtonAnchor(message) {
@@ -116,5 +162,7 @@ export const copilotAdapter: SiteAdapter = {
   stripSelectors: ['[role="status"]', "[aria-live]"],
   preprocess: rewriteCodeBlocks,
   turndownRules: (context) => ({ copilotCitationChip: citationChipRule(context) }),
+  readReferences: readCopilotReferences,
+  pageScript: "copilot",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };

@@ -100,7 +100,7 @@ None at this time.
   - The script never throws into the page: everything is in a try/catch. It imports nothing.
 
 #### [MODIFY] `src/sites/copilot.ts`
-- [ ] **TASK-6:** Add the fast path for Copilot:
+- [x] **TASK-6:** Add the fast path for Copilot:
   - `pageScript: "copilot"`.
   - `readReferences(message)`: dispatches `new CustomEvent("acf:request-references", { bubbles: true })` on the reply body, then reads, parses and removes `data-acf-references`, using an exported `parseReferencesAttribute(json): SourceReference[] | null`. That validates the shape, drops hidden entries and entries without an http(s) URL, fills in `domain`, and returns null on any problem.
   - The citation-chip rule takes each source's title from `context.findReference(url)?.title` when it's non-empty, and otherwise falls back to the 0.1.0 logic (the chip's `aria-label`, then the source name).
