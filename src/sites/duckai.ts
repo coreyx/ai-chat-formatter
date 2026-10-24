@@ -1,5 +1,6 @@
 import type TurndownService from "turndown";
 import { normalizeCitationUrl, sourceDomain } from "../core/citations";
+import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT, type RawChipSource } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
 import type { ConversionContext, SiteAdapter, SourceReference } from "../core/types";
 
@@ -113,40 +114,121 @@ function citationChipRule(context: ConversionContext): TurndownService.Rule {
 }
 
 /**
- * Reads `message`'s Read More cards as its source list, in page order. Each
- * card holds a favicon, then a `<span>` whose own text is the page title and
- * whose inner `<span>` is the domain. A card counts as cited when a chip in
- * the reply body links to the same page; the rest become the More list.
+ * Whether `node` is one of Duck.ai's popup source chips: a button that opens a
+ * popup listing the sources it stands for, showing the first source's domain
+ * and a count of the others. Its markup holds no links; the sources come from
+ * {@link CHIP_SOURCES_ATTRIBUTE}, written by the page script or the Read More
+ * fallback in {@link readDuckAiReferences}.
+ */
+function isPopupChip(node: Element): boolean {
+  return node.nodeName === "BUTTON" && node.hasAttribute("aria-haspopup") && node.hasAttribute("aria-label");
+}
+
+/** The domain a popup chip displays: the text of its first `<span>`. */
+function popupChipDomain(chip: Element): string {
+  return (Array.from(chip.children).find((child) => child.nodeName === "SPAN")?.textContent ?? "").trim();
+}
+
+/**
+ * Parses a popup chip's {@link CHIP_SOURCES_ATTRIBUTE}, keeping entries with an
+ * http(s) URL. Returns null when the attribute is missing or malformed, so the
+ * chip is dropped rather than turned into wrong citations.
+ */
+export function parseChipSources(json: string | null): RawChipSource[] | null {
+  if (!json) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed)) return null;
+  const sources = parsed.flatMap((entry: Partial<RawChipSource> | null): RawChipSource[] => {
+    const url = typeof entry?.url === "string" ? entry.url : "";
+    if (!/^https?:\/\//i.test(url)) return [];
+    return [{ url, title: typeof entry?.title === "string" ? entry.title : "", domain: typeof entry?.domain === "string" ? entry.domain : "" }];
+  });
+  return sources.length > 0 ? sources : null;
+}
+
+/**
+ * Turndown rule for Duck.ai's popup chips. Each source behind the chip is
+ * registered as its own citation, titled from its Read More card when there is
+ * one, otherwise from Duck.ai's own title for it. A chip with no readable
+ * sources becomes nothing: its visible text is only a domain and a count, which
+ * would otherwise run into the sentence ("widget.example1").
+ */
+function popupChipRule(context: ConversionContext): TurndownService.Rule {
+  return {
+    filter: (node) => isPopupChip(node),
+    replacement: (_content, node) => {
+      const sources = parseChipSources((node as HTMLElement).getAttribute(CHIP_SOURCES_ATTRIBUTE)) ?? [];
+      return sources
+        .map((source) => {
+          const domain = source.domain.trim() || sourceDomain(source.url);
+          const title = context.findReference(source.url)?.title.trim() || source.title.trim() || domain;
+          return context.registerCitation({ url: source.url, title, sourceName: domain });
+        })
+        .join("");
+    },
+  };
+}
+
+/** One Read More card as a source reference, not yet marked cited. */
+function readCard(card: Element): SourceReference {
+  const url = card.getAttribute("href") ?? "";
+  const label = Array.from(card.children).find((child) => child.nodeName === "SPAN");
+  // The title is the label's own text; its inner span is the domain.
+  const title = Array.from(label?.childNodes ?? [])
+    .filter((node) => node.nodeType === node.TEXT_NODE)
+    .map((node) => node.textContent ?? "")
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const domain = (label?.querySelector("span")?.textContent ?? "").trim() || sourceDomain(url);
+  return { url, title, domain, cited: false };
+}
+
+/**
+ * Reads `message`'s Read More cards as its source list, in page order, and
+ * makes sure every popup chip in the reply carries its sources for conversion.
  *
- * Returns null when the message has no Read More section, so the chips fall
+ * First it asks the page script (src/page/duckai.ts) to write each popup chip's
+ * sources to the chip; the request is synchronous, like Copilot's. A popup chip
+ * left without them gets the Read More card for the domain it displays, when
+ * there is one.
+ *
+ * Each card holds a favicon, then a `<span>` whose own text is the page title
+ * and whose inner `<span>` is the domain. A card counts as cited when a link
+ * chip, or a source behind a popup chip, points to the same page; the rest
+ * become the More list.
+ *
+ * Returns null when the message has no Read More section, so link chips fall
  * back to their own labels.
  */
 export function readDuckAiReferences(message: Element): SourceReference[] | null {
-  const cards = Array.from(message.querySelectorAll<HTMLAnchorElement>(READ_MORE_CARD_SELECTOR)).filter((card) =>
-    /^https?:\/\//.test(card.getAttribute("href") ?? ""),
-  );
-  if (cards.length === 0) return null;
+  message.dispatchEvent(new (message.ownerDocument.defaultView ?? window).CustomEvent(REFERENCES_EVENT, { bubbles: true }));
+
+  const references = Array.from(message.querySelectorAll(READ_MORE_CARD_SELECTOR))
+    .filter((card) => /^https?:\/\//.test(card.getAttribute("href") ?? ""))
+    .map(readCard);
 
   const body = message.querySelector(CONTENT_SELECTOR);
-  const chipUrls = new Set(
-    Array.from(body?.querySelectorAll<HTMLElement>("a[aria-label][tabindex]") ?? [])
-      .filter(isCitationChip)
-      .map((chip) => normalizeCitationUrl(chip.getAttribute("href") ?? "")),
-  );
+  const popupChips = Array.from(body?.querySelectorAll("button[aria-haspopup]") ?? []).filter(isPopupChip);
+  for (const chip of popupChips) {
+    if (parseChipSources(chip.getAttribute(CHIP_SOURCES_ATTRIBUTE))) continue;
+    const card = references.find((reference) => reference.domain === popupChipDomain(chip));
+    if (card) chip.setAttribute(CHIP_SOURCES_ATTRIBUTE, JSON.stringify([{ url: card.url, title: card.title, domain: card.domain }]));
+  }
+  if (references.length === 0) return null;
 
-  return cards.map((card) => {
-    const url = card.getAttribute("href") ?? "";
-    const label = Array.from(card.children).find((child) => child.nodeName === "SPAN");
-    // The title is the label's own text; its inner span is the domain.
-    const title = Array.from(label?.childNodes ?? [])
-      .filter((node) => node.nodeType === node.TEXT_NODE)
-      .map((node) => node.textContent ?? "")
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
-    const domain = (label?.querySelector("span")?.textContent ?? "").trim() || sourceDomain(url);
-    return { url, title, domain, cited: chipUrls.has(normalizeCitationUrl(url)) };
-  });
+  const citedUrls = new Set([
+    ...Array.from(body?.querySelectorAll<HTMLElement>("a[aria-label][tabindex]") ?? [])
+      .filter(isCitationChip)
+      .map((chip) => chip.getAttribute("href") ?? ""),
+    ...popupChips.flatMap((chip) => (parseChipSources(chip.getAttribute(CHIP_SOURCES_ATTRIBUTE)) ?? []).map((source) => source.url)),
+  ].map((url) => normalizeCitationUrl(url)));
+  return references.map((reference) => ({ ...reference, cited: citedUrls.has(normalizeCitationUrl(reference.url ?? "")) }));
 }
 
 export const duckAiAdapter: SiteAdapter = {
@@ -165,7 +247,7 @@ export const duckAiAdapter: SiteAdapter = {
   },
   stripSelectors: ['[data-streamdown="code-block-header"]', '[data-streamdown="code-block-actions"]', "[aria-live]"],
   preprocess: preprocessDuckAi,
-  turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context) }),
+  turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context), duckAiPopupChip: popupChipRule(context) }),
   readReferences: readDuckAiReferences,
   // Popup chips name their sources only in React state, which src/page/duckai.ts reads.
   pageScript: "duckai",

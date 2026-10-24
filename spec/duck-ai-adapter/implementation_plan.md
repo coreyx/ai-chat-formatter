@@ -89,7 +89,7 @@ None at this time.
   - Set `pageScript: "duckai"` on the adapter, so the build bundles the script and the manifest runs it in the page world on `duck.ai`.
 
 #### [MODIFY] `src/sites/duckai.ts`
-- [ ] **TASK-11:** Popup chips in the adapter:
+- [x] **TASK-11:** Popup chips in the adapter:
   - **Request:** `readDuckAiReferences` first dispatches `REFERENCES_EVENT` on the message, so popup chips carry `data-acf-sources`.
   - **Fallback:** for each popup chip still without the attribute, it writes one from the Read More card whose domain equals the chip's displayed domain (the first `span`), when there is one.
   - **Cited:** a card now counts as cited when a link chip or a popup chip's source has its URL.
