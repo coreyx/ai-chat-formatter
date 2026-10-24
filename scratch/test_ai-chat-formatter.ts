@@ -63,7 +63,6 @@ check("citations: footnotes attach to text and collapse adjacent repeats", () =>
   assert.equal(
     renderCitations(md, collector.citations, "footnotes"),
     "Widget 5 was released.[^1]\n\n- PathMatcher is global[^2]\n- wpm 4[^1]\n\n" +
-      "## Sources\n\n### Citations\n\n" +
       "[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n" +
       "[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example",
   );
@@ -94,7 +93,7 @@ check("citations: no citations leaves the Markdown unchanged", () => {
 check("citations: titles and URLs that would break a link are escaped", () => {
   const collector = new CitationCollector();
   const p = collector.register({ url: "https://example.com/a (b)", title: "Tips [2026]", sourceName: "example.com" });
-  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [Tips \\[2026\\]](https://example.com/a%20%28b%29) — example.com");
+  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n[^1]: [Tips \\[2026\\]](https://example.com/a%20%28b%29) — example.com");
 });
 
 check("citations: title comes from the last aria-label segment, then name, then host", () => {
@@ -179,7 +178,7 @@ check("convert: site citation rule feeds the chosen citation style", () => {
   const message = element(
     `<div class="message"><div class="reply"><p>Released in May.\u00A0<span class="chip" data-url="https://widget.example/x" data-title="Release\u00A0notes">widget</span></p></div></div>`,
   );
-  assert.equal(convertMessage(testAdapter, message, options("footnotes")), "Released in May.[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [Release notes](https://widget.example/x) — widget.example");
+  assert.equal(convertMessage(testAdapter, message, options("footnotes")), "Released in May.[^1]\n\n[^1]: [Release notes](https://widget.example/x) — widget.example");
 });
 
 check("convert: KaTeX inline and display math use $ and $$", () => {
@@ -259,7 +258,7 @@ check("copilot: the fixture converts to the expected Markdown with footnotes", (
   assert.equal(
     convertMessage(copilotAdapter, copilotReply(), options("footnotes")),
     COPILOT_EXPECTED_BODY +
-      "\n\n## Sources\n\n### Citations\n\n[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example" +
+      "\n\n[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example" +
       "\n[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example",
   );
 });

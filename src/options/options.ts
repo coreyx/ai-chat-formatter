@@ -7,9 +7,18 @@ import { canReadReferences, loadSettings, onSettingsChanged, saveSettings, type 
 import { CITATION_STYLES, type CitationStyle, type SiteAdapter } from "../core/types";
 import { SITE_ADAPTERS } from "../sites/index";
 
-/** How each citation style is presented: a label and a one-line example of its output. */
-const CITATION_STYLE_TEXT: Record<CitationStyle, { label: string; example: string }> = {
-  footnotes: { label: "Obsidian footnotes", example: "…released in May.[^1]  →  [^1]: [Title](url)" },
+/** How each citation style is presented: a label, an optional hint and a one-line example of its output. */
+const CITATION_STYLE_TEXT: Record<CitationStyle, { label: string; hint?: string; example: string }> = {
+  "linked-citations": {
+    label: "Linked citations (Obsidian)",
+    hint: "Numbered list under Sources; markers link to it. Reads the same in Reading view and Live Preview.",
+    example: "…released in May.⁽¹⁾  →  1. [Title](url) — domain",
+  },
+  footnotes: {
+    label: "Obsidian footnotes",
+    hint: "Reading view shows the footnotes at the bottom of the note, after the More list.",
+    example: "…released in May.[^1]  →  ### More …  [^1]: [Title](url) — domain",
+  },
   "inline-links-and-sources": { label: "Inline links + Sources list", example: "…released in May.[1](url)  →  ## Sources" },
   "sources-only": { label: "Sources list only", example: "…released in May.  →  ## Sources" },
 };
@@ -83,7 +92,7 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
   styleSet.append(el(document, "h2", undefined, "Citation style"));
   for (const style of CITATION_STYLES) {
     const text = CITATION_STYLE_TEXT[style];
-    const choice = option(document, "radio", "citationStyle", text.label, null, () => update((s) => (s.citationStyle = style)));
+    const choice = option(document, "radio", "citationStyle", text.label, text.hint ?? null, () => update((s) => (s.citationStyle = style)));
     choice.querySelector("input")!.value = style;
     const example = el(document, "code", undefined, text.example);
     choice.querySelector(".option-text")!.append(example);

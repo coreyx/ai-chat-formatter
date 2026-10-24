@@ -12,14 +12,19 @@ export interface Citation {
 
 /**
  * How citations are written into the copied Markdown:
- * - `footnotes`: `[^1]` markers with `[^1]: [Title](url)` definitions at the end (Obsidian renders these as footnotes).
- * - `inline-links-and-sources`: `[1](url)` markers plus a "Sources" list at the end.
- * - `sources-only`: no inline markers, just the "Sources" list.
+ * - `linked-citations`: a numbered Citations list whose entries carry Obsidian
+ *   block IDs, with markers in the text linking to them. Unlike footnotes, it
+ *   reads in the same order in Reading view and Live Preview.
+ * - `footnotes`: `[^1]` markers with `[^1]: [Title](url)` definitions at the
+ *   end. Obsidian's Reading view gathers these at the bottom of the note, so
+ *   they act as the citations and get no heading of their own.
+ * - `inline-links-and-sources`: `[1](url)` markers plus a numbered Citations list.
+ * - `sources-only`: no inline markers, just the numbered Citations list.
  */
-export type CitationStyle = "footnotes" | "inline-links-and-sources" | "sources-only";
+export type CitationStyle = "linked-citations" | "footnotes" | "inline-links-and-sources" | "sources-only";
 
 /** The citation styles in the order the options page lists them. */
-export const CITATION_STYLES: readonly CitationStyle[] = ["footnotes", "inline-links-and-sources", "sources-only"];
+export const CITATION_STYLES: readonly CitationStyle[] = ["linked-citations", "footnotes", "inline-links-and-sources", "sources-only"];
 
 /**
  * A Markdown-to-Markdown fix applied after conversion. Rules exist so that

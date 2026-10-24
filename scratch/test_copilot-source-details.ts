@@ -71,14 +71,15 @@ const MORE_SECTION =
   "- [PhotoVault Backups · Example Blog](https://www.example-blog.com/photovault) — example-blog.com\n" +
   "- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example";
 
-check("render: footnotes go under Sources > Citations, with More after them", () => {
+check("render: footnotes put More under Sources, then the definitions, with no Citations heading", () => {
   const { body, citations } = photovaultReply();
   assert.equal(
     renderCitations(body, citations, "footnotes", more),
     "PhotoVault is a strong choice.[^1][^2]\n\n" +
-      "## Sources\n\n### Citations\n\n[^1]: [PhotoVault](https://photovault.example/) — photovault.example\n" +
-      "[^2]: [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com\n\n" +
-      MORE_SECTION,
+      "## Sources\n\n" +
+      MORE_SECTION +
+      "\n\n[^1]: [PhotoVault](https://photovault.example/) — photovault.example\n" +
+      "[^2]: [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com",
   );
 });
 
@@ -99,7 +100,7 @@ check("render: More sources skips cited and repeated sources; empty list adds no
   assert.equal(out.split("### More\n\n")[1].split("\n").length, 4, "three linked plus one unlinked entry");
   assert.ok(!out.split("### More")[1].includes("](https://photovault.example"), "a cited source isn't repeated under More");
   const withoutMore = renderCitations(body, citations, "footnotes", []);
-  assert.ok(withoutMore.includes("### Citations") && !withoutMore.includes("### More"), "citations only: no More subsection");
+  assert.ok(!withoutMore.includes("## Sources") && withoutMore.includes("\n\n[^1]: "), "footnotes without More: just the definitions");
 });
 
 check("render: a source without a URL is plain, escaped text; More alone has no Citations subsection", () => {
@@ -110,7 +111,7 @@ check("render: a source without a URL is plain, escaped text; More alone has no 
 check("render: a title that is just the domain isn't repeated", () => {
   const collector = new CitationCollector();
   const p = collector.register({ url: "https://photovault.example/", title: "photovault.example", sourceName: "photovault.example" });
-  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [photovault.example](https://photovault.example/)");
+  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n[^1]: [photovault.example](https://photovault.example/)");
   assert.equal(renderCitations("x", [], "footnotes", [ref("https://www.example.com/", "", false)]), "x\n\n## Sources\n\n### More\n\n- [example.com](https://www.example.com/)");
 });
 
@@ -158,14 +159,14 @@ const lookupReferences = [ref("https://photovault.example", "PhotoVault", true),
 
 check("convert: titles come from the source list, matched by normalized URL", () => {
   const out = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: false, isRuleEnabled: () => true, references: lookupReferences });
-  assert.equal(out, "Cited.[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
+  assert.equal(out, "Cited.[^1]\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
 });
 
 check("convert: uncited sources become More sources only when asked", () => {
   const on = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: lookupReferences });
-  assert.equal(on, "Cited.[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example\n\n### More\n\n- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example");
+  assert.equal(on, "Cited.[^1]\n\n## Sources\n\n### More\n\n- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
   const none = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: null });
-  assert.equal(none, "Cited.[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [fallback](https://photovault.example/#top) — photovault.example");
+  assert.equal(none, "Cited.[^1]\n\n[^1]: [fallback](https://photovault.example/#top) — photovault.example");
 });
 
 // ---------------------------------------------------------------------------
@@ -385,7 +386,7 @@ await checkAsync("panel: More entries without URLs render as plain text", async 
   const references = await copilotAdapter.readReferencesSlowly!(page.message);
   const out = convertMessage(copilotAdapter, page.message, { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references });
   assert.ok(out.includes("[^1]: [deploykit/docs/sandbox-setup.md at main · example-dev/deploykit](" + TERRENCE + ") — github.com\n"));
-  assert.ok(out.endsWith("- Cannot start the sandbox - Example Q&A — learn.example.com"), "More comes last");
+  assert.ok(out.includes("- Cannot start the sandbox - Example Q&A — learn.example.com\n\n[^1]: "), "the More list comes before the footnote definitions");
 });
 
 // ---------------------------------------------------------------------------
@@ -544,7 +545,7 @@ await checkAsync("page data: with no page script, Copy as Markdown gets linked M
   assert.equal(panelReads, 0);
   assert.ok(written[0].includes("[^1]: [Widget — Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n"));
   assert.ok(
-    written[0].endsWith(
+    written[0].includes(
       "### More\n\n- [Set up the sandbox | Example Learn](https://learn.example.com/sandbox/install) — learn.example.com\n- [PhotoVault Backups · Example Blog](https://www.example-blog.com/photovault) — example-blog.com",
     ),
   );

@@ -112,6 +112,44 @@ function numberedCitations(citations: Citation[]): string {
   return citations.map((citation, i) => `${i + 1}. ${citationLink(citation)}`).join("\n");
 }
 
+/** The superscript forms of the digits 0 to 9, for linked-citation markers. */
+const SUPERSCRIPT_DIGITS = ["\u2070", "\u00B9", "\u00B2", "\u00B3", "\u2074", "\u2075", "\u2076", "\u2077", "\u2078", "\u2079"];
+const SUPERSCRIPT_OPEN = "\u207D";
+const SUPERSCRIPT_CLOSE = "\u207E";
+
+/** `n` written in superscript digits, so 12 becomes superscript one, superscript two. */
+export function superscriptDigits(n: number): string {
+  return String(n)
+    .split("")
+    .map((digit) => SUPERSCRIPT_DIGITS[Number(digit)] ?? digit)
+    .join("");
+}
+
+/**
+ * The Obsidian block ID for citation `n`: `c-<token>-<n>`, or `c-<n>` without a
+ * token. The token keeps IDs from two copies pasted into one note apart. Only
+ * lowercase letters, digits and hyphens are allowed in a block ID, so anything
+ * else is dropped from the token.
+ */
+export function citationBlockId(token: string, n: number): string {
+  const safeToken = token.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return safeToken ? `c-${safeToken}-${n}` : `c-${n}`;
+}
+
+/**
+ * The in-text marker for linked citations: a same-note link to the entry's
+ * block, displayed as the number in superscript parentheses. The parentheses
+ * keep adjacent markers apart; bare superscript digits would run together.
+ */
+function linkedMarker(token: string, n: number): string {
+  return `[[#^${citationBlockId(token, n)}|${SUPERSCRIPT_OPEN}${superscriptDigits(n)}${SUPERSCRIPT_CLOSE}]]`;
+}
+
+/** Every citation as a numbered entry ending in its block ID, for linked citations. */
+function linkedCitations(citations: Citation[], token: string): string {
+  return citations.map((citation, i) => `${i + 1}. ${citationLink(citation)} ^${citationBlockId(token, i + 1)}`).join("\n");
+}
+
 /** Every citation as a `[^N]: [Title](url) — domain` footnote definition. */
 function footnoteDefinitions(citations: Citation[]): string {
   return citations.map((citation, i) => `[^${i + 1}]: ${citationLink(citation)}`).join("\n");
@@ -149,18 +187,22 @@ function sourcesSection(citationLines: string, moreLines: string): string {
 
 /**
  * Swaps the citation placeholders in `markdown` for `style` and appends the
- * Sources section (see {@link sourcesSection}): the footnote definitions or
- * numbered list under Citations, then the uncited sources under More.
- * Placeholders attach to the text before them (`release.[^1]`, not
- * `release. [^1]`), and the same citation repeated back to back, as when a
- * chip is cited twice in a row, collapses into one marker. With no citations
- * and no More sources the Markdown is unchanged.
+ * Sources section (see {@link sourcesSection}): the numbered list under
+ * Citations, then the uncited sources under More. The footnotes style differs:
+ * Obsidian's Reading view gathers footnote definitions at the bottom of the
+ * note whatever their position, so they get no Citations heading and simply
+ * follow the More list, or the body when there's no More list. Placeholders
+ * attach to the text before them (`release.[^1]`, not `release. [^1]`), and
+ * the same citation repeated back to back, as when a chip is cited twice in a
+ * row, collapses into one marker. With no citations and no More sources the
+ * Markdown is unchanged. `idToken` is only used by the linked-citations style.
  */
 export function renderCitations(
   markdown: string,
   citations: Citation[],
   style: CitationStyle,
   moreSources: readonly SourceReference[] = [],
+  idToken = "",
 ): string {
   let body = markdown
     .replace(/(⟦cite:(\d+)⟧)(?:\s*⟦cite:\2⟧)+/g, "$1")
@@ -175,10 +217,15 @@ export function renderCitations(
   const citationFor = (n: string) => citations[Number(n) - 1];
   let citationLines: string;
   switch (style) {
-    case "footnotes":
-      body = body.replace(PLACEHOLDER, (_, n: string) => (citationFor(n) ? `[^${n}]` : ""));
-      citationLines = footnoteDefinitions(citations);
+    case "linked-citations":
+      body = body.replace(PLACEHOLDER, (_, n: string) => (citationFor(n) ? linkedMarker(idToken, Number(n)) : ""));
+      citationLines = linkedCitations(citations, idToken);
       break;
+    case "footnotes": {
+      body = body.replace(PLACEHOLDER, (_, n: string) => (citationFor(n) ? `[^${n}]` : ""));
+      const definitions = footnoteDefinitions(citations);
+      return more ? `${body.trimEnd()}\n\n${sourcesSection("", more)}\n\n${definitions}` : `${body.trimEnd()}\n\n${definitions}`;
+    }
     case "inline-links-and-sources":
       body = body.replace(PLACEHOLDER, (_, n: string) => {
         const citation = citationFor(n);

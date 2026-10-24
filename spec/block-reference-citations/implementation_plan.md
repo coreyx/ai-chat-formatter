@@ -56,10 +56,10 @@ None at this time.
 ### Core
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Add `"linked-citations"` to `CitationStyle` and put it first in `CITATION_STYLES`, the order the options page lists them. Update the `CitationStyle` doc comment for the new style and for the footnotes style's new shape.
+- [x] **TASK-1:** Add `"linked-citations"` to `CitationStyle` and put it first in `CITATION_STYLES`, the order the options page lists them. Update the `CitationStyle` doc comment for the new style and for the footnotes style's new shape.
 
 #### [MODIFY] `src/core/citations.ts`
-- [ ] **TASK-2:** Render the new style, and rework the footnotes layout:
+- [x] **TASK-2:** Render the new style, and rework the footnotes layout:
   - `renderCitations` gains an `idToken: string` parameter, defaulting to `""`, used only by `linked-citations`.
   - **Linked citations:**
     - A marker becomes `[[#^c-<token>-<N>|⁽<N in superscript digits>⁾]]`, for example `⁽¹²⁾` for 12.
@@ -81,7 +81,7 @@ None at this time.
 ### Options page
 
 #### [MODIFY] `src/options/options.ts`
-- [ ] **TASK-5:** Add the Linked citations choice, labeled **Linked citations (Obsidian)**, with an example such as `…in May.⁽¹⁾  →  1. [Title](url) — domain` and the hint "Numbered list under Sources; markers link to it. Reads the same in Reading view and Live Preview." Update the Footnotes example to show definitions after More. It's listed first.
+- [x] **TASK-5:** Add the Linked citations choice, labeled **Linked citations (Obsidian)**, with an example such as `…in May.⁽¹⁾  →  1. [Title](url) — domain` and the hint "Numbered list under Sources; markers link to it. Reads the same in Reading view and Live Preview." Update the Footnotes example to show definitions after More. It's listed first.
 
 ### Tests
 
