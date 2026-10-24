@@ -138,7 +138,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
 ### Tests
 
 #### [NEW] `scratch/fixtures/copilot-message.html` + `scratch/test_ai-chat-formatter.ts`
-- [ ] **TASK-14:** Add a fixture that copies the structure confirmed on copilot.com (`role="article"` message, `markdown-reply` body, headings, nested lists, inline code, a normal link, citation chips with `data-grouped-citations`/`aria-label`, an `<hr>`, the code viewer with `data-line-index`/`data-line-number` lines and a language label, and the toolbar with the native Copy button). Add the regression script described under Verification Plan, run with jsdom by `npm test`. It prints `PASS`/`FAIL` per check plus a summary and exits non-zero on any failure.
+- [x] **TASK-14:** Add a fixture that copies the structure confirmed on copilot.com (`role="article"` message, `markdown-reply` body, headings, nested lists, inline code, a normal link, citation chips with `data-grouped-citations`/`aria-label`, an `<hr>`, the code viewer with `data-line-index`/`data-line-number` lines and a language label, and the toolbar with the native Copy button). Add the regression script described under Verification Plan, run with jsdom by `npm test`. It prints `PASS`/`FAIL` per check plus a summary and exits non-zero on any failure.
 
 ### Docs and release
 

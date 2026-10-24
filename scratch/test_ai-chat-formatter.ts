@@ -537,6 +537,24 @@ check("options: the form shows the settings and reports each change as a full se
 });
 
 // ---------------------------------------------------------------------------
+// Built manifest (npm test builds dist/ first)
+// ---------------------------------------------------------------------------
+
+check("manifest: dist/manifest.json carries the version, every adapter's matches and the bundles", () => {
+  const manifest = JSON.parse(readFileSync("dist/manifest.json", "utf8"));
+  const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+  assert.equal(manifest.manifest_version, 3);
+  assert.equal(manifest.version, version);
+  assert.deepEqual(manifest.content_scripts[0].matches, SITE_ADAPTERS.flatMap((adapter) => adapter.matches));
+  assert.deepEqual(manifest.content_scripts[0].js, ["content.js"]);
+  assert.deepEqual(manifest.content_scripts[0].css, ["content.css"]);
+  assert.equal(manifest.options_ui.page, "options.html");
+  for (const file of ["content.js", "content.css", "options.js", "options.html"]) {
+    assert.ok(readFileSync(`dist/${file}`).length > 0, `dist/${file} is empty`);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 
