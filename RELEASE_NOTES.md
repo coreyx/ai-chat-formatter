@@ -1,5 +1,48 @@
 # Release Notes
 
+## 0.2.0 (2026-10-24)
+
+Sources now come through the way Copilot shows them: every citation with its page title, and the extra sources Copilot lists under **More**.
+
+### Titles on every citation
+
+Each source is written as `[Title](url) — domain`, in every citation style. Copilot's chips that stand for several sources at once, such as `photovault+1`, used to copy as bare domains; now each page gets its real title.
+
+### The "More" sources
+
+Copilot's Sources panel lists sources it consulted but didn't cite under **More**. These now come along too, after the citations. Turn this off per site with **Include "More" sources** on the options page.
+
+### Laid out like Copilot's Sources panel
+
+Every copy ends with the same structure as the panel:
+
+```markdown
+## Sources
+
+### Citations
+
+[^1]: [Set up the sandbox | Example Learn](https://learn.example.com/…) — learn.example.com
+
+### More
+
+- [Installation | DeployKit Docs](https://deploykit.example/docs/…) — deploykit.example
+```
+
+With the footnotes style, Obsidian's Reading view still gathers the footnotes at the bottom of the note; Live Preview shows the order above.
+
+### Where the titles come from
+
+The extension reads Copilot's own source list, which has every title and link:
+1. From the live page, through a small script that runs in Copilot's page. The extension now has two content scripts.
+2. If that ever fails, from the conversation data embedded when the page loaded.
+3. As a last resort, **Copy as Markdown** opens the reply's Sources panel, reads it and closes it, usually before it even comes into view. The panel has no links for its **More** entries, so those come through as plain `Title — domain`.
+
+If none of these works, the copy still goes ahead with the titles the chips carry, as in 0.1.0.
+
+### Updating
+
+Download `ai-chat-formatter-0.2.0.zip` from this release and extract it over your existing extension folder. Then click the reload icon on the **AI Chat Formatter** card in `chrome://extensions` and refresh any open Copilot tabs.
+
 ## 0.1.0 (2026-10-24)
 
 The first release of AI Chat Formatter, a Chrome extension (also for Edge) that copies Microsoft Copilot replies as clean Markdown, ready to paste into Obsidian.

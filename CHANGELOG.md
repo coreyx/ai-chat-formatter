@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-24
+
 ### Added
 
 - Every citation is written with its page title and domain: `[Title](url) — domain`. Copilot chips that group several sources (such as `photovault+1`) now get each page's real title instead of a bare domain.
@@ -30,5 +32,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Options page with a master switch, citation style, and per-site button, override and rule settings; changes apply to open tabs without a reload.
 - Pluggable site adapters: a site's match patterns go into the manifest automatically at build time.
 
-[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/coreyx/ai-chat-formatter/releases/tag/0.1.0
