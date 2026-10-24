@@ -108,9 +108,10 @@ export const copilotAdapter: SiteAdapter = {
   messageSelector: 'div[role="article"]:has([data-testid="markdown-reply"])',
   contentSelector: '[data-testid="markdown-reply"]',
   nativeCopyButtonSelector: 'button[data-testid="CopyButtonTestId"]',
+  // Directly after the native Copy button, which shares a flex row with the feedback buttons.
   findButtonAnchor(message) {
-    const container = message.querySelector('[data-testid="CopyButtonContainerTestId"]');
-    return container?.parentElement ? { parent: container.parentElement, before: container.nextSibling } : null;
+    const copy = message.querySelector('button[data-testid="CopyButtonTestId"]');
+    return copy?.parentElement ? { parent: copy.parentElement, before: copy.nextSibling } : null;
   },
   stripSelectors: ['[role="status"]', "[aria-live]"],
   preprocess: rewriteCodeBlocks,

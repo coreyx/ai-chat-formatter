@@ -21,7 +21,7 @@ A Manifest V3 Chrome extension that adds a **Copy as Markdown** button to each M
 - **`src/sites/copilot.ts`**: selectors from inspecting copilot.com on 2026-10-24:
   - a reply is `div[role="article"]` containing `[data-testid="markdown-reply"]`;
   - the native Copy button is `button[data-testid="CopyButtonTestId"]`;
-  - the extension's button goes after `[data-testid="CopyButtonContainerTestId"]`.
+  - the extension's button goes directly after the native Copy button, in the flex row it shares with the feedback buttons. The plan put it after `[data-testid="CopyButtonContainerTestId"]`; that container turned out to hold Copy, the feedback buttons and Regenerate, which put the button too far from Copy. Moved at Corey's request after his first test.
 
   Citation chips (`button[data-grouped-citations]`) register every source in their JSON. A chip with unreadable JSON keeps its text rather than failing the copy.
 
@@ -63,7 +63,7 @@ This is the project's first spec, so there were no earlier scripts to re-run. Th
 ### Checked on the live site
 On copilot.com, using the conversation created for the plan's inspection (no new prompts sent):
 - Every selector and data shape the adapter relies on was confirmed. 1 reply among 2 articles; the native Copy button and its container inside the message; a 20-line code block whose line indices are continuous and match its gutter; 11 citation chips, all with parseable single-source JSON and title-bearing `aria-label`s; the live regions to strip are present.
-- The button markup and stylesheet were injected by hand. The button matched Copilot's toolbar buttons (32×32, same color) and sat in the toolbar after Copy, the feedback buttons and Regenerate. The toast showed below the message box.
+- The button markup and stylesheet were injected by hand. The button matched Copilot's toolbar buttons (32×32, same color), and the toast showed below the message box. Placed directly after Copy, it sits 8px from it, the same spacing as the other toolbar icons, in the order Copy, M↓, thumbs, Regenerate.
 
 ## Manual Verification
 Corey loaded `dist/` with **Load unpacked**, used **Copy as Markdown** on the test conversation, pasted into Obsidian and confirmed it works (2026-10-24). The plan's other manual steps haven't been confirmed yet:

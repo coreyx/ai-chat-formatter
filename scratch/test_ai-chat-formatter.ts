@@ -308,10 +308,10 @@ check("copilot: code viewer labels map to fence languages", () => {
 check("copilot: the injected button anchors right after the native Copy button", () => {
   const reply = copilotReply();
   const anchor = copilotAdapter.findButtonAnchor(reply)!;
-  const container = reply.querySelector('[data-testid="CopyButtonContainerTestId"]')!;
-  assert.equal(anchor.parent, container.parentElement);
-  assert.equal(anchor.before, container.nextSibling);
-  assert.ok(reply.querySelector(copilotAdapter.nativeCopyButtonSelector), "the native Copy button is found");
+  const nativeCopy = reply.querySelector(copilotAdapter.nativeCopyButtonSelector)!;
+  assert.ok(nativeCopy, "the native Copy button is found");
+  assert.equal(anchor.parent, nativeCopy.parentElement);
+  assert.equal(anchor.before, nativeCopy.nextSibling);
 });
 
 // ---------------------------------------------------------------------------
@@ -419,7 +419,8 @@ check("controller: one button per finished reply, placed after the native Copy b
   controller.sync();
   const buttons = document.querySelectorAll(".acf-copy-button");
   assert.equal(buttons.length, 1);
-  assert.equal(buttons[0].previousElementSibling?.getAttribute("data-testid"), "CopyButtonContainerTestId");
+  assert.equal(buttons[0].previousElementSibling?.getAttribute("data-testid"), "CopyButtonTestId");
+  assert.equal(buttons[0].nextElementSibling?.tagName, "SECTION", "the feedback buttons follow");
   assert.equal(buttons[0].getAttribute("aria-label"), "Copy as Markdown");
 });
 
