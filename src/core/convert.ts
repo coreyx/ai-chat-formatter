@@ -107,7 +107,7 @@ export function convertMessage(
   const collector = new CitationCollector();
   const service = createTurndown();
   // Site rules go last so they take precedence over the shared ones; Turndown checks the most recently added rule first.
-  for (const [name, rule] of Object.entries(adapter.turndownRules({ registerCitation: (citation) => collector.register(citation) }))) {
+  for (const [name, rule] of Object.entries(adapter.turndownRules({ registerCitation: (citation) => collector.register(citation), findReference: () => undefined }))) {
     service.addRule(name, rule);
   }
 

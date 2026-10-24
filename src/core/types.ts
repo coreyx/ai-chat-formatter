@@ -39,6 +39,23 @@ export interface FormatRule {
   apply(markdown: string): string;
 }
 
+/**
+ * One entry in a reply's full source list, as the site keeps it: the sources
+ * cited in the text and the ones it only lists (Copilot's "More"). It is the
+ * richer counterpart to what a citation chip carries, so it's where page
+ * titles come from when the chip doesn't name them.
+ */
+export interface SourceReference {
+  /** The source's URL, or null when it was read from a place that shows no URL (such as Copilot's Sources panel). */
+  url: string | null;
+  /** The page title, or an empty string when the site gives none. */
+  title: string;
+  /** The hostname without a leading `www.`, as chat sites display it. */
+  domain: string;
+  /** Whether the reply cites this source in its text. */
+  cited: boolean;
+}
+
 /** What an adapter's Turndown rules can call into while a message is being converted. */
 export interface ConversionContext {
   /**
@@ -48,6 +65,8 @@ export interface ConversionContext {
    * and the closing list depend on every citation in the message.
    */
   registerCitation(citation: Citation): string;
+  /** The reply's source-list entry for `url` (compared normalized), when the caller gathered the list. */
+  findReference(url: string): SourceReference | undefined;
 }
 
 /** Where an injected button goes: inside `parent`, before `before` (or at the end when `before` is null). */
@@ -88,6 +107,25 @@ export interface SiteAdapter {
   preprocess?(root: HTMLElement): void;
   /** Turndown rules for this site's markup, keyed by rule name. */
   turndownRules(context: ConversionContext): Record<string, TurndownService.Rule>;
+  /**
+   * Reads `message`'s full source list synchronously, or returns null when it
+   * can't. Synchronous so the native Copy override can use it before the
+   * site's own handler runs.
+   */
+  readReferences?(message: Element): SourceReference[] | null;
+  /**
+   * A slower way to read the same list, for when {@link readReferences}
+   * returns null — for example by opening a panel on the page. Only the
+   * extension's own button uses it, since it can't finish before a native
+   * click is handled.
+   */
+  readReferencesSlowly?(message: Element): Promise<SourceReference[] | null>;
+  /**
+   * Name of a script under `src/page/` that the build bundles and the manifest
+   * runs in the page's own JavaScript world, for data the isolated content
+   * script can't see (such as a framework's internal state).
+   */
+  pageScript?: string;
   /** Post-conversion rules, applied in order. */
   rules: FormatRule[];
 }

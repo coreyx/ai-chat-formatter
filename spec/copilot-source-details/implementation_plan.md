@@ -70,7 +70,7 @@ None at this time.
 ### Core
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Add the shared types and hooks:
+- [x] **TASK-1:** Add the shared types and hooks:
   - `SourceReference` (`url: string | null`, `title`, `domain`, `cited: boolean`). A null `url` means the source came from a place that shows no URL, such as Copilot's panel.
   - On `SiteAdapter`, an optional `readReferences?(message: Element): SourceReference[] | null`: synchronous; the message's full source list, or null when it can't be read.
   - On `SiteAdapter`, an optional `readReferencesSlowly?(message: Element): Promise<SourceReference[] | null>`: the asynchronous fallback.
