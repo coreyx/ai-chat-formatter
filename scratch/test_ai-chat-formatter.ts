@@ -12,6 +12,7 @@ import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../sr
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import { ConversionError, type Citation, type SiteAdapter } from "../src/core/types";
 import { copilotAdapter, copilotLanguageId } from "../src/sites/copilot";
+import { findAdapterForUrl, matchPatternToRegExp, SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -309,6 +310,42 @@ check("copilot: the injected button anchors right after the native Copy button",
   assert.equal(anchor.parent, container.parentElement);
   assert.equal(anchor.before, container.nextSibling);
   assert.ok(reply.querySelector(copilotAdapter.nativeCopyButtonSelector), "the native Copy button is found");
+});
+
+// ---------------------------------------------------------------------------
+// Site registry
+// ---------------------------------------------------------------------------
+
+check("registry: Copilot URLs match and others don't", () => {
+  for (const url of [
+    "https://copilot.microsoft.com/",
+    "https://copilot.microsoft.com/chats/abc",
+    "https://copilot.com/chat/conversation/00000000-0000-4000-8000-000000000abc",
+    "https://copilot.com/chat?fromcode=x&sessionId=y",
+    "https://COPILOT.com/chat#top",
+  ]) {
+    assert.equal(findAdapterForUrl(url)?.id, "copilot", url);
+  }
+  for (const url of ["https://example.com/", "https://m365.cloud.microsoft/chat", "https://notcopilot.com/", "http://copilot.com/", "", "not a url"]) {
+    assert.equal(findAdapterForUrl(url), undefined, url);
+  }
+});
+
+check("registry: match patterns follow Chrome's rules", () => {
+  assert.ok(matchPatternToRegExp("*://*.example.com/docs/*").test("http://example.com/docs/a"));
+  assert.ok(matchPatternToRegExp("*://*.example.com/docs/*").test("https://a.b.example.com:8443/docs/"));
+  assert.ok(!matchPatternToRegExp("*://*.example.com/docs/*").test("https://example.com/blog/"));
+  assert.ok(matchPatternToRegExp("<all_urls>").test("file:///C:/x"));
+  assert.throws(() => matchPatternToRegExp("copilot.com/*"));
+});
+
+check("registry: every adapter has a unique id and valid match patterns", () => {
+  const ids = SITE_ADAPTERS.map((adapter) => adapter.id);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const adapter of SITE_ADAPTERS) {
+    assert.ok(adapter.matches.length > 0, adapter.id);
+    adapter.matches.forEach((pattern) => matchPatternToRegExp(pattern));
+  }
 });
 
 // ---------------------------------------------------------------------------

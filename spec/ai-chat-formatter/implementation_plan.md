@@ -115,7 +115,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
   - **Rules:** `[invisibleCharactersRule, collapseBlankLinesRule]`.
 
 #### [NEW] `src/sites/index.ts`
-- [ ] **TASK-10:** Add the registry: `SITE_ADAPTERS: SiteAdapter[] = [copilotAdapter]`, `matchPatternToRegExp(pattern)` (MV3 scheme, host and path globbing) and `findAdapterForUrl(url)`. A new site means one new module plus one entry here; the manifest picks up its matches from the build script.
+- [x] **TASK-10:** Add the registry: `SITE_ADAPTERS: SiteAdapter[] = [copilotAdapter]`, `matchPatternToRegExp(pattern)` (MV3 scheme, host and path globbing) and `findAdapterForUrl(url)`. A new site means one new module plus one entry here; the manifest picks up its matches from the build script.
 
 ### Content script and options page
 
