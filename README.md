@@ -1,8 +1,8 @@
 # AI Chat Formatter
 
-A Chrome extension (it also runs in Edge) that copies replies from AI chat sites as clean Markdown, citations included, ready to paste into Obsidian.
+A Chrome extension (it also runs in Edge and Brave) that copies replies from AI chat sites as clean Markdown, citations included, ready to paste into Obsidian.
 
-It adds a **Copy as Markdown** button to every reply. If you prefer, it can also take over the site's own Copy button. Microsoft Copilot is the first supported site; each site is a separate adapter, so more can be added.
+It adds a **Copy as Markdown** button to every reply. If you prefer, it can also take over the site's own Copy button. It supports Microsoft Copilot and Duck.ai; each site is a separate adapter, so more can be added.
 
 ## Why
 
@@ -12,6 +12,8 @@ Copilot's Copy button doesn't produce Markdown, and what it does produce falls a
 - **Code blocks lose their formatting.** Every line of a code block is copied as a separate paragraph, so an ASCII directory tree pastes with blank lines between its lines, and the code fence and language are gone.
 - **The plain-text version is no better.** It has no heading or list markers, no link URLs and no citations at all.
 
+Duck.ai's Copy button does write Markdown, but it leaves out every link and source.
+
 AI Chat Formatter reads the reply from the page instead, where the structure and the citation details are still intact, and writes proper Markdown to the clipboard.
 
 ## Features
@@ -19,7 +21,7 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 - **Copy as Markdown** button on every reply, next to the site's own buttons.
 - Optionally, **the site's own Copy button copies Markdown too**. If a reply can't be converted, the site's normal copy runs instead, so the button always copies something.
 - **Citations kept**, in the style you choose (see below), each with its page title and domain: `[Title](url) — domain`. A page cited several times gets one number.
-- **"More" sources too**: the sources Copilot lists under **More** in its Sources panel, without citing them in the reply, come along after the citations, laid out like Copilot's panel.
+- **"More" sources too**: sources the site lists without citing them in the reply (Copilot's **More** in its Sources panel, Duck.ai's uncited **Read More** cards) come along after the citations, laid out like Copilot's panel.
 - **Code blocks** come through as fenced blocks with their language and exact indentation.
 - **Headings, lists, tables, links, inline code and math** (`$…$` and `$$…$$`) convert to their Markdown equivalents.
 - **Clean-up rules** you can switch on and off per site: normalizing invisible characters (non-breaking and zero-width spaces) and collapsing runs of blank lines.
@@ -30,12 +32,13 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 | Site | Pages |
 |---|---|
 | Microsoft Copilot | `copilot.microsoft.com`, `copilot.com` |
+| Duck.ai | `duck.ai` (Duck.ai opened from DuckDuckGo, `duckduckgo.com/?ia=chat`, redirects there) |
 
 Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different markup, and isn't supported yet.
 
 ## Citation styles
 
-Choose one on the options page. Each ends with a **Sources** section laid out like Copilot's Sources panel: **Citations**, then **More** (the sources Copilot lists but the reply doesn't cite). For a reply citing the Widget release notes, with one More source:
+Choose one on the options page. Each ends with a **Sources** section laid out like Copilot's Sources panel: **Citations**, then **More** (the sources the site lists but the reply doesn't cite). For a reply citing the Widget release notes, with one More source:
 
 **Linked citations (Obsidian)** (default)
 
@@ -93,7 +96,9 @@ A subsection with nothing in it is left out. Turn off the More list with **Inclu
 
 ### Where the titles and links come from
 
-Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, is in Copilot's own data. The extension looks for it in three places, in order:
+**Duck.ai.** A reply's source chips name only the site ("GitHub", `widget.example`). The page titles come from the reply's **Read More** cards: each chip is matched to the card with the same link. Read More cards that no chip in the reply cites go under **More**, so a reply with no chips at all has only a More list. A chip without a matching card keeps the site name as its title.
+
+**Copilot.** Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, is in Copilot's own data. The extension looks for it in three places, in order:
 
 1. **Copilot's live page data**, read by a small script that runs in Copilot's own page context (the extension's second content script). This covers every reply.
 2. **The conversation data embedded in the page when it loaded.** This covers every reply that existed when you opened the conversation, but not ones written since.
@@ -120,16 +125,16 @@ AI Chat Formatter isn't in the Chrome Web Store. Install it from a GitHub releas
 
 1. Download `ai-chat-formatter-<version>.zip` from the [latest release](https://github.com/coreyx/ai-chat-formatter/releases/latest).
 2. Extract it to a folder you'll keep, such as `Documents\Extensions\ai-chat-formatter`. Chrome loads the extension from that folder every time it starts, so don't delete it.
-3. Open `chrome://extensions` (in Edge, `edge://extensions`).
+3. Open `chrome://extensions` (in Edge, `edge://extensions`; in Brave, `brave://extensions`).
 4. Turn on **Developer mode**.
 5. Click **Load unpacked** and choose the folder from step 2.
-6. Open a Copilot conversation. Finished replies now have a **Copy as Markdown** button.
+6. Open a Copilot or Duck.ai conversation. Finished replies now have a **Copy as Markdown** button.
 
 ### Updating
 
 1. Download the newer release's zip and extract it over the same folder, replacing its files.
 2. On `chrome://extensions`, click the reload icon on the **AI Chat Formatter** card.
-3. Reload any open Copilot tabs.
+3. Reload any open Copilot or Duck.ai tabs.
 
 ### Building from source
 
@@ -148,7 +153,7 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 
 ## Limitations
 
-- **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When Copilot changes its markup, the Copilot adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to Copilot's own copy.
+- **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When a site changes its markup, its adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to the site's own copy. Duck.ai's class names change between its releases, so its adapter relies only on ids, `data-*` and ARIA attributes, and page structure.
 - **Source titles and More sources depend on Copilot's internal data**, which is even more likely to change than its markup. If the live page data stops working, replies that existed when the page loaded still get full titles and links from the page's embedded data. Replies written since then fall back to the Sources panel with Copy as Markdown (More entries without links), or to the titles on the citation chips with the Copy-button override, with no More sources.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
 - **Very long code blocks.** Copilot may not keep every line of a long code block in the page. If any line is missing, the copy stops with a message instead of copying a shortened block. Scroll through the code block and try again, or use Copilot's own Copy button.
@@ -171,14 +176,16 @@ ai-chat-formatter/
 ├── src/
 │   ├── manifest.json    # Manifest template; version, match patterns and page scripts are filled in at build
 │   ├── core/            # Site-independent: types, conversion, citations, rules, settings
-│   ├── sites/           # One adapter per site, plus the registry (index.ts)
-│   ├── page/            # Page-world scripts, for site data the isolated content script can't see
+│   ├── sites/           # One adapter per site (copilot.ts, duckai.ts), plus the registry (index.ts)
+│   ├── page/            # Page-world scripts, for site data the isolated content script can't see (Copilot only)
 │   ├── content/         # Content script: button injection and the Copy override
 │   └── options/         # Options page
 └── scratch/
     ├── fixtures/        # Page markup and data samples the tests use
     ├── test_ai-chat-formatter.ts
-    └── test_copilot-source-details.ts
+    ├── test_block-reference-citations.ts
+    ├── test_copilot-source-details.ts
+    └── test_duck-ai-adapter.ts
 ```
 
 ### Adding a site

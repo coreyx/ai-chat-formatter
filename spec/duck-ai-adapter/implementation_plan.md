@@ -90,7 +90,7 @@ None at this time.
 ### Docs
 
 #### [MODIFY] `README.md`
-- [ ] **TASK-8:**
+- [x] **TASK-8:**
   - Add Duck.ai to the intro and to **Supported sites** (`duck.ai`, noting that `duckduckgo.com/?ia=chat` redirects there).
   - Explain where Duck.ai's titles come from (Read More cards), and that uncited Read More cards go under More.
   - Note that Duck.ai's own Copy button drops links and sources.
