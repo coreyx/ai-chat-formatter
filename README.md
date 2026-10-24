@@ -106,7 +106,7 @@ Then follow the installation steps from step 3, choosing the `dist/` folder.
 
 ## Pasting with Paste with Source
 
-The extension writes Markdown to the clipboard as plain text only, so Obsidian pastes exactly that Markdown instead of converting HTML. One effect on Windows: a plain-text copy carries no `HTML Format` `SourceURL`, which [Paste with Source](https://github.com/coreyx/obsidian-paste-with-source) has used to find the page a paste came from. Chrome still records the page URL in its `Chromium internal source URL` clipboard format, and support for reading that format is being added to Paste with Source on Windows. Until a release includes it, pastes from this extension on Windows get no Paste with Source citation. On macOS, Paste with Source already reads Chrome's equivalent (`org.chromium.source-url`).
+The extension writes Markdown to the clipboard as plain text only, so Obsidian pastes exactly that Markdown instead of converting HTML. One effect on Windows: a plain-text copy carries no `HTML Format` `SourceURL`, which [Paste with Source](https://github.com/coreyx/obsidian-paste-with-source) has used to find the page a paste came from. Chrome still records the page URL in its `Chromium internal source URL` clipboard format, and Paste with Source [1.6.0](https://github.com/coreyx/obsidian-paste-with-source/releases/tag/1.6.0) and later read it on Windows (setting: **Cite plain-text copies from Chromium apps**, on by default). With an older version, pastes from this extension on Windows get no citation. On macOS, Paste with Source reads Chrome's equivalent (`org.chromium.source-url`).
 
 ## Limitations
 
