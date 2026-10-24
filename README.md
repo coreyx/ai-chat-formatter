@@ -19,7 +19,7 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 - **Copy as Markdown** button on every reply, next to the site's own buttons.
 - Optionally, **the site's own Copy button copies Markdown too**. If a reply can't be converted, the site's normal copy runs instead, so the button always copies something.
 - **Citations kept**, in the style you choose (see below), each with its page title and domain: `[Title](url) — domain`. A page cited several times gets one number.
-- **"More" sources too**: the sources Copilot lists under **More** in its Sources panel, without citing them in the reply, come along as a **More sources** list.
+- **"More" sources too**: the sources Copilot lists under **More** in its Sources panel, without citing them in the reply, come along after the citations, laid out like Copilot's panel.
 - **Code blocks** come through as fenced blocks with their language and exact indentation.
 - **Headings, lists, tables, links, inline code and math** (`$…$` and `$$…$$`) convert to their Markdown equivalents.
 - **Clean-up rules** you can switch on and off per site: normalizing invisible characters (non-breaking and zero-width spaces) and collapsing runs of blank lines.
@@ -35,14 +35,22 @@ Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different 
 
 ## Citation styles
 
-Choose one on the options page. For a reply citing the Widget release notes:
+Choose one on the options page. Every style ends with a **Sources** section laid out like Copilot's Sources panel: **Citations**, then **More** (the sources Copilot lists but the reply doesn't cite). For a reply citing the Widget release notes, with one More source:
 
 **Obsidian footnotes** (default)
 
 ```markdown
 Widget 5 was released in May.[^1]
 
+## Sources
+
+### Citations
+
 [^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
+
+### More
+
+- [Widget 5 is now available | Widget Blog](https://widget.example/blog/widget-5) — widget.example
 ```
 
 **Inline links + Sources list**
@@ -52,38 +60,31 @@ Widget 5 was released in May.[1](https://widget.example/releases/5.0.0)
 
 ## Sources
 
-1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
-```
-
-**Sources list only**
-
-```markdown
-Widget 5 was released in May.
-
-## Sources
+### Citations
 
 1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
+
+### More
+
+- [Widget 5 is now available | Widget Blog](https://widget.example/blog/widget-5) — widget.example
 ```
 
-### More sources
+**Sources list only**: like the inline-links style, without the `[1](…)` markers in the text.
 
-When a reply has sources Copilot lists under **More** but doesn't cite, they're added at the end, in every style. With footnotes, the list goes just before the footnote definitions:
+A subsection with nothing in it is left out. Turn off the More list with **Include "More" sources** on the options page.
 
-```markdown
-## More sources
+> [!NOTE]
+> With footnotes, Obsidian's **Reading view** always gathers footnote definitions at the very bottom of the note, so **Citations** looks empty there, with the footnotes below **More**. Live Preview and source view show the order above.
 
-- [Set up the sandbox | Example Learn](https://learn.example.com/sandbox/install) — learn.example.com
-```
+### Where the titles and links come from
 
-Turn it off with **Include "More" sources** on the options page.
+Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, is in Copilot's own data. The extension looks for it in three places, in order:
 
-### Where the titles come from
+1. **Copilot's live page data**, read by a small script that runs in Copilot's own page context (the extension's second content script). This covers every reply.
+2. **The conversation data embedded in the page when it loaded.** This covers every reply that existed when you opened the conversation, but not ones written since.
+3. **The reply's Sources panel**, which **Copy as Markdown** opens for about a second, reads and closes again. The panel shows no URLs for its **More** entries, so those come through as `Title — domain` without a link.
 
-Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, lives in Copilot's page data. A small script that runs in Copilot's own page context reads it for each copy; that's the extension's second content script.
-
-If that data can't be found (for example after a Copilot update), **Copy as Markdown** opens the reply's Sources panel for about a second, reads it and closes it again. The panel shows no URLs for its **More** entries, so those come through as `Title — domain` without a link. If the panel doesn't work either, the copy still goes ahead, with the titles the chips themselves carry.
-
-The **Use for Copilot's own Copy button** option never opens the panel: it has to decide instantly, before Copilot's own handler runs.
+If none of these works, the copy still goes ahead, with the titles the chips themselves carry. The **Use for Copilot's own Copy button** option never opens the panel: it has to decide instantly, before Copilot's own handler runs.
 
 ## Settings
 
@@ -133,7 +134,7 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 ## Limitations
 
 - **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When Copilot changes its markup, the Copilot adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to Copilot's own copy.
-- **Source titles and More sources depend on Copilot's internal page data**, which is even more likely to change than its markup. When it does, Copy as Markdown falls back to the Sources panel (with a brief flash of the panel, and More entries without links), and the Copy-button override falls back to the titles on the citation chips, with no More sources.
+- **Source titles and More sources depend on Copilot's internal data**, which is even more likely to change than its markup. If the live page data stops working, replies that existed when the page loaded still get full titles and links from the page's embedded data. Replies written since then fall back to the Sources panel with Copy as Markdown (a brief flash of the panel, and More entries without links), or to the titles on the citation chips with the Copy-button override, with no More sources.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
 - **Very long code blocks.** Copilot may not keep every line of a long code block in the page. If any line is missing, the copy stops with a message instead of copying a shortened block. Scroll through the code block and try again, or use Copilot's own Copy button.
 

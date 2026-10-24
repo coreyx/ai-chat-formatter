@@ -176,7 +176,7 @@ None at this time.
   - `copilotAdapter.readReferences` tries the page script first and then `readPageDataReferences`, so both buttons get load-time data synchronously. The panel fallback stays last, and only Copy as Markdown uses it.
 
 #### [MODIFY] `README.md` + `scratch/test_copilot-source-details.ts`
-- [ ] **TASK-15:** Bring the docs and checks up to date:
+- [x] **TASK-15:** Bring the docs and checks up to date:
   - In the README, the citation-style examples show the `## Sources` / `### Citations` / `### More` layout, with a note on Reading view. **Where the titles come from** describes the three sources in order. The limitations note that the load-time data only covers replies that existed when the page loaded.
   - Add the fixture `scratch/fixtures/copilot-page-data.html`: a hydration `<script>` in the observed shape (a JSON string inside `JSON.parse("…")`, with messages, `references` maps and `displayData.content` strings), for one reply with two cited and two uncited sources.
   - Update the earlier layout expectations in both scratch scripts to the new headings.
