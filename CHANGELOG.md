@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- On Copilot, the **Copy as Markdown** button now comes before Copilot's Copy button, first in the toolbar.
+
 ## [0.3.0] - 2026-10-24
 
 ### Added
