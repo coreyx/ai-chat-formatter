@@ -7,12 +7,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { CitationCollector, normalizeCitationUrl, parseCitationTitle, renderCitations } from "../src/core/citations";
-import { convertMessage } from "../src/core/convert";
+import { convertMessage, type ConversionOptions } from "../src/core/convert";
 import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../src/core/rules";
 import { ContentController } from "../src/content/controller";
 import { renderOptions } from "../src/options/options";
 import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
-import { ConversionError, type Citation, type SiteAdapter } from "../src/core/types";
+import { ConversionError, type Citation, type CitationStyle, type SiteAdapter } from "../src/core/types";
 import { copilotAdapter, copilotLanguageId } from "../src/sites/copilot";
 import { findAdapterForUrl, matchPatternToRegExp, SITE_ADAPTERS } from "../src/sites/index";
 
@@ -138,6 +138,11 @@ function element(html: string): HTMLElement {
   return document.body.firstElementChild as HTMLElement;
 }
 
+/** Conversion options for `style` with every rule on and no source list, as 0.1.0 converted. */
+function options(style: CitationStyle): ConversionOptions {
+  return { style, includeMoreSources: true, isRuleEnabled: () => true, references: null };
+}
+
 /** A bare adapter: `.reply` is the body, `.chip[data-url]` is a citation, `.chrome` is stripped. */
 const testAdapter: SiteAdapter = {
   id: "test",
@@ -164,7 +169,7 @@ check("convert: compact list markers, nested lists, headings and strip selectors
       `<ol><li>Engine<ul><li>HalfFloatBuffer</li><li><code>Pattern.escape()</code></li></ul></li><li>wpm 4</li></ol></div></div>`,
   );
   assert.equal(
-    convertMessage(testAdapter, message, "footnotes", () => true),
+    convertMessage(testAdapter, message, options("footnotes")),
     "### Key features\n\n1. Engine\n   - HalfFloatBuffer\n   - `Pattern.escape()`\n2. wpm 4",
   );
 });
@@ -173,7 +178,7 @@ check("convert: site citation rule feeds the chosen citation style", () => {
   const message = element(
     `<div class="message"><div class="reply"><p>Released in May.\u00A0<span class="chip" data-url="https://widget.example/x" data-title="Release\u00A0notes">widget</span></p></div></div>`,
   );
-  assert.equal(convertMessage(testAdapter, message, "footnotes", () => true), "Released in May.[^1]\n\n[^1]: [Release notes](https://widget.example/x) — widget.example");
+  assert.equal(convertMessage(testAdapter, message, options("footnotes")), "Released in May.[^1]\n\n[^1]: [Release notes](https://widget.example/x) — widget.example");
 });
 
 check("convert: KaTeX inline and display math use $ and $$", () => {
@@ -181,11 +186,11 @@ check("convert: KaTeX inline and display math use $ and $$", () => {
   const message = element(
     `<div class="message"><div class="reply"><p>Energy ${tex("E = mc^2")} holds.</p><span class="katex-display">${tex("\\int_0^1 x\\,dx")}</span></div></div>`,
   );
-  assert.equal(convertMessage(testAdapter, message, "footnotes", () => true), "Energy $E = mc^2$ holds.\n\n$$\n\\int_0^1 x\\,dx\n$$");
+  assert.equal(convertMessage(testAdapter, message, options("footnotes")), "Energy $E = mc^2$ holds.\n\n$$\n\\int_0^1 x\\,dx\n$$");
 });
 
 check("convert: a message without a reply body throws ConversionError", () => {
-  assert.throws(() => convertMessage(testAdapter, element(`<div class="message"></div>`), "footnotes", () => true), ConversionError);
+  assert.throws(() => convertMessage(testAdapter, element(`<div class="message"></div>`), options("footnotes")), ConversionError);
 });
 
 // ---------------------------------------------------------------------------
@@ -251,7 +256,7 @@ const COPILOT_EXPECTED_BODY = [
 
 check("copilot: the fixture converts to the expected Markdown with footnotes", () => {
   assert.equal(
-    convertMessage(copilotAdapter, copilotReply(), "footnotes", () => true),
+    convertMessage(copilotAdapter, copilotReply(), options("footnotes")),
     COPILOT_EXPECTED_BODY +
       "\n\n[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example" +
       "\n[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example",
@@ -260,7 +265,7 @@ check("copilot: the fixture converts to the expected Markdown with footnotes", (
 
 check("copilot: no page chrome or chip labels leak into the output", () => {
   // Only the reply body: the Sources list legitimately names domains like "widget.example".
-  const markdown = convertMessage(copilotAdapter, copilotReply(), "sources-only", () => true).split("\n\n## Sources")[0];
+  const markdown = convertMessage(copilotAdapter, copilotReply(), options("sources-only")).split("\n\n## Sources")[0];
   for (const leak of ["Plain Text", "Python\n", "Copy code", "Copy Response", " widget", " wdocs", "[[", "](<"]) {
     assert.ok(!markdown.includes(leak), `output contains ${JSON.stringify(leak)}`);
   }
@@ -269,14 +274,14 @@ check("copilot: no page chrome or chip labels leak into the output", () => {
 check("copilot: the original page is left untouched", () => {
   const page = copilotPage();
   const before = page.body.innerHTML;
-  convertMessage(copilotAdapter, copilotReply(page), "footnotes", () => true);
+  convertMessage(copilotAdapter, copilotReply(page), options("footnotes"));
   assert.equal(page.body.innerHTML, before);
 });
 
 check("copilot: a code block missing a line throws instead of truncating", () => {
   const page = copilotPage();
   page.querySelector('[data-line-index="3"]')!.remove();
-  assert.throws(() => convertMessage(copilotAdapter, copilotReply(page), "footnotes", () => true), ConversionError);
+  assert.throws(() => convertMessage(copilotAdapter, copilotReply(page), options("footnotes")), ConversionError);
 });
 
 check("copilot: unreadable chip JSON keeps the chip text; multi-source chips register every source", () => {
@@ -290,7 +295,7 @@ check("copilot: unreadable chip JSON keeps the chip text; multi-source chips reg
       { url: "https://b.example/2", name: "b.example" },
     ]),
   );
-  const markdown = convertMessage(copilotAdapter, copilotReply(page), "footnotes", () => true);
+  const markdown = convertMessage(copilotAdapter, copilotReply(page), options("footnotes"));
   assert.ok(markdown.includes("The main changes include: widget\n"), "the unreadable chip keeps its text");
   assert.ok(markdown.includes("`Widget.isWidget()`[^1][^2]"), "both grouped sources are cited");
   assert.ok(markdown.includes("[^1]: [a.example](https://a.example/1)\n[^2]: [b.example](https://b.example/2)"), "grouped sources use their names");

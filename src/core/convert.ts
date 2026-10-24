@@ -1,8 +1,20 @@
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
-import { CitationCollector, renderCitations } from "./citations";
+import { CitationCollector, normalizeCitationUrl, renderCitations } from "./citations";
 import { runRules } from "./rules";
-import { ConversionError, type CitationStyle, type SiteAdapter } from "./types";
+import { ConversionError, type CitationStyle, type ConversionContext, type SiteAdapter, type SourceReference } from "./types";
+
+/** How {@link convertMessage} writes a message. */
+export interface ConversionOptions {
+  /** How citations are written. */
+  style: CitationStyle;
+  /** Whether sources the reply lists but doesn't cite get a "More sources" section. */
+  includeMoreSources: boolean;
+  /** Whether the adapter's post-processing rule `ruleId` is on. */
+  isRuleEnabled: (ruleId: string) => boolean;
+  /** The message's full source list, if the caller could read it; titles and the More list come from here. */
+  references: SourceReference[] | null;
+}
 
 /**
  * List items with a single space after the marker (`- item`, `1. item`).
@@ -86,15 +98,14 @@ function createTurndown(): TurndownService {
  * the click reaches the site's handler, so that a failure can fall back to the
  * native copy.
  *
+ * That's also why the message's full source list is gathered by the caller and
+ * passed in as `options.references`: reading it can take time on some sites.
+ *
  * @throws ConversionError when the message has no reply body or an adapter
  *   rule finds content it can't convert faithfully.
  */
-export function convertMessage(
-  adapter: SiteAdapter,
-  message: Element,
-  style: CitationStyle,
-  isRuleEnabled: (ruleId: string) => boolean,
-): string {
+export function convertMessage(adapter: SiteAdapter, message: Element, options: ConversionOptions): string {
+  const { style, includeMoreSources, isRuleEnabled, references } = options;
   const content = message.matches(adapter.contentSelector) ? message : message.querySelector(adapter.contentSelector);
   if (!content) throw new ConversionError(`Couldn't find the reply text in this ${adapter.name} message.`);
 
@@ -105,13 +116,23 @@ export function convertMessage(
   adapter.preprocess?.(clone);
 
   const collector = new CitationCollector();
+  const referencesByUrl = new Map<string, SourceReference>();
+  for (const reference of references ?? []) {
+    if (reference.url !== null) referencesByUrl.set(normalizeCitationUrl(reference.url), reference);
+  }
+  const context: ConversionContext = {
+    registerCitation: (citation) => collector.register(citation),
+    findReference: (url) => referencesByUrl.get(normalizeCitationUrl(url)),
+  };
+
   const service = createTurndown();
   // Site rules go last so they take precedence over the shared ones; Turndown checks the most recently added rule first.
-  for (const [name, rule] of Object.entries(adapter.turndownRules({ registerCitation: (citation) => collector.register(citation), findReference: () => undefined }))) {
+  for (const [name, rule] of Object.entries(adapter.turndownRules(context))) {
     service.addRule(name, rule);
   }
 
-  const markdown = renderCitations(service.turndown(clone), collector.citations, style);
+  const moreSources = includeMoreSources ? (references ?? []).filter((reference) => !reference.cited) : [];
+  const markdown = renderCitations(service.turndown(clone), collector.citations, style, moreSources);
   // Rules run after citations are rendered so that citation titles are cleaned up too.
   return runRules(markdown, adapter.rules, isRuleEnabled);
 }

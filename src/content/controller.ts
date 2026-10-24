@@ -134,7 +134,12 @@ export class ContentController {
   /** Converts `message` with the current settings; throws as {@link convertMessage} does. */
   private convert(message: Element): string {
     const site = this.settings.sites[this.adapter.id];
-    return convertMessage(this.adapter, message, this.settings.citationStyle, (ruleId) => site?.rules[ruleId] ?? true);
+    return convertMessage(this.adapter, message, {
+      style: this.settings.citationStyle,
+      includeMoreSources: false,
+      isRuleEnabled: (ruleId) => site?.rules[ruleId] ?? true,
+      references: null,
+    });
   }
 
   /**

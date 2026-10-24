@@ -6,8 +6,10 @@
  * FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { JSDOM } from "jsdom";
 import { CitationCollector, renderCitations, sourceDomain } from "../src/core/citations";
-import type { Citation, SourceReference } from "../src/core/types";
+import { convertMessage } from "../src/core/convert";
+import type { Citation, SiteAdapter, SourceReference } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -107,6 +109,54 @@ check("render: sourceDomain drops www. and survives a bad URL", () => {
   assert.equal(sourceDomain("https://www.example-blog.com/photovault"), "example-blog.com");
   assert.equal(sourceDomain("https://docs.photovault.example/x"), "docs.photovault.example");
   assert.equal(sourceDomain("not a url"), "not a url");
+});
+
+// ---------------------------------------------------------------------------
+// convertMessage with a source list
+// ---------------------------------------------------------------------------
+
+/** Parses `html` into a detached element using jsdom. */
+function element(html: string): HTMLElement {
+  const { document } = new JSDOM(`<!doctype html><body>${html}</body>`).window;
+  return document.body.firstElementChild as HTMLElement;
+}
+
+/** A bare adapter whose `.chip[data-url]` citations take their title from the source list when it has one. */
+const lookupAdapter: SiteAdapter = {
+  id: "test",
+  name: "Test",
+  matches: ["https://chat.example/*"],
+  messageSelector: ".message",
+  contentSelector: ".reply",
+  nativeCopyButtonSelector: ".copy",
+  findButtonAnchor: () => null,
+  stripSelectors: [],
+  turndownRules: (context) => ({
+    chip: {
+      filter: (node) => node.classList.contains("chip"),
+      replacement: (_content, node) => {
+        const url = node.getAttribute("data-url")!;
+        return context.registerCitation({ url, title: context.findReference(url)?.title || "fallback", sourceName: "" });
+      },
+    },
+  }),
+  rules: [],
+};
+
+const lookupMessage = () =>
+  element(`<div class="message"><div class="reply"><p>Cited. <span class="chip" data-url="https://photovault.example/#top">x</span></p></div></div>`);
+const lookupReferences = [ref("https://photovault.example", "PhotoVault", true), more[2]];
+
+check("convert: titles come from the source list, matched by normalized URL", () => {
+  const out = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: false, isRuleEnabled: () => true, references: lookupReferences });
+  assert.equal(out, "Cited.[^1]\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
+});
+
+check("convert: uncited sources become More sources only when asked", () => {
+  const on = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: lookupReferences });
+  assert.equal(on, "Cited.[^1]\n\n## More sources\n\n- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
+  const none = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: null });
+  assert.equal(none, "Cited.[^1]\n\n[^1]: [fallback](https://photovault.example/#top) — photovault.example");
 });
 
 // ---------------------------------------------------------------------------
