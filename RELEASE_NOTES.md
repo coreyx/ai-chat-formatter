@@ -1,5 +1,29 @@
 # Release Notes
 
+## 0.4.0 (2026-10-24)
+
+AI Chat Formatter now works on **Duck.ai**, DuckDuckGo's private AI chat, as well as Copilot.
+
+### Duck.ai
+
+Every Duck.ai reply gets a **Copy as Markdown** button, just left of Duck.ai's own Copy button. Duck.ai's Copy already writes Markdown, but it leaves out every link and source; this copy keeps them.
+
+- **Sources:** each source chip in the reply becomes a citation, in whichever citation style you've chosen. Duck.ai's chips show only a site name, so the page titles come from the reply's **Read More** cards: `[Title](url) — domain`.
+- **Chips with several sources:** some chips open a popup instead of linking, showing a domain and a count of further sources. Each source behind them becomes its own citation, read through a small script in Duck.ai's page. If that ever stops working, the chip falls back to the Read More card for the domain it shows.
+- **More:** Read More cards that nothing in the reply cites come through under **More**. Turn them off per site with **Include "More" sources**.
+- **Formatting:** code blocks keep their language and line breaks, and bold text stays bold.
+- **Duck.ai's own Copy button:** as on Copilot, you can have it copy Markdown too, with **Use for Duck.ai's own Copy button** on the options page.
+
+Duck.ai opened from DuckDuckGo (`duckduckgo.com/?ia=chat`) redirects to `duck.ai`, so it's covered too.
+
+### Copilot: Copy as Markdown comes first
+
+On Copilot, the **Copy as Markdown** button now sits before Copilot's Copy button, first in the toolbar, matching Duck.ai.
+
+### Brave
+
+The extension loads in Brave the same way as in Chrome and Edge: from `brave://extensions`, with **Developer mode** on and **Load unpacked**.
+
 ## 0.3.0 (2026-10-24)
 
 Citations now read the same in Obsidian's Reading view as in Live Preview, with the Sources section in Copilot's order.

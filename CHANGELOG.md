@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-24
+
 ### Added
 
 - **Duck.ai support** (`duck.ai`): a **Copy as Markdown** button on every reply, and the option to have Duck.ai's own Copy button copy Markdown too. Duck.ai's Copy leaves out every link and source; this keeps them.
@@ -54,7 +56,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Options page with a master switch, citation style, and per-site button, override and rule settings; changes apply to open tabs without a reload.
 - Pluggable site adapters: a site's match patterns go into the manifest automatically at build time.
 
-[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/coreyx/ai-chat-formatter/releases/tag/0.1.0
