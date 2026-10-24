@@ -9,7 +9,8 @@ import { JSDOM } from "jsdom";
 import { CitationCollector, normalizeCitationUrl, parseCitationTitle, renderCitations } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
 import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../src/core/rules";
-import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
+import { ContentController } from "../src/content/controller";
+import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
 import { ConversionError, type Citation, type SiteAdapter } from "../src/core/types";
 import { copilotAdapter, copilotLanguageId } from "../src/sites/copilot";
 import { findAdapterForUrl, matchPatternToRegExp, SITE_ADAPTERS } from "../src/sites/index";
@@ -374,6 +375,126 @@ check("settings: merge keeps stored values and fills in what's missing or invali
   });
   assert.deepEqual(mergeSettings(undefined, defaults), defaults);
   assert.equal(mergeSettings({ citationStyle: "sources-only" }, defaults).citationStyle, "sources-only");
+});
+
+// ---------------------------------------------------------------------------
+// Content controller (button injection and native Copy override)
+// ---------------------------------------------------------------------------
+
+/** A controller on a fresh fixture page, recording clipboard writes and clicks that reach the "site". */
+function controllerOnFixture(configure: (settings: Settings) => void = () => {}) {
+  const dom = new JSDOM(readFileSync("scratch/fixtures/copilot-message.html", "utf8"));
+  const document = dom.window.document;
+  const written: string[] = [];
+  const siteClicks: string[] = [];
+  // Stands in for Copilot's own handler, which React attaches at its root element.
+  document.querySelector("main")!.addEventListener("click", () => siteClicks.push("native copy ran"));
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  configure(settings);
+  const controller = new ContentController(copilotAdapter, settings, {
+    document,
+    writeClipboard: async (text) => void written.push(text),
+    requestFrame: (callback) => callback(),
+  });
+  controller.start();
+  return { document, controller, settings, written, siteClicks };
+}
+
+/** Lets pending promise callbacks (the clipboard write) run. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** Runs an async check, recording its result like {@link check}. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+    results.push({ name });
+  } catch (error) {
+    results.push({ name, error });
+  }
+}
+
+check("controller: one button per finished reply, placed after the native Copy button", () => {
+  const { document, controller } = controllerOnFixture();
+  controller.sync();
+  const buttons = document.querySelectorAll(".acf-copy-button");
+  assert.equal(buttons.length, 1);
+  assert.equal(buttons[0].previousElementSibling?.getAttribute("data-testid"), "CopyButtonContainerTestId");
+  assert.equal(buttons[0].getAttribute("aria-label"), "Copy as Markdown");
+});
+
+check("controller: a reply without a toolbar yet gets its button once the toolbar appears", () => {
+  const { document, controller } = controllerOnFixture();
+  const toolbar = document.querySelector('[role="toolbar"]')!;
+  const parent = toolbar.parentElement!;
+  toolbar.remove();
+  document.querySelectorAll(".acf-copy-button").forEach((button) => button.remove());
+  controller.sync();
+  assert.equal(document.querySelectorAll(".acf-copy-button").length, 0);
+  parent.appendChild(toolbar);
+  controller.sync();
+  assert.equal(document.querySelectorAll(".acf-copy-button").length, 1);
+});
+
+check("controller: turning the button setting off removes buttons, and on restores them", () => {
+  const { document, controller, settings } = controllerOnFixture();
+  controller.applySettings({ ...settings, sites: { copilot: { ...settings.sites.copilot, showCopyButton: false } } });
+  assert.equal(document.querySelectorAll(".acf-copy-button").length, 0);
+  controller.applySettings(settings);
+  assert.equal(document.querySelectorAll(".acf-copy-button").length, 1);
+  controller.applySettings({ ...settings, enabled: false });
+  assert.equal(document.querySelectorAll(".acf-copy-button").length, 0);
+});
+
+await checkAsync("controller: Copy as Markdown writes the converted reply and doesn't reach the site", async () => {
+  const { document, written, siteClicks } = controllerOnFixture();
+  (document.querySelector(".acf-copy-button") as HTMLButtonElement).click();
+  await flush();
+  assert.equal(written.length, 1);
+  assert.ok(written[0].startsWith("**Widget 5** was released"));
+  assert.ok(written[0].endsWith("(https://docs.widget.example/api/path-matcher)"));
+  assert.deepEqual(siteClicks, []);
+  assert.equal(document.querySelector(".acf-copy-button")!.getAttribute("aria-label"), "Copied as Markdown");
+});
+
+await checkAsync("controller: a reply that can't be converted shows a toast and copies nothing", async () => {
+  const { document, written } = controllerOnFixture();
+  document.querySelector('[data-line-index="2"]')!.remove();
+  (document.querySelector(".acf-copy-button") as HTMLButtonElement).click();
+  await flush();
+  assert.deepEqual(written, []);
+  assert.match(document.querySelector(".acf-toast")?.textContent ?? "", /isn't fully loaded/);
+});
+
+await checkAsync("controller: native Copy is left alone while the override is off", async () => {
+  const { document, written, siteClicks } = controllerOnFixture();
+  (document.querySelector(copilotAdapter.nativeCopyButtonSelector) as HTMLButtonElement).click();
+  await flush();
+  assert.deepEqual(written, []);
+  assert.deepEqual(siteClicks, ["native copy ran"]);
+});
+
+await checkAsync("controller: with the override on, native Copy writes the Markdown instead", async () => {
+  const { document, written, siteClicks } = controllerOnFixture((settings) => (settings.sites.copilot.overrideNativeCopy = true));
+  (document.querySelector(copilotAdapter.nativeCopyButtonSelector) as HTMLButtonElement).click();
+  await flush();
+  assert.equal(written.length, 1);
+  assert.ok(written[0].includes("[^1]: [Widget 5.0.0 (Current)]"));
+  assert.deepEqual(siteClicks, []);
+});
+
+await checkAsync("controller: with the override on, a failed conversion falls back to the native copy", async () => {
+  const { document, written, siteClicks } = controllerOnFixture((settings) => (settings.sites.copilot.overrideNativeCopy = true));
+  document.querySelector('[data-line-index="2"]')!.remove();
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    (document.querySelector(copilotAdapter.nativeCopyButtonSelector) as HTMLButtonElement).click();
+  } finally {
+    console.warn = warn;
+  }
+  await flush();
+  assert.deepEqual(written, []);
+  assert.deepEqual(siteClicks, ["native copy ran"]);
 });
 
 // ---------------------------------------------------------------------------

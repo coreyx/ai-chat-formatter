@@ -120,7 +120,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
 ### Content script and options page
 
 #### [NEW] `src/content/index.ts`
-- [ ] **TASK-11:** Add the content script:
+- [x] **TASK-11:** Add the content script:
   - **Setup:** pick the adapter for `location.href` (exit if there's none), load settings, and re-apply them live through `onSettingsChanged`.
   - **Injected button:** while `enabled`, the site is enabled and `showCopyButton` is on, a `MutationObserver` on `document.body` (debounced to one animation frame) puts a **Copy as Markdown** button (`button.acf-copy-button`, inline Markdown-glyph SVG, `aria-label` and `title` "Copy as Markdown") at each message's `findButtonAnchor`. A `data-acf-injected` marker prevents duplicates. Turning the setting off removes the buttons. A click converts the message, writes it with `navigator.clipboard.writeText`, and shows a checkmark for 1.5 seconds. On a `ConversionError` or clipboard error it shows a toast (`div.acf-toast`, 4 seconds) with the message.
   - **Native override:** while `overrideNativeCopy` is on, a capture-phase `click` listener on `document` catches clicks inside `nativeCopyButtonSelector`. It converts synchronously. On success it calls `preventDefault()` and `stopImmediatePropagation()`, then writes the Markdown. On failure it lets the event through, so Copilot's own copy runs, and logs a `console.warn` prefixed `[AI Chat Formatter]`.
