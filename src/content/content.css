@@ -1,0 +1,80 @@
+/*
+ * Styles for what the extension adds to chat pages. Every class is prefixed
+ * `acf-` so nothing collides with the site's own styles, and colors come from
+ * `currentColor` so the button matches the site's toolbar in either theme.
+ */
+
+.acf-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.8;
+  cursor: pointer;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+.acf-copy-button:hover {
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
+  opacity: 1;
+}
+
+.acf-copy-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.acf-copy-button svg {
+  display: block;
+  pointer-events: none;
+}
+
+.acf-copy-button.acf-copied {
+  opacity: 1;
+}
+
+/*
+ * A dark toast with a light edge reads clearly on light and dark pages alike,
+ * and the site's theme setting doesn't always follow prefers-color-scheme.
+ */
+.acf-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 2147483647;
+  max-width: min(480px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 10px;
+  background: #1f1f23;
+  color: #f4f4f5;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  transform: translateX(-50%);
+  animation: acf-toast-in 160ms ease-out;
+}
+
+@keyframes acf-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acf-copy-button {
+    transition: none;
+  }
+
+  .acf-toast {
+    animation: none;
+  }
+}

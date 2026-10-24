@@ -126,7 +126,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
   - **Native override:** while `overrideNativeCopy` is on, a capture-phase `click` listener on `document` catches clicks inside `nativeCopyButtonSelector`. It converts synchronously. On success it calls `preventDefault()` and `stopImmediatePropagation()`, then writes the Markdown. On failure it lets the event through, so Copilot's own copy runs, and logs a `console.warn` prefixed `[AI Chat Formatter]`.
 
 #### [NEW] `src/content/content.css`
-- [ ] **TASK-12:** Style `.acf-copy-button` to sit with Copilot's toolbar icons: 32px square, transparent background, `currentColor` icon, rounded hover background, visible focus ring. Add the copied (checkmark) state and the `.acf-toast` (fixed bottom-center, readable in light and dark). Class names are prefixed `acf-` so they don't clash with the page.
+- [x] **TASK-12:** Style `.acf-copy-button` to sit with Copilot's toolbar icons: 32px square, transparent background, `currentColor` icon, rounded hover background, visible focus ring. Add the copied (checkmark) state and the `.acf-toast` (fixed bottom-center, readable in light and dark). Class names are prefixed `acf-` so they don't clash with the page.
 
 #### [NEW] `src/options/options.html` + `src/options/options.ts`
 - [ ] **TASK-13:** Add the options page, built from `SITE_ADAPTERS` and the stored settings. Every change saves immediately.
