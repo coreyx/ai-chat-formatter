@@ -98,7 +98,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
   Everything is synchronous, so an overridden native click can decide whether to take over before Copilot's handler runs. It throws `ConversionError` (with a user-facing message) when the content root is missing or an adapter rule reports incomplete content.
 
 #### [NEW] `src/core/settings.ts`
-- [ ] **TASK-8:** Add the settings:
+- [x] **TASK-8:** Add the settings:
   - Shape: `Settings` (`enabled`, `citationStyle` defaulting to `"footnotes"`, `sites: Record<id, { enabled; showCopyButton: true; overrideNativeCopy: false; rules: Record<ruleId, boolean> }>`).
   - `buildDefaultSettings(adapters)`, and `mergeSettings(stored, defaults)`, which keeps stored values and fills in anything missing. That way a site or rule added in a later version gets its default without a migration.
   - `loadSettings()` / `saveSettings()` on `chrome.storage.sync`, and `onSettingsChanged(callback)`.

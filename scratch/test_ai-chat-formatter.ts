@@ -8,6 +8,7 @@ import { JSDOM } from "jsdom";
 import { CitationCollector, normalizeCitationUrl, parseCitationTitle, renderCitations } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
 import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../src/core/rules";
+import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import { ConversionError, type Citation, type SiteAdapter } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -180,6 +181,34 @@ check("convert: KaTeX inline and display math use $ and $$", () => {
 
 check("convert: a message without a reply body throws ConversionError", () => {
   assert.throws(() => convertMessage(testAdapter, element(`<div class="message"></div>`), "footnotes", () => true), ConversionError);
+});
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+
+check("settings: defaults come from each adapter and its rules", () => {
+  const defaults = buildDefaultSettings([testAdapter]);
+  assert.deepEqual(defaults, {
+    enabled: true,
+    citationStyle: "footnotes",
+    sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: false, rules: { "invisible-characters": true, "collapse-blank-lines": true } } },
+  });
+});
+
+check("settings: merge keeps stored values and fills in what's missing or invalid", () => {
+  const defaults = buildDefaultSettings([testAdapter]);
+  const merged = mergeSettings(
+    { enabled: false, citationStyle: "bogus", sites: { test: { overrideNativeCopy: true, showCopyButton: "yes", rules: { "collapse-blank-lines": false } }, gone: { enabled: true } } },
+    defaults,
+  );
+  assert.deepEqual(merged, {
+    enabled: false,
+    citationStyle: "footnotes",
+    sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: true, rules: { "invisible-characters": true, "collapse-blank-lines": false } } },
+  });
+  assert.deepEqual(mergeSettings(undefined, defaults), defaults);
+  assert.equal(mergeSettings({ citationStyle: "sources-only" }, defaults).citationStyle, "sources-only");
 });
 
 // ---------------------------------------------------------------------------
