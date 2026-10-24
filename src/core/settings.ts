@@ -8,6 +8,12 @@ export interface SiteSettings {
   showCopyButton: boolean;
   /** Whether the site's own Copy button produces the extension's Markdown instead of its native output. */
   overrideNativeCopy: boolean;
+  /**
+   * Whether sources the site lists for a reply but the reply doesn't cite get
+   * a "More sources" section. Only meaningful for adapters that can read a
+   * reply's source list; it defaults off for the others.
+   */
+  includeMoreSources: boolean;
   /** Which post-processing rules are on, keyed by rule id. */
   rules: Record<string, boolean>;
 }
@@ -24,6 +30,11 @@ export interface Settings {
 /** The `chrome.storage.sync` key the settings object lives under. */
 const STORAGE_KEY = "settings";
 
+/** Whether `adapter` can read a reply's full source list, and so can offer a "More sources" section. */
+export function canReadReferences(adapter: SiteAdapter): boolean {
+  return Boolean(adapter.readReferences || adapter.readReferencesSlowly);
+}
+
 /** The settings a fresh install starts with, derived from the adapters so each site and rule gets its declared default. */
 export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings {
   const sites: Record<string, SiteSettings> = {};
@@ -32,6 +43,7 @@ export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings
       enabled: true,
       showCopyButton: true,
       overrideNativeCopy: false,
+      includeMoreSources: canReadReferences(adapter),
       rules: Object.fromEntries(adapter.rules.map((rule) => [rule.id, rule.defaultEnabled])),
     };
   }
@@ -65,6 +77,7 @@ export function mergeSettings(stored: unknown, defaults: Settings): Settings {
       enabled: bool(site.enabled, siteDefaults.enabled),
       showCopyButton: bool(site.showCopyButton, siteDefaults.showCopyButton),
       overrideNativeCopy: bool(site.overrideNativeCopy, siteDefaults.overrideNativeCopy),
+      includeMoreSources: bool(site.includeMoreSources, siteDefaults.includeMoreSources),
       rules: Object.fromEntries(Object.entries(siteDefaults.rules).map(([ruleId, on]) => [ruleId, bool(savedRules[ruleId], on)])),
     };
   }

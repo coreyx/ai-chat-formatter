@@ -87,7 +87,7 @@ None at this time.
 - [x] **TASK-3:** `convertMessage(adapter, message, options)` takes `{ style, includeMoreSources, isRuleEnabled, references }`, replacing the positional parameters; there are two callers, both in `src/content/controller.ts`. `references` is the list the caller gathered, or null. It builds `findReference` over `references` by normalized URL and passes the uncited, unhidden references to `renderCitations` when `includeMoreSources` is on. Conversion stays synchronous; gathering references is the caller's job.
 
 #### [MODIFY] `src/core/settings.ts`
-- [ ] **TASK-4:** Add `includeMoreSources: boolean` to `SiteSettings`, defaulting to `true` for adapters with `readReferences` or `readReferencesSlowly`, and merged like the other booleans.
+- [x] **TASK-4:** Add `includeMoreSources: boolean` to `SiteSettings`, defaulting to `true` for adapters with `readReferences` or `readReferencesSlowly`, and merged like the other booleans.
 
 ### Copilot
 

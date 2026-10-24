@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 import { CitationCollector, renderCitations, sourceDomain } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
+import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { Citation, SiteAdapter, SourceReference } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -157,6 +158,20 @@ check("convert: uncited sources become More sources only when asked", () => {
   assert.equal(on, "Cited.[^1]\n\n## More sources\n\n- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
   const none = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: null });
   assert.equal(none, "Cited.[^1]\n\n[^1]: [fallback](https://photovault.example/#top) — photovault.example");
+});
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+
+check("settings: More sources defaults on only where the adapter can read sources, and survives a merge", () => {
+  const withHook: SiteAdapter = { ...lookupAdapter, id: "with", readReferences: () => null };
+  const without: SiteAdapter = { ...lookupAdapter, id: "without" };
+  const defaults = buildDefaultSettings([withHook, without]);
+  assert.equal(defaults.sites.with.includeMoreSources, true);
+  assert.equal(defaults.sites.without.includeMoreSources, false);
+  assert.equal(mergeSettings({ sites: { with: { includeMoreSources: false } } }, defaults).sites.with.includeMoreSources, false);
+  assert.equal(mergeSettings({ sites: { with: { includeMoreSources: "no" } } }, defaults).sites.with.includeMoreSources, true);
 });
 
 // ---------------------------------------------------------------------------

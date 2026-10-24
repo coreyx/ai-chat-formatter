@@ -365,7 +365,7 @@ check("settings: defaults come from each adapter and its rules", () => {
   assert.deepEqual(defaults, {
     enabled: true,
     citationStyle: "footnotes",
-    sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: false, rules: { "invisible-characters": true, "collapse-blank-lines": true } } },
+    sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: false, includeMoreSources: false, rules: { "invisible-characters": true, "collapse-blank-lines": true } } },
   });
 });
 
@@ -378,7 +378,7 @@ check("settings: merge keeps stored values and fills in what's missing or invali
   assert.deepEqual(merged, {
     enabled: false,
     citationStyle: "footnotes",
-    sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: true, rules: { "invisible-characters": true, "collapse-blank-lines": false } } },
+    sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: true, includeMoreSources: false, rules: { "invisible-characters": true, "collapse-blank-lines": false } } },
   });
   assert.deepEqual(mergeSettings(undefined, defaults), defaults);
   assert.equal(mergeSettings({ citationStyle: "sources-only" }, defaults).citationStyle, "sources-only");
