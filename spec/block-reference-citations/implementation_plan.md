@@ -91,7 +91,7 @@ None at this time.
 ### Docs
 
 #### [MODIFY] `README.md`
-- [ ] **TASK-7:** Document Linked citations as the default style, with its example, and explain why it exists (Reading view gathers footnotes at the bottom). Describe its Obsidian-only syntax and the per-copy IDs. Update the Footnotes example to the new layout, and replace the old Reading-view note with a pointer to Linked citations.
+- [x] **TASK-7:** Document Linked citations as the default style, with its example, and explain why it exists (Reading view gathers footnotes at the bottom). Describe its Obsidian-only syntax and the per-copy IDs. Update the Footnotes example to the new layout, and replace the old Reading-view note with a pointer to Linked citations.
 
 ### Release
 

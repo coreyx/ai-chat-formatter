@@ -35,23 +35,41 @@ Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different 
 
 ## Citation styles
 
-Choose one on the options page. Every style ends with a **Sources** section laid out like Copilot's Sources panel: **Citations**, then **More** (the sources Copilot lists but the reply doesn't cite). For a reply citing the Widget release notes, with one More source:
+Choose one on the options page. Each ends with a **Sources** section laid out like Copilot's Sources panel: **Citations**, then **More** (the sources Copilot lists but the reply doesn't cite). For a reply citing the Widget release notes, with one More source:
 
-**Obsidian footnotes** (default)
+**Linked citations (Obsidian)** (default)
+
+```markdown
+Widget 5 was released in May.[[#^c-k3f9-1|⁽¹⁾]]
+
+## Sources
+
+### Citations
+
+1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-k3f9-1
+
+### More
+
+- [Widget 5 is now available | Widget Blog](https://widget.example/blog/widget-5) — widget.example
+```
+
+In Obsidian, the marker shows as a small `⁽¹⁾` link: clicking it jumps to the citation, and hovering previews it. The `^c-k3f9-1` at the end of the entry is a block ID, which Obsidian hides. The `k3f9` part is random for each copy, so two replies pasted into one note don't clash. This style exists because Obsidian's Reading view always gathers footnotes at the very bottom of a note; linked citations stay in this order in every view. It's Obsidian-specific: other Markdown apps show the `[[…]]` and `^…` syntax as text, so use one of the other styles there.
+
+**Obsidian footnotes**
 
 ```markdown
 Widget 5 was released in May.[^1]
 
 ## Sources
 
-### Citations
-
-[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
-
 ### More
 
 - [Widget 5 is now available | Widget Blog](https://widget.example/blog/widget-5) — widget.example
+
+[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
 ```
+
+Obsidian shows the footnote definitions at the bottom of the note as its own footnotes list, so they get no **Citations** heading. Without More sources, the definitions simply follow the reply.
 
 **Inline links + Sources list**
 
@@ -73,9 +91,6 @@ Widget 5 was released in May.[1](https://widget.example/releases/5.0.0)
 
 A subsection with nothing in it is left out. Turn off the More list with **Include "More" sources** on the options page.
 
-> [!NOTE]
-> With footnotes, Obsidian's **Reading view** always gathers footnote definitions at the very bottom of the note, so **Citations** looks empty there, with the footnotes below **More**. Live Preview and source view show the order above.
-
 ### Where the titles and links come from
 
 Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, is in Copilot's own data. The extension looks for it in three places, in order:
@@ -91,7 +106,7 @@ If none of these works, the copy still goes ahead, with the titles the chips the
 Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** → **Extension options**.
 
 - **Enable AI Chat Formatter**: turns everything on or off.
-- **Citation style**: one of the three styles above.
+- **Citation style**: one of the four styles above (Linked citations by default).
 - Per site:
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
