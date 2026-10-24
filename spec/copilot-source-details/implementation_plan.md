@@ -128,7 +128,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/test_copilot-source-details.ts` + fixtures
-- [ ] **TASK-10:** Add the fixtures:
+- [x] **TASK-10:** Add the fixtures:
   - `scratch/fixtures/copilot-references.json`: `response.references` entries in the observed shape. Three cited, three More, one hidden, one non-http URL.
   - `scratch/fixtures/copilot-sources-panel.html`: the observed drawer markup, with Citations (two `github.com` entries) and More.
 
