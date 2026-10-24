@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Every citation is written with its page title and domain: `[Title](url) — domain`. Copilot chips that group several sources (such as `photovault+1`) now get each page's real title instead of a bare domain.
+- The sources Copilot lists under **More** in its Sources panel, without citing them in the reply, are included. Turn this off per site with **Include "More" sources**, which is on by default.
+- Copilot's source list is read from its page data through a small script that runs in the page itself, then from the conversation data embedded when the page loaded, and as a last resort, for **Copy as Markdown**, from the reply's Sources panel.
+
+### Changed
+
+- Sources are laid out like Copilot's Sources panel in every citation style: `## Sources`, then `### Citations` (footnote definitions or the numbered list), then `### More`.
+- **Copy as Markdown** is disabled while it reads a reply's sources, so a second click doesn't start a second copy.
+
 ## [0.1.0] - 2026-10-24
 
 ### Added
