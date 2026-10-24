@@ -44,7 +44,7 @@ export function mapOutsideCodeFences(text: string, fn: (prose: string) => string
  * Normalizes characters that are invisible on screen but break Markdown or
  * search in the pasted note: non-breaking spaces become plain spaces, and
  * zero-width characters are removed. A zero-width joiner between pictographs
- * is kept, since emoji such as 👨‍👩‍👧 are built from them.
+ * is kept, since emoji such as 👨\u200D👩\u200D👧 are built from them.
  */
 export const invisibleCharactersRule: FormatRule = {
   id: "invisible-characters",
@@ -53,9 +53,9 @@ export const invisibleCharactersRule: FormatRule = {
   defaultEnabled: true,
   apply: (markdown) =>
     markdown
-      .replace(/[  ]/g, " ")
-      .replace(/[​‌⁠﻿]/g, "")
-      .replace(/(?<![\p{Extended_Pictographic}\u{FE0F}\u{1F3FB}-\u{1F3FF}])‍|‍(?!\p{Extended_Pictographic})/gu, ""),
+      .replace(/[\u00A0\u202F]/g, " ")
+      .replace(/[\u200B\u200C\u2060\uFEFF]/g, "")
+      .replace(/(?<![\p{Extended_Pictographic}\u{FE0F}\u{1F3FB}-\u{1F3FF}])\u200D|\u200D(?!\p{Extended_Pictographic})/gu, ""),
 };
 
 /**

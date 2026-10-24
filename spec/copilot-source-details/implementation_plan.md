@@ -78,7 +78,7 @@ None at this time.
   - On `ConversionContext`, `findReference(url): SourceReference | undefined`, so adapter rules can look up a source's title by normalized URL.
 
 #### [MODIFY] `src/core/citations.ts`
-- [ ] **TASK-2:** Add the domain and the More list to rendering:
+- [x] **TASK-2:** Add the domain and the More list to rendering:
   - `sourceDomain(url)`: the hostname without a leading `www.`; the URL itself when unparsable.
   - `citationLink` writes `[Title](url) — domain`, or just `[domain](url)` when the title equals the domain, case-insensitively.
   - `renderCitations` gains a `moreSources: SourceReference[]` parameter, defaulting to empty. When it's non-empty, `## More sources` goes after the body or the Sources list and before the footnote definitions. Each line is `- [Title](url) — domain`, or `- Title — domain` for a source without a URL; a title that's Markdown-sensitive is escaped. Sources whose normalized URL was cited, or that repeat within the list (by URL, or by title and domain when there's no URL), are left out.

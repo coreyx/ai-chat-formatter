@@ -63,8 +63,8 @@ check("citations: footnotes attach to text and collapse adjacent repeats", () =>
   assert.equal(
     renderCitations(md, collector.citations, "footnotes"),
     "Widget 5 was released.[^1]\n\n- PathMatcher is global[^2]\n- wpm 4[^1]\n\n" +
-      "[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)\n" +
-      "[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher)",
+      "[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n" +
+      "[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example",
   );
 });
 
@@ -73,7 +73,7 @@ check("citations: inline links plus Sources list", () => {
   const p1 = collector.register(widgetRelease);
   assert.equal(
     renderCitations(`Released. ${p1}`, collector.citations, "inline-links-and-sources"),
-    "Released.[1](https://widget.example/releases/5.0.0)\n\n## Sources\n\n1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)",
+    "Released.[1](https://widget.example/releases/5.0.0)\n\n## Sources\n\n1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example",
   );
 });
 
@@ -82,7 +82,7 @@ check("citations: Sources list only removes inline markers", () => {
   const p1 = collector.register(widgetRelease);
   assert.equal(
     renderCitations(`Released. ${p1}`, collector.citations, "sources-only"),
-    "Released.\n\n## Sources\n\n1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)",
+    "Released.\n\n## Sources\n\n1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example",
   );
 });
 
@@ -93,7 +93,7 @@ check("citations: no citations leaves the Markdown unchanged", () => {
 check("citations: titles and URLs that would break a link are escaped", () => {
   const collector = new CitationCollector();
   const p = collector.register({ url: "https://example.com/a (b)", title: "Tips [2026]", sourceName: "example.com" });
-  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n[^1]: [Tips \\[2026\\]](https://example.com/a%20%28b%29)");
+  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n[^1]: [Tips \\[2026\\]](https://example.com/a%20%28b%29) — example.com");
 });
 
 check("citations: title comes from the last aria-label segment, then name, then host", () => {
@@ -107,8 +107,8 @@ check("citations: title comes from the last aria-label segment, then name, then 
 // ---------------------------------------------------------------------------
 
 check("rules: invisible characters are normalized, emoji joiners kept", () => {
-  const family = "👨‍👩‍👧";
-  assert.equal(invisibleCharactersRule.apply(`a b c​d‌e⁠f﻿g x‍y ${family}`), `a b cdefg xy ${family}`);
+  const family = "👨\u200D👩\u200D👧";
+  assert.equal(invisibleCharactersRule.apply(`a\u00A0b\u202Fc\u200Bd\u200Ce\u2060f\uFEFFg x\u200Dy ${family}`), `a b cdefg xy ${family}`);
 });
 
 check("rules: blank-line runs collapse outside fences but not inside", () => {
@@ -171,9 +171,9 @@ check("convert: compact list markers, nested lists, headings and strip selectors
 
 check("convert: site citation rule feeds the chosen citation style", () => {
   const message = element(
-    `<div class="message"><div class="reply"><p>Released in May. <span class="chip" data-url="https://widget.example/x" data-title="Release notes">widget</span></p></div></div>`,
+    `<div class="message"><div class="reply"><p>Released in May.\u00A0<span class="chip" data-url="https://widget.example/x" data-title="Release\u00A0notes">widget</span></p></div></div>`,
   );
-  assert.equal(convertMessage(testAdapter, message, "footnotes", () => true), "Released in May.[^1]\n\n[^1]: [Release notes](https://widget.example/x)");
+  assert.equal(convertMessage(testAdapter, message, "footnotes", () => true), "Released in May.[^1]\n\n[^1]: [Release notes](https://widget.example/x) — widget.example");
 });
 
 check("convert: KaTeX inline and display math use $ and $$", () => {
@@ -253,13 +253,14 @@ check("copilot: the fixture converts to the expected Markdown with footnotes", (
   assert.equal(
     convertMessage(copilotAdapter, copilotReply(), "footnotes", () => true),
     COPILOT_EXPECTED_BODY +
-      "\n\n[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)" +
-      "\n[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher)",
+      "\n\n[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example" +
+      "\n[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example",
   );
 });
 
 check("copilot: no page chrome or chip labels leak into the output", () => {
-  const markdown = convertMessage(copilotAdapter, copilotReply(), "sources-only", () => true);
+  // Only the reply body: the Sources list legitimately names domains like "widget.example".
+  const markdown = convertMessage(copilotAdapter, copilotReply(), "sources-only", () => true).split("\n\n## Sources")[0];
   for (const leak of ["Plain Text", "Python\n", "Copy code", "Copy Response", " widget", " wdocs", "[[", "](<"]) {
     assert.ok(!markdown.includes(leak), `output contains ${JSON.stringify(leak)}`);
   }
@@ -453,7 +454,7 @@ await checkAsync("controller: Copy as Markdown writes the converted reply and do
   await flush();
   assert.equal(written.length, 1);
   assert.ok(written[0].startsWith("**Widget 5** was released"));
-  assert.ok(written[0].endsWith("(https://docs.widget.example/api/path-matcher)"));
+  assert.ok(written[0].endsWith("(https://docs.widget.example/api/path-matcher) — docs.widget.example"));
   assert.deepEqual(siteClicks, []);
   assert.equal(document.querySelector(".acf-copy-button")!.getAttribute("aria-label"), "Copied as Markdown");
 });
