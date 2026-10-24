@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Linked citations (Obsidian)** citation style: markers in the text are same-note links shown as `⁽¹⁾`, pointing to a numbered `### Citations` list whose entries carry Obsidian block IDs. Unlike footnotes, it keeps Copilot's order (Citations, then More) in Reading view as well as Live Preview. Each copy gets its own random ID token, so two replies pasted into one note don't clash.
+
+### Changed
+
+- Linked citations is the default citation style. A citation style you chose and saved is kept.
+- The footnotes style no longer has a `### Citations` heading, which Reading view left empty because it moves footnotes to the bottom of the note. With More sources the copy ends `## Sources` → `### More` → the footnote definitions; without, just the definitions.
+
 ## [0.2.0] - 2026-10-24
 
 ### Added

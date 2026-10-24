@@ -53,7 +53,7 @@ Widget 5 was released in May.[[#^c-k3f9-1|⁽¹⁾]]
 - [Widget 5 is now available | Widget Blog](https://widget.example/blog/widget-5) — widget.example
 ```
 
-In Obsidian, the marker shows as a small `⁽¹⁾` link: clicking it jumps to the citation, and hovering previews it. The `^c-k3f9-1` at the end of the entry is a block ID, which Obsidian hides. The `k3f9` part is random for each copy, so two replies pasted into one note don't clash. This style exists because Obsidian's Reading view always gathers footnotes at the very bottom of a note; linked citations stay in this order in every view. It's Obsidian-specific: other Markdown apps show the `[[…]]` and `^…` syntax as text, so use one of the other styles there.
+In Obsidian, the marker shows as a small `⁽¹⁾` link: clicking it jumps to the citation, and hovering previews it. The `^c-k3f9-1` at the end of the entry is a block ID, which Obsidian hides. The `k3f9` part is random for each copy, so two replies pasted into one note don't clash. This style exists because Obsidian's Reading view always gathers footnotes at the very bottom of a note; linked citations stay in this order in every view. It's Obsidian-specific: other Markdown apps show the `[[…]]` and `^…` syntax as text, so use one of the other styles there. Obsidian plugins that show block links as live transclusions replace each `⁽¹⁾` with a copy of its entry in Reading view.
 
 **Obsidian footnotes**
 
