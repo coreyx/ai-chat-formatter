@@ -143,7 +143,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
 ### Docs and release
 
 #### [NEW] `README.md`
-- [ ] **TASK-15:** Write the README:
+- [x] **TASK-15:** Write the README:
   - What the extension does, and why it's needed (what Copilot's Copy button loses, from the inspection findings).
   - Supported sites, the three citation styles with examples, and the settings.
   - Limitations: undocumented markup, consumer Copilot only for now, `text/plain` only.
