@@ -235,10 +235,15 @@ check("registration: Duck.ai's pages pick the adapter, DuckDuckGo search doesn't
   assert.equal(findAdapterForUrl("https://duckduckgo.com/?q=widget"), undefined);
 });
 
-check("registration: the manifest runs the content script on duck.ai, and More sources default on", () => {
+check("registration: the manifest runs the content script and Duck.ai's page script on duck.ai, and More sources default on", () => {
   const manifest = JSON.parse(readFileSync("dist/manifest.json", "utf8"));
   assert.ok(manifest.content_scripts[0].matches.includes("https://duck.ai/*"));
-  assert.ok(!manifest.content_scripts.slice(1).some((script: { matches: string[] }) => script.matches.includes("https://duck.ai/*")), "no page script on duck.ai");
+  const pageScripts = manifest.content_scripts.slice(1) as { matches: string[]; js: string[]; world: string }[];
+  assert.deepEqual(
+    pageScripts.filter((script) => script.matches.includes("https://duck.ai/*")),
+    [{ matches: ["https://duck.ai/*"], js: ["page-duckai.js"], run_at: "document_idle", world: "MAIN" }],
+  );
+  assert.ok(!pageScripts.find((script) => script.js.includes("page-copilot.js"))!.matches.includes("https://duck.ai/*"), "Copilot's page script stays off duck.ai");
   assert.equal(buildDefaultSettings(SITE_ADAPTERS).sites.duckai.includeMoreSources, true);
 });
 

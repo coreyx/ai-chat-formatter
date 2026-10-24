@@ -82,7 +82,7 @@ None at this time.
   - No `readReferencesSlowly`, `hasUntitledCitations` or `pageScript`: everything is in the page already.
 
 #### [MODIFY] `src/core/references-protocol.ts`, [NEW] `src/page/duckai.ts`
-- [ ] **TASK-10:** The Duck.ai page script.
+- [x] **TASK-10:** The Duck.ai page script.
   - **Protocol:** add `CHIP_SOURCES_ATTRIBUTE = "data-acf-sources"` and a `RawChipSource { url, title, domain }` type. The request reuses `REFERENCES_EVENT`, dispatched on the reply. Only one page script runs on a site, so the event name doesn't clash with Copilot's.
   - **`extractDuckAiChipSources(button)`:** walk up to 8 fiber levels from the button to the first `memoizedProps.sources` array. Keep entries with an `http(s)` `url`, taking `title` and `domain` as strings (empty when missing). Return null when nothing is found.
   - **`installDuckAiPageScript(document)`:** on the event, for each `button[aria-haspopup]` in the reply's `[data-dark-theme]` body, write the JSON to `data-acf-sources`, or remove the attribute when nothing was found. Errors are caught.

@@ -166,7 +166,8 @@ export const duckAiAdapter: SiteAdapter = {
   stripSelectors: ['[data-streamdown="code-block-header"]', '[data-streamdown="code-block-actions"]', "[aria-live]"],
   preprocess: preprocessDuckAi,
   turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context) }),
-  // Everything is in the page already, so there's no slower reader or page script.
   readReferences: readDuckAiReferences,
+  // Popup chips name their sources only in React state, which src/page/duckai.ts reads.
+  pageScript: "duckai",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };

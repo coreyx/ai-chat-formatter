@@ -10,6 +10,22 @@
 export const REFERENCES_EVENT = "acf:request-references";
 export const REFERENCES_ATTRIBUTE = "data-acf-references";
 
+/**
+ * Where a page script leaves the sources behind one citation chip, as a JSON
+ * array of {@link RawChipSource}, for sites whose chips name their sources
+ * only in framework state (Duck.ai's popup chips). It's written on the chip
+ * itself in answer to {@link REFERENCES_EVENT} and left there, so the copy of
+ * the reply taken for conversion carries it.
+ */
+export const CHIP_SOURCES_ATTRIBUTE = "data-acf-sources";
+
+/** One source behind a citation chip, as a page script hands it over; validated again before use. */
+export interface RawChipSource {
+  url: string;
+  title: string;
+  domain: string;
+}
+
 /** One source as the page script hands it over; the content script validates it again before use. */
 export interface RawReference {
   url: string;
