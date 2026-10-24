@@ -391,10 +391,10 @@ export const copilotAdapter: SiteAdapter = {
   messageSelector: 'div[role="article"]:has([data-testid="markdown-reply"])',
   contentSelector: REPLY_SELECTOR,
   nativeCopyButtonSelector: 'button[data-testid="CopyButtonTestId"]',
-  // Directly after the native Copy button, which shares a flex row with the feedback buttons.
+  // Directly before the native Copy button, at the start of its flex row with the feedback buttons, so Copy as Markdown comes first.
   findButtonAnchor(message) {
     const copy = message.querySelector('button[data-testid="CopyButtonTestId"]');
-    return copy?.parentElement ? { parent: copy.parentElement, before: copy.nextSibling } : null;
+    return copy?.parentElement ? { parent: copy.parentElement, before: copy } : null;
   },
   stripSelectors: ['[role="status"]', "[aria-live]"],
   preprocess: rewriteCodeBlocks,

@@ -26,12 +26,12 @@ None at this time.
 ### Copilot adapter
 
 #### [MODIFY] `src/sites/copilot.ts`
-- [ ] **TASK-1:** Change `findButtonAnchor` to return `{ parent: copy.parentElement, before: copy }`, and update its comment: directly before the native Copy button, so M↓ comes first.
+- [x] **TASK-1:** Change `findButtonAnchor` to return `{ parent: copy.parentElement, before: copy }`, and update its comment: directly before the native Copy button, so M↓ comes first.
 
 ### Tests
 
 #### [MODIFY] `scratch/test_ai-chat-formatter.ts`
-- [ ] **TASK-2:** Update the two placement checks:
+- [x] **TASK-2:** Update the two placement checks:
   - The anchor's `before` is the native Copy button.
   - In the controller check, the injected button's next sibling is the Copy button, and it's the row's first child.
 
