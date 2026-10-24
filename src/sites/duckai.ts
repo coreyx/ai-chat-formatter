@@ -57,6 +57,25 @@ function rewriteDuckAiCodeBlocks(root: HTMLElement): void {
 }
 
 /**
+ * Turns Streamdown's bold text back into `<strong>`. Streamdown renders `**…**`
+ * as a `<span data-streamdown="strong">` styled bold, and Turndown only knows
+ * bold from the tag, so without this every bold run would copy as plain text.
+ */
+function rewriteDuckAiStrong(root: HTMLElement): void {
+  for (const span of Array.from(root.querySelectorAll('span[data-streamdown="strong"]'))) {
+    const strong = root.ownerDocument.createElement("strong");
+    strong.append(...Array.from(span.childNodes));
+    span.replaceWith(strong);
+  }
+}
+
+/** Rewrites the reply body's Streamdown markup into HTML that Turndown converts faithfully. */
+function preprocessDuckAi(root: HTMLElement): void {
+  rewriteDuckAiCodeBlocks(root);
+  rewriteDuckAiStrong(root);
+}
+
+/**
  * Whether `node` is one of Duck.ai's inline source chips: a link to an
  * `http(s)` page with an `aria-label` and a `tabindex`, wrapping a single
  * `<span>` with the site's name. Ordinary links in a reply carry neither
@@ -145,7 +164,7 @@ export const duckAiAdapter: SiteAdapter = {
     return wrapper?.parentElement ? { parent: wrapper.parentElement, before: wrapper.nextSibling } : null;
   },
   stripSelectors: ['[data-streamdown="code-block-header"]', '[data-streamdown="code-block-actions"]', "[aria-live]"],
-  preprocess: rewriteDuckAiCodeBlocks,
+  preprocess: preprocessDuckAi,
   turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context) }),
   // Everything is in the page already, so there's no slower reader or page script.
   readReferences: readDuckAiReferences,
