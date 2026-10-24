@@ -72,7 +72,7 @@ None at this time.
   - No `readReferencesSlowly`, `hasUntitledCitations` or `pageScript`: everything is in the page already.
 
 #### [MODIFY] `src/sites/index.ts`
-- [ ] **TASK-5:** Add `duckAiAdapter` to `SITE_ADAPTERS`, after Copilot. The build then adds its match pattern to the manifest's content script, and the options page gets a Duck.ai section with **Include "More" sources** on by default.
+- [x] **TASK-5:** Add `duckAiAdapter` to `SITE_ADAPTERS`, after Copilot. The build then adds its match pattern to the manifest's content script, and the options page gets a Duck.ai section with **Include "More" sources** on by default.
 
 ### Tests
 
