@@ -8,7 +8,9 @@ Two improvements to how Copilot replies' sources are copied:
 - **Every citation gets its page title and domain.** Chips that group several sources (shown as `photovault+1`) currently copy as bare domains.
 - **The "More" sources come along.** These are the sources Copilot lists under **More** in its Sources panel but doesn't cite in the text.
 
-The data comes from the reply's own source list, which Copilot keeps in its React state; a small script running in the page's own JavaScript world reads it. When that isn't available, the extension opens the reply's Sources panel, reads it and closes it again. Sources are written as `[Title](url) — domain`. The More list is a `## More sources` section, on by default, with a toggle per site.
+The data comes from the reply's own source list, which Copilot keeps in its React state; a small script running in the page's own JavaScript world reads it. When that isn't available, the extension reads the conversation data Copilot embeds in the page when it loads, and as a last resort opens the reply's Sources panel, reads it and closes it again. Sources are written as `[Title](url) — domain` and laid out like Copilot's Sources panel: `## Sources`, with `### Citations` and then `### More`. The More list is on by default, with a toggle per site.
+
+*Revised after first testing (2026-10-24):* the load-time data source (TASK-14) gives the fallback's More entries real links, and the closing sections now mirror Copilot's panel, with More after Citations in every style (TASK-13). TASK-15 updates the docs to match.
 
 **Related documents**
 - [AI Chat Formatter 0.1.0 plan](../ai-chat-formatter/implementation_plan.md)
@@ -26,7 +28,14 @@ The data comes from the reply's own source list, which Copilot keeps in its Reac
 > One reply had 6: 3 cited, matching its chip URLs exactly, and 3 under More. Content scripts run in an isolated world and can't see React's properties, so a second content script runs in the page's world (`"world": "MAIN"`, Chrome 111+, which the manifest's minimum of 120 already covers). It only reads data and hands it over. **This relies on React internals**, which are more fragile than markup, hence the fallback below.
 
 > [!IMPORTANT]
-> **Fallback: open the Sources panel.** Used only by the **Copy as Markdown** button, and only when the React data can't be read. Inspected the same day:
+> **Second source: the page's load-time data** (TASK-14). Copilot embeds the conversation as JSON in a `<script>` that sets `window.__staticRouterHydrationData = JSON.parse("…")`. A content script can read the script's text directly, without React or the page script. Inspected on 2026-10-24:
+> - Each reply's `data-message-id` matches a `messageId` in `loaderData["chat-history"].store.rawConversationResponse.messages`.
+> - The message's `references` is a map of every source. Cited entries are keyed by the chips' own `index` (`1-a1b2c3`), uncited ones `uncite-…`. Each has `targetLink` (the URL), `isCitedInResponse`, and `displayData.content`, a JSON string whose `providerDisplayName` (or `Title`) is the page title.
+>
+> It's synchronous, so both buttons can use it. Its limit: it only covers replies that existed when the page loaded, not ones written since. It's **also internal data, not an API**, but it doesn't depend on React's internals, so it survives the kind of change that would break the page script.
+
+> [!IMPORTANT]
+> **Fallback: open the Sources panel.** Used only by the **Copy as Markdown** button, and only when neither the React data nor the load-time data has the reply. In practice that means a reply written since the page loaded, when the page script isn't working. Inspected the same day:
 > - The extension clicks the reply's `[data-testid="sources-button-testid"]`. A scripted click works, and the panel's entries appeared within about 1 second.
 > - It reads the panel: `[data-testid="search-widget-drawer-test-id"]` holds a "Citations" heading, then a `role="list"` of `[data-testid="search-widget-item"]`, then "More" and its own list. Each item has the full title and the domain as `title` attributes.
 > - It closes the panel with the panel header's `button[aria-label="Close"]`.
@@ -37,7 +46,7 @@ The data comes from the reply's own source list, which Copilot keeps in its Reac
 >
 > What you'll see: the panel slides open for about a second during the copy, then closes. If it was already open, it's left open, now showing this reply's sources. The copy waits up to 3 seconds for the panel, and checks that the panel's citation domains match the chip URLs in order, so it never pairs one reply's titles with another's. If anything doesn't line up, it copies as 0.1.0 does.
 >
-> **The Copy-button takeover doesn't use the fallback.** It has to decide synchronously, before Copilot's own handler runs, and opening the panel takes time. When the React data can't be read there, it copies as 0.1.0 does.
+> **The Copy-button takeover doesn't use the panel.** It has to decide synchronously, before Copilot's own handler runs, and opening the panel takes time. It does use the load-time data. When neither synchronous source has the reply, it copies as 0.1.0 does.
 
 > [!IMPORTANT]
 > **Release.** This adds features, so the next version is **0.2.0**. TASK-12 repeats 0.1.0's release steps, which publish to GitHub: package, push `main`, tag `0.2.0`, publish the release. Approving this plan authorizes them for 0.2.0, after `wrap-up` and `prepare-release`.
@@ -53,13 +62,21 @@ The data comes from the reply's own source list, which Copilot keeps in its Reac
 > [!NOTE]
 > **Output format.** Every source entry, in footnote definitions and in both Sources lists, becomes `[Title](url) — domain`. The domain is the hostname without a leading `www.`, as the Sources panel shows it. When the only title available *is* the domain, the entry is just `[domain](url)`.
 >
-> The More list goes after everything else, in every citation style; its entries have no link only when they came from the panel fallback:
+> The closing sections mirror Copilot's Sources panel in every citation style (TASK-13): `## Sources`, then `### Citations` with the footnote definitions or the numbered list, then `### More` with the uncited sources. A section with nothing to list is left out, and so is `## Sources` when both are empty. More entries have no link only when they came from the panel fallback.
 > ```markdown
-> ## More sources
+> ## Sources
 >
-> - [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/…) — docs.photovault.example
+> ### Citations
+>
+> [^1]: [Set up the sandbox | Example Learn](https://learn.example.com/…) — learn.example.com
+>
+> ### More
+>
+> - [Installation | DeployKit Docs](https://deploykit.example/docs/…) — deploykit.example
 > ```
-> It leaves out sources already cited in the text, and those with `hideCitationFromReferenceSection` set, which Copilot itself doesn't list. A footnote reply's definitions still come last, so Obsidian's footnote rendering isn't affected.
+> The list leaves out sources already cited in the text, and those with `hideCitationFromReferenceSection` set, which Copilot itself doesn't list.
+>
+> **Obsidian's Reading view** always gathers footnote definitions at the very bottom of the note. With the footnotes style, Reading view shows `### Citations` empty and the citations below the More list. Live Preview and source view show the order above. This is how Obsidian renders footnotes, not something the extension can change.
 
 ## Open Questions
 
@@ -143,6 +160,27 @@ None at this time.
   - Where the titles come from: Copilot's page data via a small page script, or, failing that, the Sources panel opened briefly by **Copy as Markdown**. Note the panel flash, and that More entries from the panel have no links.
   - Add `src/page/` to the project structure, and `pageScript`/`readReferences`/`readReferencesSlowly` to **Adding a site**.
 
+### Revision after first testing
+
+#### [MODIFY] `src/core/citations.ts`
+- [ ] **TASK-13:** Lay out the closing sections like Copilot's Sources panel, in every style. After the body come `## Sources`, then `### Citations` (the footnote definitions, or the numbered `N. [Title](url) — domain` list), then `### More` (the `- …` list), each separated by a blank line.
+  - Leave out a subsection with nothing in it, and leave out `## Sources` when both are empty.
+  - `moreSourcesList` returns just the list lines; the headings are added in `renderCitations`.
+  - The inline `[N](url)` and `[^N]` markers in the body are unchanged.
+
+#### [MODIFY] `src/sites/copilot.ts`
+- [ ] **TASK-14:** Read sources from the page's load-time data:
+  - An exported `readPageDataReferences(message)` finds the reply's `data-message-id`, then the `<script>` whose text contains `window.__staticRouterHydrationData = JSON.parse(`. It takes the string literal passed to `JSON.parse`, decodes it, and parses the result. The parsed data is cached per script element, since it's about 350 KB and doesn't change while the page is open.
+  - It finds the message whose `messageId` matches in `loaderData["chat-history"].store.rawConversationResponse.messages`, and maps each `references` value to `{ url: targetLink, title, domain, cited: isCitedInResponse === true }`. The title comes from `displayData.content` parsed as JSON: `providerDisplayName`, then `Title`, then `""`. Values without an http(s) `targetLink` are dropped.
+  - It returns null for anything missing or malformed, and never throws.
+  - `copilotAdapter.readReferences` tries the page script first and then `readPageDataReferences`, so both buttons get load-time data synchronously. The panel fallback stays last, and only Copy as Markdown uses it.
+
+#### [MODIFY] `README.md` + `scratch/test_copilot-source-details.ts`
+- [ ] **TASK-15:** Bring the docs and checks up to date:
+  - In the README, the citation-style examples show the `## Sources` / `### Citations` / `### More` layout, with a note on Reading view. **Where the titles come from** describes the three sources in order. The limitations note that the load-time data only covers replies that existed when the page loaded.
+  - Add the fixture `scratch/fixtures/copilot-page-data.html`: a hydration `<script>` in the observed shape (a JSON string inside `JSON.parse("…")`, with messages, `references` maps and `displayData.content` strings), for one reply with two cited and two uncited sources.
+  - Update the earlier layout expectations in both scratch scripts to the new headings.
+
 ### Release
 
 #### [MODIFY] GitHub repository `coreyx/ai-chat-formatter`
@@ -165,7 +203,7 @@ None at this time.
    - It closes the panel when it wasn't open before, and leaves it open when it was.
    - It returns null when the panel never appears (after the timeout, using a shortened timeout in the test), when the domains don't match the chips, or when the message has no Sources button.
 5. **Multi-source chip titles:** with references present, a chip holding two sources (`photovault+1`) produces footnotes `[^1]: [PhotoVault](https://photovault.example/) — photovault.example` and `[^2]: [GitHub - photovault/photovault: …](https://github.com/photovault/photovault) — github.com`. Without references, the output matches 0.1.0 except for the new `— domain` suffix.
-6. **More sources:** each of the three citation styles ends with `## More sources` listing exactly the uncited, non-hidden sources: `[Title](url) — domain` (`www.` dropped), or `Title — domain` when the URL is null. The footnote definitions come after it. A More source also cited in the text is left out. With `includeMoreSources` off, or no uncited sources, there's no section.
+6. **More sources:** each of the three citation styles ends with `### More` listing exactly the uncited, non-hidden sources: `[Title](url) — domain` (`www.` dropped), or `Title — domain` when the URL is null. A More source also cited in the text is left out. With `includeMoreSources` off, or no uncited sources, there's no More section.
 7. **Title equals domain:** a source whose only title is its domain renders as `[photovault.example](https://photovault.example/)` with no repeated domain.
 8. **The controller:**
    - **Copy as Markdown** uses `readReferences` when it returns data, and doesn't call the fallback.
@@ -174,6 +212,20 @@ None at this time.
    - The native override never calls `readReferencesSlowly`.
 9. **Settings and options page:** `includeMoreSources` defaults to true for Copilot and survives a merge. The options page shows its toggle, and toggling it reports a full settings object.
 10. **Built manifest:** `dist/manifest.json` has the isolated entry and a `world: "MAIN"` entry with `page-copilot.js` and Copilot's matches, and `dist/page-copilot.js` exists.
+11. **The panel layout (TASK-13):**
+    - In all three styles the output ends with `## Sources`, `### Citations`, then `### More`, with footnote definitions or the numbered list under Citations.
+    - Citations only leaves out `### More`, and More only leaves out `### Citations`.
+    - No sources at all leaves the Markdown unchanged.
+12. **Load-time data (TASK-14),** against the page-data fixture:
+    - `readPageDataReferences` returns the matching reply's four sources with titles from `providerDisplayName`, the `Title` fallback, `targetLink` URLs and cited flags.
+    - It returns null for a reply whose id isn't in the data, a page without the script, a malformed string literal, and malformed `displayData.content` (the entry falls back to an empty title rather than failing the list).
+    - `copilotAdapter.readReferences` uses it when no page script answers, and the panel fallback isn't called.
+13. **Combined:** with the page script blocked and the load-time data present, the More list has real links.
+
+### Revised manual checks (TASK-13 to TASK-15)
+- **R1.** Copy a reply with two same-domain citations with footnotes. In Live Preview the paste reads `## Sources`, `### Citations` (two GitHub footnotes), then `### More` (four linked entries). In Reading view the footnotes move to the bottom, as noted above.
+- **R2.** Block the page script with step 4's snippet and copy again: no panel opens, and the More entries still have links, now from the load-time data.
+- **R3.** To exercise the panel, also remove the load-time data with `[...document.scripts].find((s) => s.textContent.includes("__staticRouterHydrationData"))?.remove()`, then copy: the panel opens briefly, and the More entries come through without links. Reload the tab to undo both.
 
 ### Manual Verification
 1. Run `npm run build`, then click reload on the extension in `chrome://extensions` and refresh Copilot.
@@ -182,7 +234,7 @@ None at this time.
    - a **More sources** section with the four More articles, linked;
    - no Sources panel opening (the React path).
 3. Copy another reply with web citations the same way: three titled citations and three More sources, compared against its Sources panel.
-4. Exercise the fallback: in DevTools on the Copilot tab, run `document.addEventListener("acf:request-references", e => e.stopImmediatePropagation(), true)`. This blocks the page script's reply, as if the React data weren't readable. Click M↓: the panel opens briefly and closes. The paste has the same titled citations, and the More entries are written `Title — domain` without links. Reload the page to undo.
+4. Exercise the fallback: in DevTools on the Copilot tab, run `document.addEventListener("acf:request-references", e => e.stopImmediatePropagation(), true)`. This blocks the page script's reply, as if the React data weren't readable. Click M↓: the panel opens briefly and closes. The paste has the same titled citations, and the More entries are written `Title — domain` without links. Reload the page to undo. *After TASK-14, the load-time data answers first; see R2 and R3 below.*
 5. Repeat step 4 with the Sources panel already open on another reply: it ends up showing this reply's sources and stays open.
 6. Turn off **Include "More" sources** and copy again: no More section.
 7. Switch to **Inline links + Sources list**, then **Sources list only**, copying after each: entries keep the `— domain` suffix, and More sources stays last.
