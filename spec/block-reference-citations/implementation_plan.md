@@ -86,7 +86,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/test_block-reference-citations.ts`
-- [ ] **TASK-6:** Add the regression script described under Verification Plan, and update the earlier scripts' expectations for the footnotes layout (B) and the default style. `npm test` picks up the new script automatically.
+- [x] **TASK-6:** Add the regression script described under Verification Plan, and update the earlier scripts' expectations for the footnotes layout (B) and the default style. `npm test` picks up the new script automatically.
 
 ### Docs
 
