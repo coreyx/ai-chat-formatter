@@ -85,7 +85,7 @@ None at this time.
   All names, titles and URLs are made up (`*.example`).
 
 #### [NEW] `scratch/test_duck-ai-adapter.ts`
-- [ ] **TASK-7:** The regression script described under Verification Plan, plus updates to the earlier scripts for a second adapter, if any check assumed Copilot was the only one (options sections, manifest matches).
+- [x] **TASK-7:** The regression script described under Verification Plan, plus updates to the earlier scripts for a second adapter, if any check assumed Copilot was the only one (options sections, manifest matches).
 
 ### Docs
 
