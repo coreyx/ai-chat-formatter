@@ -88,6 +88,9 @@ Not yet confirmed by hand:
 5. With **Use for Copilot's own Copy button** on, Copilot's Copy gives the same output as M↓. With only the page script blocked (R2), it still has linked More entries from the load-time data. With both blocked (R3), it gives chip titles, no More section and no panel.
 6. Send a new prompt, then block only the page script and copy the new reply. It isn't in the load-time data, so the panel fallback answers.
 
+## Release
+Released as **0.2.0** on 2026-10-24: https://github.com/coreyx/ai-chat-formatter/releases/tag/0.2.0. The asset is `ai-chat-formatter-0.2.0.zip`, six files including `page-copilot.js`, and its checksum was verified against the local build.
+
 ## Follow-ups
 - **Reading view and footnotes:** Obsidian's Reading view gathers footnote definitions at the bottom of the note, so `### Citations` looks empty there under the footnotes style. That's Obsidian's rendering, documented in the README.
 - **Back-to-back fallback copies:** copying a different reply within about a second of a panel-fallback copy can leave the panel open, since the closing panel still counts as "open". Cosmetic, and only on the panel path.

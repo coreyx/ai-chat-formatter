@@ -184,7 +184,7 @@ None at this time.
 ### Release
 
 #### [MODIFY] GitHub repository `coreyx/ai-chat-formatter`
-- [ ] **TASK-12:** After `wrap-up` and `prepare-release` have produced the 0.2.0 `CHANGELOG.md` and `RELEASE_NOTES.md` sections:
+- [x] **TASK-12:** After `wrap-up` and `prepare-release` have produced the 0.2.0 `CHANGELOG.md` and `RELEASE_NOTES.md` sections:
   1. Run `npm run package`.
   2. Push `main`.
   3. Create and push the tag `0.2.0`.
