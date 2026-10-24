@@ -4,9 +4,12 @@
   collapsed (inert) Reasoning panel listing the sites searched, a body under
   [data-dark-theme] rendered by Streamdown, a Read More section of source
   cards, and a toolbar whose items each sit in their own wrapper div, Copy
-  among them. Class names imitate Duck.ai's generated hashes; every attribute
-  the adapter relies on is kept as observed. All names, titles and URLs are
-  made up.
+  among them. The first reply has both kinds of citation chip: links, and a
+  popup button showing a domain and a count. The popup chip's sources live in
+  React state on the real page; the tests attach a fake React fiber holding
+  them. Class names imitate Duck.ai's generated hashes; every attribute the
+  adapter relies on is kept as observed. All names, titles and URLs are made
+  up.
 -->
 <div id="app">
   <main class="rwHXT40MKuShkXKetVvg">
@@ -28,7 +31,7 @@
       <div class="nmLQcPOIo3MNL8oiV0cN">
         <div data-dark-theme="">
           <div class="aZ9kQe2ltYp0XvB7wR1c">
-            <p><span data-streamdown="strong">Widget 5</span> was released in May as the new current release. <a target="_blank" rel="noopener noreferrer" href="https://widget.example/releases/5.0.0" aria-label="Widget" tabindex="0"><span>Widget</span></a></p>
+            <p><span data-streamdown="strong">Widget 5</span> was released in May as the new current release. <a target="_blank" rel="noopener noreferrer" href="https://widget.example/releases/5.0.0" aria-label="Widget" tabindex="0"><span>Widget</span></a> The team announced it on its blog. <span><button type="button" aria-label="Sources from blog.widget.example" aria-haspopup="dialog" aria-expanded="false" aria-controls=":r9:"><span>blog.widget.example</span><span><span><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></span><span>1</span></span></button></span></p>
             <ul data-streamdown="unordered-list">
               <li data-streamdown="list-item"><span data-streamdown="strong">PathMatcher is global:</span> no import needed. <a target="_blank" rel="noopener noreferrer" href="https://docs.widget.example/api/path-matcher" aria-label="docs.widget.example" tabindex="0"><span>docs.widget.example</span></a> <a target="_blank" rel="noopener noreferrer" href="https://widget.example/releases/5.0.0#features" aria-label="Widget" tabindex="0"><span>Widget</span></a></li>
               <li data-streamdown="list-item">The upgrade guide is in <a href="https://widget.example/docs/upgrade" target="_blank" rel="noopener noreferrer">the Widget docs</a>.</li>
@@ -49,6 +52,7 @@
             <li><a href="https://widget.example/releases/5.0.0" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/widget.example.ico" alt=""><span>Widget 5.0.0 (Current)<span>widget.example</span></span></a></li>
             <li><a href="https://docs.widget.example/api/path-matcher" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/docs.widget.example.ico" alt=""><span>PathMatcher - API Reference | Widget Docs<span>docs.widget.example</span></span></a></li>
             <li><a href="https://blog.widget.example/widget-5" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/blog.widget.example.ico" alt=""><span>Widget 5 is now available | Widget Blog<span>blog.widget.example</span></span></a></li>
+            <li><a href="https://news.example/widget-5-hands-on" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/news.example.ico" alt=""><span>Widget 5 hands-on | News Example<span>news.example</span></span></a></li>
           </ul>
         </section>
       </div>

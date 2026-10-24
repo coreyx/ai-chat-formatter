@@ -1,19 +1,21 @@
 /**
  * Regression checks for spec/duck-ai-adapter: the Duck.ai adapter's selectors,
- * conversion (citation chips, Read More cards, code blocks, bold text), button
- * placement, registration and native Copy override, against a synthetic
- * fixture modeled on duck.ai's markup. Run with `npm test`, which runs every
- * scratch/test_*.ts script. Each check prints PASS or FAIL, and the process
- * exits non-zero if any failed.
+ * conversion (link and popup citation chips, Read More cards, code blocks,
+ * bold text), the page script, button placement, registration and native Copy
+ * override, against a synthetic fixture modeled on duck.ai's markup. Run with
+ * `npm test`, which runs every scratch/test_*.ts script. Each check prints
+ * PASS or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
+import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT } from "../src/core/references-protocol";
 import { buildDefaultSettings } from "../src/core/settings";
 import type { CitationStyle } from "../src/core/types";
-import { duckAiAdapter, duckAiLanguageId, readDuckAiReferences } from "../src/sites/duckai";
+import { extractDuckAiChipSources, installDuckAiPageScript } from "../src/page/duckai";
+import { duckAiAdapter, duckAiLanguageId, parseChipSources, readDuckAiReferences } from "../src/sites/duckai";
 import { findAdapterForUrl, SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -38,12 +40,43 @@ async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> 
   }
 }
 
-/** A fresh copy of the fixture page. */
-function duckAiPage(): Document {
-  return new JSDOM(readFileSync("scratch/fixtures/duckai-message.html", "utf8")).window.document;
+/**
+ * The sources behind the fixture's popup chip, as Duck.ai keeps them in React
+ * state: the blog post (which also has a Read More card with a different
+ * title), a status page with no card, and an entry without an http(s) URL
+ * that must be dropped.
+ */
+const POPUP_SOURCES = [
+  { id: 3, url: "https://blog.widget.example/widget-5", title: "Widget 5 announcement", domain: "blog.widget.example", rootDomain: "widget.example", siteName: null },
+  { id: 4, url: "https://status.widget.example/", title: "Widget status", domain: "status.widget.example", rootDomain: "widget.example", siteName: null },
+  { id: 5, url: "javascript:void(0)", title: "Not a page", domain: "", rootDomain: "", siteName: null },
+];
+
+/** Builds a chain of fake React fibers with `sources` on the fiber `levels` above the first, as React keeps it on Duck.ai. */
+function fakeFiber(sources: unknown, levels = 3): object {
+  let fiber: object = { memoizedProps: { sources }, return: null };
+  for (let i = 0; i < levels; i++) fiber = { memoizedProps: { className: "x" }, return: fiber };
+  return fiber;
 }
 
-/** The fixture's replies: the first with chips and three Read More cards, the second with cards and no chips. */
+/** The first reply's popup chip. */
+function popupChip(page: Document): HTMLElement {
+  return page.querySelector<HTMLElement>("[data-dark-theme] button[aria-haspopup]")!;
+}
+
+/**
+ * A fresh copy of the fixture page. jsdom runs no React, so the popup chip
+ * gets a fake fiber holding {@link POPUP_SOURCES}; with `pageScript`, Duck.ai's
+ * page script is installed as it is on the real page.
+ */
+function duckAiPage({ pageScript = true } = {}): Document {
+  const page = new JSDOM(readFileSync("scratch/fixtures/duckai-message.html", "utf8")).window.document;
+  (popupChip(page) as unknown as Record<string, object>)["__reactFiber$test"] = fakeFiber(POPUP_SOURCES);
+  if (pageScript) installDuckAiPageScript(page);
+  return page;
+}
+
+/** The fixture's replies: the first with link and popup chips and four Read More cards, the second with cards and no chips. */
 function replies(page = duckAiPage()): Element[] {
   return Array.from(page.querySelectorAll(duckAiAdapter.messageSelector));
 }
@@ -61,17 +94,19 @@ function convert(message: Element, style: CitationStyle = "linked-citations", ov
 }
 
 const FIRST_REPLY =
-  "**Widget 5** was released in May as the new current release.[[#^c-k3f9-1|⁽¹⁾]]\n\n" +
-  "- **PathMatcher is global:** no import needed.[[#^c-k3f9-2|⁽²⁾]][[#^c-k3f9-1|⁽¹⁾]]\n" +
+  "**Widget 5** was released in May as the new current release.[[#^c-k3f9-1|⁽¹⁾]] The team announced it on its blog.[[#^c-k3f9-2|⁽²⁾]][[#^c-k3f9-3|⁽³⁾]]\n\n" +
+  "- **PathMatcher is global:** no import needed.[[#^c-k3f9-4|⁽⁴⁾]][[#^c-k3f9-1|⁽¹⁾]]\n" +
   "- The upgrade guide is in [the Widget docs](https://widget.example/docs/upgrade).\n\n" +
   "Check your version:\n\n" +
   '```bash\nif widget --version; then\n  echo "installed"\nfi\n```\n\n' +
   "## Sources\n\n" +
   "### Citations\n\n" +
   "1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-k3f9-1\n" +
-  "2. [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example ^c-k3f9-2\n\n" +
+  "2. [Widget 5 is now available | Widget Blog](https://blog.widget.example/widget-5) — blog.widget.example ^c-k3f9-2\n" +
+  "3. [Widget status](https://status.widget.example/) — status.widget.example ^c-k3f9-3\n" +
+  "4. [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example ^c-k3f9-4\n\n" +
   "### More\n\n" +
-  "- [Widget 5 is now available | Widget Blog](https://blog.widget.example/widget-5) — blog.widget.example";
+  "- [Widget 5 hands-on | News Example](https://news.example/widget-5-hands-on) — news.example";
 
 // ---------------------------------------------------------------------------
 // Selectors
@@ -90,32 +125,37 @@ check("messages: the two replies are found, not the user messages or the reply h
 // Conversion
 // ---------------------------------------------------------------------------
 
-check("convert: chips become linked citations titled from Read More, uncited cards go under More", () => {
+check("convert: chips become linked citations titled from Read More, popup chips one per source, uncited cards under More", () => {
   assert.equal(convert(replies()[0]), FIRST_REPLY);
 });
 
-check("convert: no Reasoning panel, Read More card or toolbar text leaks into the body", () => {
+check("convert: no Reasoning panel, Read More card, toolbar or popup chip text leaks into the body", () => {
   const body = convert(replies()[0]).split("\n\n## Sources")[0];
-  for (const leak of ["searched.example", "forum.example", "Hide Reasoning", "Read More", "Copy", "Share", "Model"]) {
+  for (const leak of ["searched.example", "forum.example", "Hide Reasoning", "Read More", "Copy", "Share", "Model", "blog.widget.example", "Sources from"]) {
     assert.ok(!body.includes(leak), `body contains ${leak}`);
   }
 });
 
-check("convert: the original page is left untouched", () => {
+check("convert: the original page is left untouched apart from the popup chip's sources attribute", () => {
   const page = duckAiPage();
   const before = page.body.innerHTML;
   convert(replies(page)[0]);
+  assert.ok(popupChip(page).hasAttribute(CHIP_SOURCES_ATTRIBUTE), "the attribute stays for the conversion's copy of the reply");
+  popupChip(page).removeAttribute(CHIP_SOURCES_ATTRIBUTE);
   assert.equal(page.body.innerHTML, before);
 });
 
 check("convert: footnotes style with the same sources", () => {
   const markdown = convert(replies()[0], "footnotes");
-  assert.ok(markdown.includes("needed.[^2][^1]"));
+  assert.ok(markdown.includes("blog.[^2][^3]"));
+  assert.ok(markdown.includes("needed.[^4][^1]"));
   assert.ok(
     markdown.endsWith(
-      "## Sources\n\n### More\n\n- [Widget 5 is now available | Widget Blog](https://blog.widget.example/widget-5) — blog.widget.example\n\n" +
+      "## Sources\n\n### More\n\n- [Widget 5 hands-on | News Example](https://news.example/widget-5-hands-on) — news.example\n\n" +
         "[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n" +
-        "[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example",
+        "[^2]: [Widget 5 is now available | Widget Blog](https://blog.widget.example/widget-5) — blog.widget.example\n" +
+        "[^3]: [Widget status](https://status.widget.example/) — status.widget.example\n" +
+        "[^4]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example",
     ),
   );
 });
@@ -137,11 +177,12 @@ check("code blocks: language from data-language, lines joined with newlines, pla
 // Read More references
 // ---------------------------------------------------------------------------
 
-check("references: the Read More cards in order, with title, domain and whether a chip cites them", () => {
+check("references: the Read More cards in order, with title, domain and whether a link or popup chip cites them", () => {
   assert.deepEqual(readDuckAiReferences(replies()[0]), [
     { url: "https://widget.example/releases/5.0.0", title: "Widget 5.0.0 (Current)", domain: "widget.example", cited: true },
     { url: "https://docs.widget.example/api/path-matcher", title: "PathMatcher - API Reference | Widget Docs", domain: "docs.widget.example", cited: true },
-    { url: "https://blog.widget.example/widget-5", title: "Widget 5 is now available | Widget Blog", domain: "blog.widget.example", cited: false },
+    { url: "https://blog.widget.example/widget-5", title: "Widget 5 is now available | Widget Blog", domain: "blog.widget.example", cited: true },
+    { url: "https://news.example/widget-5-hands-on", title: "Widget 5 hands-on | News Example", domain: "news.example", cited: false },
   ]);
 });
 
@@ -156,14 +197,15 @@ check("references: a reply without chips lists its cards under More, and nothing
   assert.equal(convert(second, "linked-citations", { includeMoreSources: false }), "Two good overviews are listed below.");
 });
 
-check("references: without a Read More section, null, and chips fall back to their labels", () => {
+check("references: without a Read More section, null; link chips fall back to their labels, popup chips to Duck.ai's titles", () => {
   const page = duckAiPage();
   page.querySelectorAll("section").forEach((section) => section.remove());
   const first = replies(page)[0];
   assert.equal(readDuckAiReferences(first), null);
   const markdown = convert(first);
   assert.ok(markdown.includes("1. [Widget](https://widget.example/releases/5.0.0) — widget.example ^c-k3f9-1"));
-  assert.ok(markdown.includes("2. [docs.widget.example](https://docs.widget.example/api/path-matcher) ^c-k3f9-2"));
+  assert.ok(markdown.includes("2. [Widget 5 announcement](https://blog.widget.example/widget-5) — blog.widget.example ^c-k3f9-2"));
+  assert.ok(markdown.includes("4. [docs.widget.example](https://docs.widget.example/api/path-matcher) ^c-k3f9-4"));
   assert.ok(!markdown.includes("### More"));
 });
 
@@ -172,6 +214,61 @@ check("references: an empty domain span falls back to the URL's domain", () => {
   const card = page.querySelector('a[data-handled-by-react][href="https://blog.widget.example/widget-5"] span span')!;
   card.textContent = "";
   assert.equal(readDuckAiReferences(replies(page)[0])![2].domain, "blog.widget.example");
+});
+
+// ---------------------------------------------------------------------------
+// Popup chips: the page script and the fallback
+// ---------------------------------------------------------------------------
+
+check("page script: finds sources a few fiber levels up, drops non-http entries, gives up past 8 levels", () => {
+  const page = duckAiPage({ pageScript: false });
+  assert.deepEqual(extractDuckAiChipSources(popupChip(page)), [
+    { url: "https://blog.widget.example/widget-5", title: "Widget 5 announcement", domain: "blog.widget.example" },
+    { url: "https://status.widget.example/", title: "Widget status", domain: "status.widget.example" },
+  ]);
+  const deep = page.createElement("button");
+  (deep as unknown as Record<string, object>)["__reactFiber$test"] = fakeFiber(POPUP_SOURCES, 9);
+  assert.equal(extractDuckAiChipSources(deep), null);
+  assert.equal(extractDuckAiChipSources(page.createElement("button")), null, "no fiber at all");
+});
+
+check("page script: a request on a reply writes each popup chip's sources to it, and clears stale ones", () => {
+  const page = duckAiPage();
+  const reply = replies(page)[0];
+  const chip = popupChip(page);
+  reply.dispatchEvent(new page.defaultView!.CustomEvent(REFERENCES_EVENT, { bubbles: true }));
+  assert.deepEqual(JSON.parse(chip.getAttribute(CHIP_SOURCES_ATTRIBUTE)!).map((source: { url: string }) => source.url), [
+    "https://blog.widget.example/widget-5",
+    "https://status.widget.example/",
+  ]);
+  (chip as unknown as Record<string, object>)["__reactFiber$test"] = fakeFiber([]);
+  reply.dispatchEvent(new page.defaultView!.CustomEvent(REFERENCES_EVENT, { bubbles: true }));
+  assert.equal(chip.hasAttribute(CHIP_SOURCES_ATTRIBUTE), false);
+});
+
+check("popup chips: malformed sources parse to null", () => {
+  assert.equal(parseChipSources(null), null);
+  assert.equal(parseChipSources("not json"), null);
+  assert.equal(parseChipSources('{"url":"https://widget.example/"}'), null);
+  assert.equal(parseChipSources('[{"url":"ftp://widget.example/"}]'), null);
+  assert.deepEqual(parseChipSources('[{"url":"https://widget.example/","title":7}]'), [{ url: "https://widget.example/", title: "", domain: "" }]);
+});
+
+check("fallback: without the page script, a popup chip gets the Read More card for its domain", () => {
+  const first = replies(duckAiPage({ pageScript: false }))[0];
+  const markdown = convert(first);
+  assert.ok(markdown.includes("blog.[[#^c-k3f9-2|⁽²⁾]]\n"), "one marker, for the card");
+  assert.ok(markdown.includes("2. [Widget 5 is now available | Widget Blog](https://blog.widget.example/widget-5) — blog.widget.example ^c-k3f9-2"));
+  assert.ok(!markdown.includes("status.widget.example"));
+  assert.ok(markdown.endsWith("### More\n\n- [Widget 5 hands-on | News Example](https://news.example/widget-5-hands-on) — news.example"));
+});
+
+check("fallback: with no page script and no card for its domain, a popup chip copies as nothing", () => {
+  const page = duckAiPage({ pageScript: false });
+  page.querySelector('a[data-handled-by-react][href="https://blog.widget.example/widget-5"]')!.closest("li")!.remove();
+  const markdown = convert(replies(page)[0]);
+  assert.ok(markdown.includes("on its blog.\n\n- **PathMatcher"), "no marker and no leftover chip text");
+  assert.ok(!markdown.includes("blog.widget.example"));
 });
 
 // ---------------------------------------------------------------------------

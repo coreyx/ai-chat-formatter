@@ -113,7 +113,7 @@ None at this time.
 - [x] **TASK-7:** The regression script described under Verification Plan, plus updates to the earlier scripts for a second adapter, if any check assumed Copilot was the only one (options sections, manifest matches).
 
 #### [MODIFY] `scratch/fixtures/duckai-message.html`, `scratch/test_duck-ai-adapter.ts`
-- [ ] **TASK-12:**
+- [x] **TASK-12:**
   - **Fixture:** add a popup chip to the first reply, standing for two sources. One of them is the currently uncited third card, so it moves out of More; the other has no card.
   - **Tests:** the checks numbered 9 to 12 under Verification Plan. Since jsdom has no React, the tests attach a fake fiber (`__reactFiber$test` with `memoizedProps.sources` a few levels up) to the fixture's popup chip.
 
