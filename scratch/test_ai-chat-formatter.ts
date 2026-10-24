@@ -4,9 +4,11 @@
  * check prints PASS or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { JSDOM } from "jsdom";
 import { CitationCollector, normalizeCitationUrl, parseCitationTitle, renderCitations } from "../src/core/citations";
+import { convertMessage } from "../src/core/convert";
 import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../src/core/rules";
-import type { Citation } from "../src/core/types";
+import { ConversionError, type Citation, type SiteAdapter } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -118,6 +120,66 @@ check("rules: runRules skips a disabled rule and keeps order", () => {
   const bang = { id: "bang", name: "", description: "", defaultEnabled: true, apply: (s: string) => s + "!" };
   assert.equal(runRules("hi", [upper, bang], () => true), "HI!");
   assert.equal(runRules("hi", [upper, bang], (id) => id !== "upper"), "hi!");
+});
+
+// ---------------------------------------------------------------------------
+// Converter (generic, with a minimal test adapter)
+// ---------------------------------------------------------------------------
+
+/** Parses `html` into a detached element using jsdom, standing in for the live page. */
+function element(html: string): HTMLElement {
+  const { document } = new JSDOM(`<!doctype html><body>${html}</body>`).window;
+  return document.body.firstElementChild as HTMLElement;
+}
+
+/** A bare adapter: `.reply` is the body, `.chip[data-url]` is a citation, `.chrome` is stripped. */
+const testAdapter: SiteAdapter = {
+  id: "test",
+  name: "Test",
+  matches: ["https://chat.example/*"],
+  messageSelector: ".message",
+  contentSelector: ".reply",
+  nativeCopyButtonSelector: ".copy",
+  findButtonAnchor: () => null,
+  stripSelectors: [".chrome"],
+  turndownRules: (context) => ({
+    chip: {
+      filter: (node) => node.classList.contains("chip"),
+      replacement: (_content, node) =>
+        context.registerCitation({ url: node.getAttribute("data-url")!, title: node.getAttribute("data-title")!, sourceName: "" }),
+    },
+  }),
+  rules: [invisibleCharactersRule, collapseBlankLinesRule],
+};
+
+check("convert: compact list markers, nested lists, headings and strip selectors", () => {
+  const message = element(
+    `<div class="message"><div class="reply"><h3>Key features</h3><span class="chrome">Copy</span>` +
+      `<ol><li>Engine<ul><li>HalfFloatBuffer</li><li><code>Pattern.escape()</code></li></ul></li><li>wpm 4</li></ol></div></div>`,
+  );
+  assert.equal(
+    convertMessage(testAdapter, message, "footnotes", () => true),
+    "### Key features\n\n1. Engine\n   - HalfFloatBuffer\n   - `Pattern.escape()`\n2. wpm 4",
+  );
+});
+
+check("convert: site citation rule feeds the chosen citation style", () => {
+  const message = element(
+    `<div class="message"><div class="reply"><p>Released in May. <span class="chip" data-url="https://widget.example/x" data-title="Release notes">widget</span></p></div></div>`,
+  );
+  assert.equal(convertMessage(testAdapter, message, "footnotes", () => true), "Released in May.[^1]\n\n[^1]: [Release notes](https://widget.example/x)");
+});
+
+check("convert: KaTeX inline and display math use $ and $$", () => {
+  const tex = (source: string) => `<span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">${source}</annotation></semantics></math></span><span class="katex-html">rendered</span></span>`;
+  const message = element(
+    `<div class="message"><div class="reply"><p>Energy ${tex("E = mc^2")} holds.</p><span class="katex-display">${tex("\\int_0^1 x\\,dx")}</span></div></div>`,
+  );
+  assert.equal(convertMessage(testAdapter, message, "footnotes", () => true), "Energy $E = mc^2$ holds.\n\n$$\n\\int_0^1 x\\,dx\n$$");
+});
+
+check("convert: a message without a reply body throws ConversionError", () => {
+  assert.throws(() => convertMessage(testAdapter, element(`<div class="message"></div>`), "footnotes", () => true), ConversionError);
 });
 
 // ---------------------------------------------------------------------------

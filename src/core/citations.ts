@@ -100,7 +100,7 @@ function sourcesList(citations: Citation[]): string {
 export function renderCitations(markdown: string, citations: Citation[], style: CitationStyle): string {
   let body = markdown
     .replace(/(⟦cite:(\d+)⟧)(?:\s*⟦cite:\2⟧)+/g, "$1")
-    .replace(/[ \t]+(?=⟦cite:\d+⟧)/g, "");
+    .replace(/[ \t  ]+(?=⟦cite:\d+⟧)/g, "");
 
   if (citations.length === 0) return body.replace(PLACEHOLDER, "");
 

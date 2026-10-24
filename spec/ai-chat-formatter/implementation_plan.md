@@ -90,7 +90,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
   - `runRules(markdown, rules, isEnabled)` applies the enabled rules in order.
 
 #### [NEW] `src/core/convert.ts`
-- [ ] **TASK-7:** Add `convertMessage(adapter, messageElement, style, isRuleEnabled): string`. It:
+- [x] **TASK-7:** Add `convertMessage(adapter, messageElement, style, isRuleEnabled): string`. It:
   - Finds `adapter.contentSelector`, deep-clones it and removes `adapter.stripSelectors`.
   - Converts it with a Turndown instance (`headingStyle: "atx"`, `codeBlockStyle: "fenced"`, `bulletListMarker: "-"`, `emDelimiter: "*"`, GFM plugin) plus the adapter's rules and a shared KaTeX rule.
   - Runs the adapter's post-processing rules, then `renderCitations`.
