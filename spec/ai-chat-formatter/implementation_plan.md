@@ -84,7 +84,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
   - `parseCitationTitle(ariaLabel, fallbackName, url)` takes the last ` — `-separated part of `Citation: widget — Widget — Widget 5.0.0 (Current)`. It falls back to the source name, then the URL's hostname.
 
 #### [NEW] `src/core/rules.ts`
-- [ ] **TASK-6:** Add the shared rules and the runner:
+- [x] **TASK-6:** Add the shared rules and the runner:
   - `invisibleCharactersRule` turns U+00A0 and U+202F into spaces and removes U+200B, U+200C, U+200D, U+2060 and U+FEFF.
   - `collapseBlankLinesRule` turns two or more blank lines into one and trims leading and trailing blank lines. It leaves fenced code blocks alone; a `mapOutsideCodeFences(text, fn)` helper handles ``` and ~~~ fences of any length.
   - `runRules(markdown, rules, isEnabled)` applies the enabled rules in order.

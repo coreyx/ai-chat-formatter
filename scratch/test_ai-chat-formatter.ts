@@ -5,6 +5,7 @@
  */
 import assert from "node:assert/strict";
 import { CitationCollector, normalizeCitationUrl, parseCitationTitle, renderCitations } from "../src/core/citations";
+import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../src/core/rules";
 import type { Citation } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -91,6 +92,32 @@ check("citations: title comes from the last aria-label segment, then name, then 
   assert.equal(parseCitationTitle("Citation: widget — Widget — Widget 5.0.0 (Current)", "widget.example", widgetRelease.url), "Widget 5.0.0 (Current)");
   assert.equal(parseCitationTitle("Citation: widget", "widget.example", widgetRelease.url), "widget.example");
   assert.equal(parseCitationTitle(null, "", "https://www.example.com/x"), "example.com");
+});
+
+// ---------------------------------------------------------------------------
+// Rules
+// ---------------------------------------------------------------------------
+
+check("rules: invisible characters are normalized, emoji joiners kept", () => {
+  const family = "👨‍👩‍👧";
+  assert.equal(invisibleCharactersRule.apply(`a b c​d‌e⁠f﻿g x‍y ${family}`), `a b cdefg xy ${family}`);
+});
+
+check("rules: blank-line runs collapse outside fences but not inside", () => {
+  const input = "\n\nOne\n\n\n\nTwo\n```\ncode\n\n\n\nmore\n```\n\n\nThree\n\n";
+  assert.equal(collapseBlankLinesRule.apply(input), "One\n\nTwo\n```\ncode\n\n\n\nmore\n```\n\nThree");
+});
+
+check("rules: a longer closing fence and tilde fences are respected", () => {
+  const input = "````md\n```\n\n\ninner\n````\n\n\n~~~\n\n\n~~~";
+  assert.equal(collapseBlankLinesRule.apply(input), "````md\n```\n\n\ninner\n````\n\n~~~\n\n\n~~~");
+});
+
+check("rules: runRules skips a disabled rule and keeps order", () => {
+  const upper = { id: "upper", name: "", description: "", defaultEnabled: true, apply: (s: string) => s.toUpperCase() };
+  const bang = { id: "bang", name: "", description: "", defaultEnabled: true, apply: (s: string) => s + "!" };
+  assert.equal(runRules("hi", [upper, bang], () => true), "HI!");
+  assert.equal(runRules("hi", [upper, bang], (id) => id !== "upper"), "hi!");
 });
 
 // ---------------------------------------------------------------------------
