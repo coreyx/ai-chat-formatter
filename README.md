@@ -98,6 +98,8 @@ A subsection with nothing in it is left out. Turn off the More list with **Inclu
 
 **Duck.ai.** A reply's source chips name only the site ("GitHub", `widget.example`). The page titles come from the reply's **Read More** cards: each chip is matched to the card with the same link. Read More cards that no chip in the reply cites go under **More**, so a reply with no chips at all has only a More list. A chip without a matching card keeps the site name as its title.
 
+Some chips open a popup instead of linking, showing a domain and a count of further sources (`widget.example` with `1`). Their links aren't in the page's markup, so a small script running in Duck.ai's own page context (the extension's second content script on Duck.ai) reads them from Duck.ai's page data when you copy. Each source becomes its own citation, titled from its Read More card or from Duck.ai's own title for it. If that data can't be read, the chip gets the Read More card for the domain it shows, or is left out if there's none.
+
 **Copilot.** Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, is in Copilot's own data. The extension looks for it in three places, in order:
 
 1. **Copilot's live page data**, read by a small script that runs in Copilot's own page context (the extension's second content script). This covers every reply.
@@ -155,6 +157,7 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 
 - **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When a site changes its markup, its adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to the site's own copy. Duck.ai's class names change between its releases, so its adapter relies only on ids, `data-*` and ARIA attributes, and page structure.
 - **Source titles and More sources depend on Copilot's internal data**, which is even more likely to change than its markup. If the live page data stops working, replies that existed when the page loaded still get full titles and links from the page's embedded data. Replies written since then fall back to the Sources panel with Copy as Markdown (More entries without links), or to the titles on the citation chips with the Copy-button override, with no More sources.
+- **Duck.ai's popup chips depend on Duck.ai's internal data** in the same way. If reading it stops working, a popup chip falls back to the Read More card for the domain it shows, so a chip standing for several sources keeps only that one.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
 - **Very long code blocks.** Copilot may not keep every line of a long code block in the page. If any line is missing, the copy stops with a message instead of copying a shortened block. Scroll through the code block and try again, or use Copilot's own Copy button.
 
@@ -177,7 +180,7 @@ ai-chat-formatter/
 │   ├── manifest.json    # Manifest template; version, match patterns and page scripts are filled in at build
 │   ├── core/            # Site-independent: types, conversion, citations, rules, settings
 │   ├── sites/           # One adapter per site (copilot.ts, duckai.ts), plus the registry (index.ts)
-│   ├── page/            # Page-world scripts, for site data the isolated content script can't see (Copilot only)
+│   ├── page/            # Page-world scripts, for site data the isolated content script can't see
 │   ├── content/         # Content script: button injection and the Copy override
 │   └── options/         # Options page
 └── scratch/

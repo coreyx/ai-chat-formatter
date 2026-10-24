@@ -126,7 +126,7 @@ None at this time.
   - Note that Duck.ai's own Copy button drops links and sources.
   - Add `brave://extensions` to the installation steps, since Brave loads the extension the same way.
   - Update the development tree with the new files.
-- [ ] **TASK-13:** Describe popup chips in Duck.ai's part of "Where the titles and links come from": the page script, and the fallback to the card with the same domain. Update `src/page/` in the development tree, which now holds both page scripts.
+- [x] **TASK-13:** Describe popup chips in Duck.ai's part of "Where the titles and links come from": the page script, and the fallback to the card with the same domain. Update `src/page/` in the development tree, which now holds both page scripts.
 
 ### Release
 
