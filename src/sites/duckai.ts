@@ -70,10 +70,26 @@ function rewriteDuckAiStrong(root: HTMLElement): void {
   }
 }
 
+/**
+ * Removes popup chips that have no readable sources, together with the `<span>`
+ * that wraps each one, so that nothing of them reaches Turndown. Emitting an
+ * empty string from the chip rule instead would leave the space before the
+ * chip at the end of its line.
+ */
+function removeUnreadablePopupChips(root: HTMLElement): void {
+  for (const chip of Array.from(root.querySelectorAll("button[aria-haspopup]")).filter(isPopupChip)) {
+    if (parseChipSources(chip.getAttribute(CHIP_SOURCES_ATTRIBUTE))) continue;
+    const wrapper = chip.parentElement;
+    if (wrapper?.nodeName === "SPAN" && wrapper.childNodes.length === 1) wrapper.remove();
+    else chip.remove();
+  }
+}
+
 /** Rewrites the reply body's Streamdown markup into HTML that Turndown converts faithfully. */
 function preprocessDuckAi(root: HTMLElement): void {
   rewriteDuckAiCodeBlocks(root);
   rewriteDuckAiStrong(root);
+  removeUnreadablePopupChips(root);
 }
 
 /**
