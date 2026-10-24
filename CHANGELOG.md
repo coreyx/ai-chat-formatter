@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-24
+
 ### Added
 
 - **Linked citations (Obsidian)** citation style: markers in the text are same-note links shown as `⁽¹⁾`, pointing to a numbered `### Citations` list whose entries carry Obsidian block IDs. Unlike footnotes, it keeps Copilot's order (Citations, then More) in Reading view as well as Live Preview. Each copy gets its own random ID token, so two replies pasted into one note don't clash.
@@ -41,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Options page with a master switch, citation style, and per-site button, override and rule settings; changes apply to open tabs without a reload.
 - Pluggable site adapters: a site's match patterns go into the manifest automatically at build time.
 
-[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/coreyx/ai-chat-formatter/releases/tag/0.1.0

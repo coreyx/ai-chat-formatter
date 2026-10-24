@@ -1,5 +1,39 @@
 # Release Notes
 
+## 0.3.0 (2026-10-24)
+
+Citations now read the same in Obsidian's Reading view as in Live Preview, with the Sources section in Copilot's order.
+
+### Linked citations, the new default
+
+Obsidian's Reading view always moves footnotes to the very bottom of a note, so the footnotes style couldn't keep Copilot's order there. The new **Linked citations (Obsidian)** style makes the citations an ordinary numbered list and links the markers in the text to it:
+
+```markdown
+Widget 5 was released in May.[[#^c-k3f9-1|⁽¹⁾]]
+
+## Sources
+
+### Citations
+
+1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-k3f9-1
+
+### More
+
+- [Widget 5 is now available | Widget Blog](https://widget.example/blog/widget-5) — widget.example
+```
+
+In Obsidian, each marker shows as a small `⁽¹⁾` link: click it to jump to the citation, or hover to preview it. The `^c-k3f9-1` block IDs are hidden. The `k3f9` part is random for each copy, so two replies pasted into one note don't clash.
+
+The syntax is Obsidian's own; other Markdown apps show it as text, so pick one of the other styles for them. Obsidian plugins that show block links as live transclusions replace each `⁽¹⁾` with a copy of its entry in Reading view.
+
+### Defaults and saved choices
+
+Linked citations is now the default. If you chose and saved a citation style before, it's kept.
+
+### Footnotes without the empty heading
+
+The footnotes style drops its `### Citations` heading, which Reading view left empty. With More sources, a copy ends with `## Sources`, `### More`, and then the footnotes; without them, just the footnotes.
+
 ## 0.2.0 (2026-10-24)
 
 Sources now come through the way Copilot shows them: every citation with its page title, and the extra sources Copilot lists under **More**.
