@@ -137,7 +137,7 @@ None at this time.
 ### Docs
 
 #### [MODIFY] `README.md`
-- [ ] **TASK-11:** Document the new behavior:
+- [x] **TASK-11:** Document the new behavior:
   - The `[Title](url) — domain` entry format, in the citation-style examples.
   - The "More sources" section and its setting.
   - Where the titles come from: Copilot's page data via a small page script, or, failing that, the Sources panel opened briefly by **Copy as Markdown**. Note the panel flash, and that More entries from the panel have no links.

@@ -18,7 +18,8 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 
 - **Copy as Markdown** button on every reply, next to the site's own buttons.
 - Optionally, **the site's own Copy button copies Markdown too**. If a reply can't be converted, the site's normal copy runs instead, so the button always copies something.
-- **Citations kept**, in the style you choose (see below). A page cited several times gets one number.
+- **Citations kept**, in the style you choose (see below), each with its page title and domain: `[Title](url) — domain`. A page cited several times gets one number.
+- **"More" sources too**: the sources Copilot lists under **More** in its Sources panel, without citing them in the reply, come along as a **More sources** list.
 - **Code blocks** come through as fenced blocks with their language and exact indentation.
 - **Headings, lists, tables, links, inline code and math** (`$…$` and `$$…$$`) convert to their Markdown equivalents.
 - **Clean-up rules** you can switch on and off per site: normalizing invisible characters (non-breaking and zero-width spaces) and collapsing runs of blank lines.
@@ -41,7 +42,7 @@ Choose one on the options page. For a reply citing the Widget release notes:
 ```markdown
 Widget 5 was released in May.[^1]
 
-[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)
+[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
 ```
 
 **Inline links + Sources list**
@@ -51,7 +52,7 @@ Widget 5 was released in May.[1](https://widget.example/releases/5.0.0)
 
 ## Sources
 
-1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)
+1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
 ```
 
 **Sources list only**
@@ -61,8 +62,28 @@ Widget 5 was released in May.
 
 ## Sources
 
-1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)
+1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
 ```
+
+### More sources
+
+When a reply has sources Copilot lists under **More** but doesn't cite, they're added at the end, in every style. With footnotes, the list goes just before the footnote definitions:
+
+```markdown
+## More sources
+
+- [Set up the sandbox | Example Learn](https://learn.example.com/sandbox/install) — learn.example.com
+```
+
+Turn it off with **Include "More" sources** on the options page.
+
+### Where the titles come from
+
+Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, lives in Copilot's page data. A small script that runs in Copilot's own page context reads it for each copy; that's the extension's second content script.
+
+If that data can't be found (for example after a Copilot update), **Copy as Markdown** opens the reply's Sources panel for about a second, reads it and closes it again. The panel shows no URLs for its **More** entries, so those come through as `Title — domain` without a link. If the panel doesn't work either, the copy still goes ahead, with the titles the chips themselves carry.
+
+The **Use for Copilot's own Copy button** option never opens the panel: it has to decide instantly, before Copilot's own handler runs.
 
 ## Settings
 
@@ -74,6 +95,7 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
   - **Use for _site_'s own Copy button**: off by default.
+  - **Include "More" sources**: on by default.
   - **Formatting rules**: one switch per clean-up rule.
 
 ## Installation
@@ -111,6 +133,7 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 ## Limitations
 
 - **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When Copilot changes its markup, the Copilot adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to Copilot's own copy.
+- **Source titles and More sources depend on Copilot's internal page data**, which is even more likely to change than its markup. When it does, Copy as Markdown falls back to the Sources panel (with a brief flash of the panel, and More entries without links), and the Copy-button override falls back to the titles on the citation chips, with no More sources.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
 - **Very long code blocks.** Copilot may not keep every line of a long code block in the page. If any line is missing, the copy stops with a message instead of copying a shortened block. Scroll through the code block and try again, or use Copilot's own Copy button.
 
@@ -120,23 +143,26 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 |---|---|
 | `npm run build` | Type-checks and builds the extension into `dist/` |
 | `npm run watch` | Rebuilds `dist/` on every change, with source maps |
-| `npm test` | Builds, then runs the regression checks in `scratch/test_ai-chat-formatter.ts` |
+| `npm test` | Builds, then runs every regression script in `scratch/` (`test_*.ts`) |
 | `npm run package` | Builds and zips `dist/` into `release/ai-chat-formatter-<version>.zip` |
 
 ```text
 ai-chat-formatter/
 ├── scripts/
 │   ├── build.mjs        # Bundles with esbuild, writes dist/manifest.json
-│   └── package.mjs      # Zips dist/ for a release
+│   ├── package.mjs      # Zips dist/ for a release
+│   └── run-tests.mjs    # Builds, then runs every scratch/test_*.ts
 ├── src/
-│   ├── manifest.json    # Manifest template; version and match patterns are filled in at build
+│   ├── manifest.json    # Manifest template; version, match patterns and page scripts are filled in at build
 │   ├── core/            # Site-independent: types, conversion, citations, rules, settings
 │   ├── sites/           # One adapter per site, plus the registry (index.ts)
+│   ├── page/            # Page-world scripts, for site data the isolated content script can't see
 │   ├── content/         # Content script: button injection and the Copy override
 │   └── options/         # Options page
 └── scratch/
-    ├── fixtures/        # Page markup samples the tests convert
-    └── test_ai-chat-formatter.ts
+    ├── fixtures/        # Page markup and data samples the tests use
+    ├── test_ai-chat-formatter.ts
+    └── test_copilot-source-details.ts
 ```
 
 ### Adding a site
@@ -148,9 +174,11 @@ ai-chat-formatter/
    - where the button goes,
    - Turndown rules for anything site-specific, such as citations,
    - an optional `preprocess` step for whitespace-sensitive markup like code viewers,
-   - its post-processing rules.
-3. Add it to `SITE_ADAPTERS` in `src/sites/index.ts`. The build adds its match patterns to the manifest, and the options page gives it a section automatically.
-4. Save a trimmed copy of the site's markup under `scratch/fixtures/` and add checks for it to `scratch/test_ai-chat-formatter.ts`.
+   - its post-processing rules,
+   - optionally, ways to read each reply's full source list: `readReferences` (synchronous, used by both buttons), `readReferencesSlowly` (asynchronous fallback, used by Copy as Markdown only), and `hasUntitledCitations` (whether the fallback is worth running when More sources is off),
+   - optionally, a `pageScript`: the name of a script in `src/page/` that the manifest runs in the page's own JavaScript world, for data only the page can see.
+3. Add it to `SITE_ADAPTERS` in `src/sites/index.ts`. The build adds its match patterns and page script to the manifest, and the options page gives it a section automatically.
+4. Save a trimmed copy of the site's markup under `scratch/fixtures/` and add a `scratch/test_<name>.ts` script with checks for it; `npm test` runs it.
 
 ## License
 
