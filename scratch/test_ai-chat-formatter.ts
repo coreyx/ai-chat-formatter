@@ -4,12 +4,14 @@
  * check prints PASS or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { CitationCollector, normalizeCitationUrl, parseCitationTitle, renderCitations } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
 import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../src/core/rules";
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import { ConversionError, type Citation, type SiteAdapter } from "../src/core/types";
+import { copilotAdapter, copilotLanguageId } from "../src/sites/copilot";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -181,6 +183,132 @@ check("convert: KaTeX inline and display math use $ and $$", () => {
 
 check("convert: a message without a reply body throws ConversionError", () => {
   assert.throws(() => convertMessage(testAdapter, element(`<div class="message"></div>`), "footnotes", () => true), ConversionError);
+});
+
+// ---------------------------------------------------------------------------
+// Copilot adapter, against a fixture modeled on copilot.com's markup
+// ---------------------------------------------------------------------------
+
+/** A fresh copy of the Copilot fixture document, so checks that edit it don't affect each other. */
+function copilotPage(): Document {
+  return new JSDOM(readFileSync("scratch/fixtures/copilot-message.html", "utf8")).window.document;
+}
+
+/** The fixture's assistant reply, the one message the adapter should select. */
+function copilotReply(page = copilotPage()): Element {
+  const messages = page.querySelectorAll(copilotAdapter.messageSelector);
+  assert.equal(messages.length, 1, "only the assistant reply is a message, not the user prompt");
+  return messages[0];
+}
+
+const COPILOT_EXPECTED_BODY = [
+  '**Widget 5** was released on **March 3, 2026** as the new "Current" release. The main changes include:[^1]',
+  "",
+  "### Key New Features in Widget 5",
+  "",
+  "1. **Render Engine 3.2**",
+  "   - Upgraded to Render Engine 3.2.",
+  "   - Includes support for:",
+  "     - `HalfFloatBuffer`",
+  "     - Scoped Resources",
+  "     - `Widget.isWidget()`[^1]",
+  "2. **PathMatcher Is Now Global**",
+  "   - Available without importing a module.[^2][^1]",
+  "",
+  "---",
+  "",
+  "### Official Release Notes",
+  "",
+  "- [Widget 5.0.0 (Current) Release Notes](https://widget.example/releases/5.0.0)",
+  "",
+  "### Example ASCII Directory Tree",
+  "",
+  "```",
+  "my-widget-app/",
+  "├── package.json",
+  "├── src/",
+  "│   ├── index.js",
+  "│   └── routes/",
+  "│       └── users.js",
+  "└── test/",
+  "    └── users.test.js",
+  "```",
+  "",
+  "And a script:",
+  "",
+  "```python",
+  "def fence():",
+  '    return "```"',
+  "",
+  "print(fence())",
+  "```",
+  "",
+  "For most developers, the headline items are the **Render Engine 3.2 upgrade** and **global PathMatcher**.[^1]",
+].join("\n");
+
+check("copilot: the fixture converts to the expected Markdown with footnotes", () => {
+  assert.equal(
+    convertMessage(copilotAdapter, copilotReply(), "footnotes", () => true),
+    COPILOT_EXPECTED_BODY +
+      "\n\n[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0)" +
+      "\n[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher)",
+  );
+});
+
+check("copilot: no page chrome or chip labels leak into the output", () => {
+  const markdown = convertMessage(copilotAdapter, copilotReply(), "sources-only", () => true);
+  for (const leak of ["Plain Text", "Python\n", "Copy code", "Copy Response", " widget", " wdocs", "[[", "](<"]) {
+    assert.ok(!markdown.includes(leak), `output contains ${JSON.stringify(leak)}`);
+  }
+});
+
+check("copilot: the original page is left untouched", () => {
+  const page = copilotPage();
+  const before = page.body.innerHTML;
+  convertMessage(copilotAdapter, copilotReply(page), "footnotes", () => true);
+  assert.equal(page.body.innerHTML, before);
+});
+
+check("copilot: a code block missing a line throws instead of truncating", () => {
+  const page = copilotPage();
+  page.querySelector('[data-line-index="3"]')!.remove();
+  assert.throws(() => convertMessage(copilotAdapter, copilotReply(page), "footnotes", () => true), ConversionError);
+});
+
+check("copilot: unreadable chip JSON keeps the chip text; multi-source chips register every source", () => {
+  const page = copilotPage();
+  const chips = page.querySelectorAll("button[data-grouped-citations]");
+  chips[0].setAttribute("data-grouped-citations", "{not json");
+  chips[1].setAttribute(
+    "data-grouped-citations",
+    JSON.stringify([
+      { url: "https://a.example/1", name: "a.example" },
+      { url: "https://b.example/2", name: "b.example" },
+    ]),
+  );
+  const markdown = convertMessage(copilotAdapter, copilotReply(page), "footnotes", () => true);
+  assert.ok(markdown.includes("The main changes include: widget\n"), "the unreadable chip keeps its text");
+  assert.ok(markdown.includes("`Widget.isWidget()`[^1][^2]"), "both grouped sources are cited");
+  assert.ok(markdown.includes("[^1]: [a.example](https://a.example/1)\n[^2]: [b.example](https://b.example/2)"), "grouped sources use their names");
+});
+
+check("copilot: code viewer labels map to fence languages", () => {
+  assert.equal(copilotLanguageId("Plain Text"), "");
+  assert.equal(copilotLanguageId("Python"), "python");
+  assert.equal(copilotLanguageId("C#"), "csharp");
+  assert.equal(copilotLanguageId("C++"), "cpp");
+  assert.equal(copilotLanguageId("Shell"), "bash");
+  assert.equal(copilotLanguageId("Visual Basic"), "visualbasic");
+  assert.equal(copilotLanguageId(undefined), "");
+});
+
+check("copilot: the injected button anchors right after the native Copy button", () => {
+  const reply = copilotReply();
+  const anchor = copilotAdapter.findButtonAnchor(reply)!;
+  const container = reply.querySelector('[data-testid="CopyButtonContainerTestId"]')!;
+  assert.equal(anchor.parent, container.parentElement);
+  assert.equal(anchor.before, container.nextSibling);
+  assert.ok(reply.querySelector(copilotAdapter.nativeCopyButtonSelector), "the native Copy button is found");
 });
 
 // ---------------------------------------------------------------------------

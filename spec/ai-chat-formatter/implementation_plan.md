@@ -106,7 +106,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
 ### Sites
 
 #### [NEW] `src/sites/copilot.ts`
-- [ ] **TASK-9:** Add `copilotAdapter` (`id: "copilot"`, `name: "Copilot"`, `matches: ["https://copilot.microsoft.com/*", "https://copilot.com/*"]`) using the selectors confirmed during the inspection:
+- [x] **TASK-9:** Add `copilotAdapter` (`id: "copilot"`, `name: "Copilot"`, `matches: ["https://copilot.microsoft.com/*", "https://copilot.com/*"]`) using the selectors confirmed during the inspection:
   - **Message:** `div[role="article"]` that contains `[data-testid="markdown-reply"]` (the reply body, which carries `data-message-id`).
   - **Native Copy:** `button[data-testid="CopyButtonTestId"]` (aria-label "Copy Response"), inside `[data-testid="CopyButtonContainerTestId"]`, in the message's `[role="toolbar"]`. The extension's button goes directly after that container.
   - **Citation chips:** each `button[data-grouped-citations]` holds a JSON array of `{ index, occurrence, url, name }`, plus an `aria-label` like "Citation: widget — Widget — Widget 5.0.0 (Current)". The Turndown rule registers every entry and emits its placeholders. Invalid JSON falls back to the chip's text and is never fatal.

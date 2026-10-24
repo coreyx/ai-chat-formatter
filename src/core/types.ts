@@ -78,6 +78,14 @@ export interface SiteAdapter {
   findButtonAnchor(message: Element): ButtonAnchor | null;
   /** Page chrome inside the reply body (buttons, labels, live regions) removed before conversion. */
   stripSelectors: string[];
+  /**
+   * Rewrites site-specific markup in the cloned reply body into standard HTML
+   * before Turndown sees it. This is the place for anything whitespace-sensitive
+   * that the site doesn't render with `<pre>`: Turndown collapses whitespace in
+   * every other element before its rules run, so a rule would only ever see the
+   * damaged text. May throw {@link ConversionError}.
+   */
+  preprocess?(root: HTMLElement): void;
   /** Turndown rules for this site's markup, keyed by rule name. */
   turndownRules(context: ConversionContext): Record<string, TurndownService.Rule>;
   /** Post-conversion rules, applied in order. */

@@ -8,6 +8,12 @@ import { ConversionError, type CitationStyle, type SiteAdapter } from "./types";
  * List items with a single space after the marker (`- item`, `1. item`).
  * Turndown's own rule pads markers to four characters, which renders the same
  * but makes every pasted list look unlike one typed in Obsidian.
+ *
+ * Chat sites often wrap an item's lead text in `<p>` before a nested list,
+ * which Turndown separates with a blank line; that makes the whole list
+ * "loose" (spaced out) in Obsidian although the site shows it tight. The blank
+ * line is dropped only where a nested list follows, since between two
+ * paragraphs it is what keeps them separate.
  */
 const compactListItem: TurndownService.Rule = {
   filter: "li",
@@ -20,7 +26,11 @@ const compactListItem: TurndownService.Rule = {
       prefix = `${start ? Number(start) + index : index + 1}. `;
     }
     const isParagraph = /\n$/.test(content);
-    const body = content.replace(/^\n+/, "").replace(/\n+$/, "") + (isParagraph ? "\n" : "");
+    const body =
+      content
+        .replace(/^\n+/, "")
+        .replace(/\n+$/, "")
+        .replace(/\n\n+(?=[ \t]*(?:[-*+]|\d+[.)])[ \t])/g, "\n") + (isParagraph ? "\n" : "");
     return prefix + body.replace(/\n/g, "\n" + " ".repeat(prefix.length)) + (node.nextSibling ? "\n" : "");
   },
 };
@@ -92,6 +102,7 @@ export function convertMessage(
   for (const selector of adapter.stripSelectors) {
     clone.querySelectorAll(selector).forEach((element) => element.remove());
   }
+  adapter.preprocess?.(clone);
 
   const collector = new CitationCollector();
   const service = createTurndown();
