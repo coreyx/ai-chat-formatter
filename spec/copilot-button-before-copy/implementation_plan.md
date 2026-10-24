@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # Copilot: put Copy as Markdown before the Copy button

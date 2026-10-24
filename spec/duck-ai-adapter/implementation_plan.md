@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # Duck.ai adapter: Copy as Markdown with Read More sources
