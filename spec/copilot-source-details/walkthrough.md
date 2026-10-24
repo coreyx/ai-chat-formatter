@@ -36,7 +36,7 @@ Copilot replies now copy with every citation's page title and domain (`[Title](u
 - Literal invisible characters in source regexes and test strings were replaced by their `\u` escapes, with no change in behavior.
 
 ### Plan revision
-After first testing, the approved plan was reopened, with Corey's agreement, and extended with TASK-13 to TASK-15:
+After first testing, the approved plan was reopened, with the maintainer's agreement, and extended with TASK-13 to TASK-15:
 - **TASK-13:** the panel-style layout, with More after Citations in every style. It had been before the footnote definitions.
 - **TASK-14:** the load-time data source, so More entries keep their links when the page script fails.
 - **TASK-15:** docs.
@@ -74,7 +74,7 @@ Failures along the way, all fixed before their items were committed:
 - **R3's missing flash, investigated:** with both quick sources blocked, the panel was added off-screen (`x=1624` in a 1512-pixel-wide window) and removed about 1.6 seconds later without ever coming into view. The fallback works, it's just invisible. The README wording was corrected.
 
 ## Manual Verification
-Corey's results, 2026-10-24, with the extension reloaded:
+The maintainer's results, 2026-10-24, with the extension reloaded:
 - **R1 passed:** a footnotes copy of a reply with two same-domain citations reads `## Sources` → `### Citations` (two titled GitHub footnotes) → `### More` (four linked entries).
 - **R2 passed:** with the page script blocked, no panel opened and the More entries kept their links (the load-time data).
 - **R3 behaved correctly:** with the load-time data also removed, the More entries came through as `Title — domain` without links (the panel). No flash appeared, for the reason above.
