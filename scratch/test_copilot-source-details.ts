@@ -399,6 +399,19 @@ check("settings: More sources defaults on only where the adapter can read source
 });
 
 // ---------------------------------------------------------------------------
+// Built manifest (npm test builds dist/ first)
+// ---------------------------------------------------------------------------
+
+check("manifest: Copilot's page script runs in the page world on Copilot's pages", () => {
+  const manifest = JSON.parse(readFileSync("dist/manifest.json", "utf8"));
+  const [isolated, page] = manifest.content_scripts;
+  assert.deepEqual(isolated.js, ["content.js"]);
+  assert.equal(isolated.world, undefined, "the main content script stays isolated");
+  assert.deepEqual(page, { matches: copilotAdapter.matches, js: ["page-copilot.js"], run_at: "document_idle", world: "MAIN" });
+  assert.ok(readFileSync("dist/page-copilot.js", "utf8").includes(REFERENCES_EVENT));
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 

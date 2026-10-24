@@ -115,7 +115,7 @@ None at this time.
 ### Build and extension
 
 #### [MODIFY] `scripts/build.mjs`
-- [ ] **TASK-8:** Bundle each adapter's `pageScript` (`src/page/<name>.ts` → `dist/page-<name>.js`, IIFE). For each one, add a second `content_scripts` entry `{ matches: <that adapter's matches>, js: ["page-<name>.js"], run_at: "document_idle", world: "MAIN" }` after the isolated entry.
+- [x] **TASK-8:** Bundle each adapter's `pageScript` (`src/page/<name>.ts` → `dist/page-<name>.js`, IIFE). For each one, add a second `content_scripts` entry `{ matches: <that adapter's matches>, js: ["page-<name>.js"], run_at: "document_idle", world: "MAIN" }` after the isolated entry.
 
 #### [MODIFY] `src/content/controller.ts` + `src/options/options.ts`
 - [ ] **TASK-9:** Wire up the controller and options page:
