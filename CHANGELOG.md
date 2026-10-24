@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Duck.ai support** (`duck.ai`): a **Copy as Markdown** button on every reply, and the option to have Duck.ai's own Copy button copy Markdown too. Duck.ai's Copy leaves out every link and source; this keeps them.
+- Duck.ai's source chips become citations titled from the reply's **Read More** cards. Chips that open a popup of several sources become one citation per source, read through a small script in Duck.ai's page. Read More cards that nothing in the reply cites go under **More**.
+- Duck.ai code blocks keep their language and line breaks, and bold text stays bold.
+- Install steps for Brave (`brave://extensions`).
+
 ### Changed
 
 - On Copilot, the **Copy as Markdown** button now comes before Copilot's Copy button, first in the toolbar.
