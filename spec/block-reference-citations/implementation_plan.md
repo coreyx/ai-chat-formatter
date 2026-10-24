@@ -73,7 +73,7 @@ None at this time.
   - Add `superscriptDigits(n)`. Write the superscript characters as `\u` escapes in the source, so nothing invisible or ambiguous ends up in the code.
 
 #### [MODIFY] `src/core/convert.ts`
-- [ ] **TASK-3:** Add an optional `idToken?: string` to `ConversionOptions`, passed to `renderCitations`. When it's absent and the style is `linked-citations`, generate one: 4 characters from `[a-z0-9]`, using `crypto.getRandomValues`. Tests pass a fixed token so their output is predictable.
+- [x] **TASK-3:** Add an optional `idToken?: string` to `ConversionOptions`, passed to `renderCitations`. When it's absent and the style is `linked-citations`, generate one: 4 characters from `[a-z0-9]`, using `crypto.getRandomValues`. Tests pass a fixed token so their output is predictable.
 
 #### [MODIFY] `src/core/settings.ts`
 - [ ] **TASK-4:** Default `citationStyle` to `"linked-citations"`. `mergeSettings` already keeps any valid stored style, so saved choices survive. Valid stored values now include the new style.

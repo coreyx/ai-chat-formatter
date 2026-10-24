@@ -6,8 +6,12 @@
  * or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { JSDOM } from "jsdom";
 import { CitationCollector, citationBlockId, renderCitations, sourceDomain, superscriptDigits } from "../src/core/citations";
+import { convertMessage, randomIdToken } from "../src/core/convert";
 import type { Citation, SourceReference } from "../src/core/types";
+import { copilotAdapter } from "../src/sites/copilot";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -98,6 +102,35 @@ check("footnotes: More under Sources, then the definitions; without More, just t
   const withoutMore = renderCitations(body, citations, "footnotes", []);
   assert.ok(withoutMore.endsWith("- PathMatcher is global[^2][^1]\n\n[^1]: [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n[^2]: [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example"));
   assert.ok(!withoutMore.includes("## Sources"));
+});
+
+// ---------------------------------------------------------------------------
+// Tokens from convertMessage
+// ---------------------------------------------------------------------------
+
+/** The Copilot fixture's assistant reply, in a fresh jsdom page. */
+function copilotReply(): Element {
+  const document = new JSDOM(readFileSync("scratch/fixtures/copilot-message.html", "utf8")).window.document;
+  return document.querySelectorAll(copilotAdapter.messageSelector)[0];
+}
+
+/** The block-ID tokens used in `markdown`'s markers. */
+function tokensIn(markdown: string): string[] {
+  return [...new Set([...markdown.matchAll(/\[\[#\^c-([a-z0-9]+)-\d+\|/g)].map((m) => m[1]))];
+}
+
+check("convert: each linked-citations copy gets its own 4-character token; a fixed one is used as given", () => {
+  const options = { style: "linked-citations" as const, includeMoreSources: true, isRuleEnabled: () => true, references: null };
+  const first = tokensIn(convertMessage(copilotAdapter, copilotReply(), options));
+  const second = tokensIn(convertMessage(copilotAdapter, copilotReply(), options));
+  assert.equal(first.length, 1);
+  assert.equal(second.length, 1);
+  assert.match(first[0], /^[a-z0-9]{4}$/);
+  assert.notEqual(first[0], second[0], "two copies get different tokens (a clash here has odds of about 1 in 1.7 million)");
+  const fixed = convertMessage(copilotAdapter, copilotReply(), { ...options, idToken: "k3f9" });
+  assert.deepEqual(tokensIn(fixed), ["k3f9"]);
+  assert.ok(fixed.includes("### Citations\n\n1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-k3f9-1"));
+  assert.match(randomIdToken(), /^[a-z0-9]{4}$/);
 });
 
 // ---------------------------------------------------------------------------

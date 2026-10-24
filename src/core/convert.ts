@@ -14,6 +14,23 @@ export interface ConversionOptions {
   isRuleEnabled: (ruleId: string) => boolean;
   /** The message's full source list, if the caller could read it; titles and the More list come from here. */
   references: SourceReference[] | null;
+  /**
+   * The token that makes this copy's block IDs unique, for the linked-citations
+   * style. Generated randomly when absent; tests pass a fixed one.
+   */
+  idToken?: string;
+}
+
+const ID_TOKEN_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+/**
+ * A random 4-character token of lowercase letters and digits. Two copies pasted
+ * into one note then get different block IDs; 36^4 (about 1.7 million)
+ * combinations make a clash between a handful of pastes vanishingly unlikely.
+ */
+export function randomIdToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(4));
+  return Array.from(bytes, (byte) => ID_TOKEN_ALPHABET[byte % ID_TOKEN_ALPHABET.length]).join("");
 }
 
 /**
@@ -132,7 +149,8 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   }
 
   const moreSources = includeMoreSources ? (references ?? []).filter((reference) => !reference.cited) : [];
-  const markdown = renderCitations(service.turndown(clone), collector.citations, style, moreSources);
+  const idToken = style === "linked-citations" ? (options.idToken ?? randomIdToken()) : "";
+  const markdown = renderCitations(service.turndown(clone), collector.citations, style, moreSources, idToken);
   // Rules run after citations are rendered so that citation titles are cleaned up too.
   return runRules(markdown, adapter.rules, isRuleEnabled);
 }
