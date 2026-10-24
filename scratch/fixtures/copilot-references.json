@@ -1,0 +1,67 @@
+[
+  {
+    "name": "PhotoVault",
+    "lastUpdatedDate": null,
+    "hideCitationFromReferenceSection": false,
+    "url": "https://photovault.example/",
+    "isDeduped": false,
+    "referenceMetadata": { "type": "WebSearchResult", "referenceType": "Web", "isExternal": true },
+    "isCitedInResponse": true,
+    "id": "1-0a0b0c",
+    "label": "photovault"
+  },
+  {
+    "name": "GitHub - photovault/photovault: Self-hosted photo library.",
+    "hideCitationFromReferenceSection": false,
+    "url": "https://github.com/photovault/photovault",
+    "isDeduped": false,
+    "isCitedInResponse": true,
+    "id": "2-41a9be"
+  },
+  {
+    "name": "GitHub - example-user/photovault-fork: A fork of PhotoVault.",
+    "hideCitationFromReferenceSection": false,
+    "url": "https://github.com/example-user/photovault-fork",
+    "isDeduped": false,
+    "isCitedInResponse": true,
+    "id": "3-8c02f1"
+  },
+  {
+    "name": "PhotoVault: A Complete Setup Guide",
+    "hideCitationFromReferenceSection": false,
+    "url": "https://guides.example.net/photovault",
+    "isDeduped": false,
+    "isCitedInResponse": false,
+    "id": "4-0f7a33"
+  },
+  {
+    "name": "PhotoVault Backups · Example Blog",
+    "hideCitationFromReferenceSection": false,
+    "url": "https://www.example-blog.com/photovault",
+    "isDeduped": false,
+    "isCitedInResponse": false,
+    "id": "5-6b1d90"
+  },
+  {
+    "name": "Backup and Restore | PhotoVault Docs",
+    "hideCitationFromReferenceSection": false,
+    "url": "https://docs.photovault.example/backup",
+    "isDeduped": false,
+    "isCitedInResponse": false,
+    "id": "6-e27c45"
+  },
+  {
+    "name": "Internal grounding document",
+    "hideCitationFromReferenceSection": true,
+    "url": "https://example.com/hidden",
+    "isCitedInResponse": false,
+    "id": "7-hidden"
+  },
+  {
+    "name": "Not a web page",
+    "hideCitationFromReferenceSection": false,
+    "url": "file:///C:/notes.txt",
+    "isCitedInResponse": false,
+    "id": "8-file"
+  }
+]

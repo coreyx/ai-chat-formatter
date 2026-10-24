@@ -6,7 +6,10 @@
  * FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
+import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../src/core/references-protocol";
+import { extractCopilotReferences, installCopilotPageScript } from "../src/page/copilot";
 import { CitationCollector, renderCitations, sourceDomain } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
@@ -158,6 +161,59 @@ check("convert: uncited sources become More sources only when asked", () => {
   assert.equal(on, "Cited.[^1]\n\n## More sources\n\n- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
   const none = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: null });
   assert.equal(none, "Cited.[^1]\n\n[^1]: [fallback](https://photovault.example/#top) — photovault.example");
+});
+
+// ---------------------------------------------------------------------------
+// Page-world script: reading response.references from React fibers
+// ---------------------------------------------------------------------------
+
+const RAW_REFERENCES: unknown[] = JSON.parse(readFileSync("scratch/fixtures/copilot-references.json", "utf8"));
+
+/**
+ * A jsdom page with one Copilot reply whose `markdown-reply` element carries a
+ * fake React fiber chain with `response.references` at `level` (0 being the
+ * element's own fiber). `level` null gives a chain with no references.
+ */
+function fiberPage(level: number | null, references: unknown[] = RAW_REFERENCES) {
+  const document = new JSDOM(
+    `<!doctype html><body><div role="article"><div data-testid="markdown-reply"><p>Reply.</p></div><div role="toolbar"></div></div></body>`,
+  ).window.document;
+  const reply = document.querySelector('[data-testid="markdown-reply"]')!;
+  let fiber: Record<string, unknown> | null = null;
+  for (let i = 25; i >= 0; i--) {
+    fiber = { memoizedProps: i === level ? { response: { references } } : { other: i }, return: fiber };
+  }
+  (reply as unknown as Record<string, unknown>)["__reactFiber$test123"] = fiber;
+  return { document, reply, message: document.querySelector('[role="article"]')! };
+}
+
+check("page script: reads every web source with title, cited and hidden flags", () => {
+  const { reply } = fiberPage(4);
+  const found = extractCopilotReferences(reply)!;
+  assert.equal(found.length, 7, "the file:// entry is dropped");
+  assert.deepEqual(found[0], { url: "https://photovault.example/", title: "PhotoVault", cited: true, hidden: false });
+  assert.deepEqual(found.map((r) => r.cited), [true, true, true, false, false, false, false]);
+  assert.equal(found[6].hidden, true);
+});
+
+check("page script: finds the list from the message element too, and gives up cleanly", () => {
+  assert.equal(extractCopilotReferences(fiberPage(4).message)?.length, 7);
+  assert.equal(extractCopilotReferences(fiberPage(20).reply)?.length, 7, "20 levels up is still searched");
+  assert.equal(extractCopilotReferences(fiberPage(21).reply), null, "beyond 20 levels it stops");
+  assert.equal(extractCopilotReferences(fiberPage(null).reply), null, "a chain without references");
+  const bare = new JSDOM(`<div data-testid="markdown-reply"></div>`).window.document.body.firstElementChild!;
+  assert.equal(extractCopilotReferences(bare), null, "no fiber at all");
+});
+
+check("page script: answers a request event by writing the list to the reply", () => {
+  const { document, reply } = fiberPage(4);
+  installCopilotPageScript(document);
+  reply.dispatchEvent(new document.defaultView!.CustomEvent(REFERENCES_EVENT, { bubbles: true }));
+  assert.equal(JSON.parse(reply.getAttribute(REFERENCES_ATTRIBUTE)!).length, 7);
+  const empty = fiberPage(null);
+  installCopilotPageScript(empty.document);
+  empty.reply.dispatchEvent(new empty.document.defaultView!.CustomEvent(REFERENCES_EVENT, { bubbles: true }));
+  assert.equal(empty.reply.hasAttribute(REFERENCES_ATTRIBUTE), false);
 });
 
 // ---------------------------------------------------------------------------

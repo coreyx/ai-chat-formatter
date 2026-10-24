@@ -92,7 +92,7 @@ None at this time.
 ### Copilot
 
 #### [NEW] `src/page/copilot.ts`
-- [ ] **TASK-5:** Add the page-world script:
+- [x] **TASK-5:** Add the page-world script:
   - It listens on `document` for `acf:request-references`.
   - An exported `extractCopilotReferences(element)` finds the event target's `[data-testid="markdown-reply"]` (the target itself or a descendant). It reads the property whose name starts with `__reactFiber$` and walks `.return` at most 20 times to the first `memoizedProps.response.references` array.
   - It maps that array to `{ url, title: name, cited: isCitedInResponse === true, hidden: hideCitationFromReferenceSection === true }`. Entries without an http(s) `url` are dropped, and `name` falls back to `""`.
