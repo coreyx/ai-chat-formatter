@@ -47,7 +47,7 @@ None at this time.
 ### Duck.ai adapter
 
 #### [NEW] `src/sites/duckai.ts`
-- [ ] **TASK-1:** Add `duckAiAdapter: SiteAdapter`, with a header comment naming the inspection date as Copilot's does:
+- [x] **TASK-1:** Add `duckAiAdapter: SiteAdapter`, with a header comment naming the inspection date as Copilot's does:
   - `id: "duckai"`, `name: "Duck.ai"`, `matches: ["https://duck.ai/*"]`.
   - `messageSelector: 'div[id*="-assistant-message-"]:not([id^="heading-"])'`, `contentSelector: "[data-dark-theme]"`, `nativeCopyButtonSelector: "button[data-copyairesponse]"`.
   - `findButtonAnchor`: the toolbar row is the copy button's wrapper's parent. Insert directly after the copy button's wrapper `div`, or return null when there's no copy button yet (still streaming).
