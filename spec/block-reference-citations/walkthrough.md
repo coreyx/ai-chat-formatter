@@ -55,5 +55,8 @@ To repeat the checks:
 3. Paste a second reply into the same note, and check that each copy's markers go to their own entries.
 4. Switch to **Obsidian footnotes** and copy again: Reading view shows no empty Citations heading, and a reply without More sources gets only the footnotes.
 
+## Release
+Released as [0.3.0](https://github.com/coreyx/ai-chat-formatter/releases/tag/0.3.0) on 2026-10-24, with `ai-chat-formatter-0.3.0.zip` attached. The asset's SHA-256 matches the local package.
+
 ## Follow-ups
 - None required. Other Markdown apps show linked citations' `[[…]]` and `^…` syntax as text; the other three styles remain for them.
