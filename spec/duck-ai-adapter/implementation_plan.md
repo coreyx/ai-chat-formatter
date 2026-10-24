@@ -62,7 +62,7 @@ None at this time.
   - `sourceName` is the chip's text.
 
   Ordinary links in the reply have no `aria-label`, so they keep converting as normal links.
-- [ ] **TASK-4:** `readReferences: readDuckAiReferences(message)`:
+- [x] **TASK-4:** `readReferences: readDuckAiReferences(message)`:
   - Reads the Read More cards (`section:has(> h4) a[data-handled-by-react]`, in page order) into `SourceReference`s:
     - `url`: the card's `href`.
     - `title`: the card `span`'s own text, excluding the inner domain `span`, with whitespace collapsed.

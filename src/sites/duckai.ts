@@ -1,6 +1,7 @@
 import type TurndownService from "turndown";
+import { normalizeCitationUrl, sourceDomain } from "../core/citations";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import type { ConversionContext, SiteAdapter } from "../core/types";
+import type { ConversionContext, SiteAdapter, SourceReference } from "../core/types";
 
 /*
  * Duck.ai, DuckDuckGo's AI chat. Every selector here comes from duck.ai's
@@ -12,6 +13,12 @@ import type { ConversionContext, SiteAdapter } from "../core/types";
 
 /** Duck.ai's own Copy button in a reply's toolbar. */
 const COPY_BUTTON_SELECTOR = "button[data-copyairesponse]";
+
+/** The reply body: the rendered Markdown, without the Reasoning panel or the Read More cards. */
+const CONTENT_SELECTOR = "[data-dark-theme]";
+
+/** The cards in a reply's Read More section, a `<section>` headed by an `<h4>`. */
+const READ_MORE_CARD_SELECTOR = "section:has(> h4) a[data-handled-by-react]";
 
 /** Code block labels that mean "no particular language", so the fence gets no info string. */
 const PLAIN_LANGUAGES = new Set(["text", "plaintext", "plain", "txt"]);
@@ -86,6 +93,43 @@ function citationChipRule(context: ConversionContext): TurndownService.Rule {
   };
 }
 
+/**
+ * Reads `message`'s Read More cards as its source list, in page order. Each
+ * card holds a favicon, then a `<span>` whose own text is the page title and
+ * whose inner `<span>` is the domain. A card counts as cited when a chip in
+ * the reply body links to the same page; the rest become the More list.
+ *
+ * Returns null when the message has no Read More section, so the chips fall
+ * back to their own labels.
+ */
+export function readDuckAiReferences(message: Element): SourceReference[] | null {
+  const cards = Array.from(message.querySelectorAll<HTMLAnchorElement>(READ_MORE_CARD_SELECTOR)).filter((card) =>
+    /^https?:\/\//.test(card.getAttribute("href") ?? ""),
+  );
+  if (cards.length === 0) return null;
+
+  const body = message.querySelector(CONTENT_SELECTOR);
+  const chipUrls = new Set(
+    Array.from(body?.querySelectorAll<HTMLElement>("a[aria-label][tabindex]") ?? [])
+      .filter(isCitationChip)
+      .map((chip) => normalizeCitationUrl(chip.getAttribute("href") ?? "")),
+  );
+
+  return cards.map((card) => {
+    const url = card.getAttribute("href") ?? "";
+    const label = Array.from(card.children).find((child) => child.nodeName === "SPAN");
+    // The title is the label's own text; its inner span is the domain.
+    const title = Array.from(label?.childNodes ?? [])
+      .filter((node) => node.nodeType === node.TEXT_NODE)
+      .map((node) => node.textContent ?? "")
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const domain = (label?.querySelector("span")?.textContent ?? "").trim() || sourceDomain(url);
+    return { url, title, domain, cited: chipUrls.has(normalizeCitationUrl(url)) };
+  });
+}
+
 export const duckAiAdapter: SiteAdapter = {
   id: "duckai",
   name: "Duck.ai",
@@ -93,8 +137,7 @@ export const duckAiAdapter: SiteAdapter = {
   matches: ["https://duck.ai/*"],
   // Each reply's id ends in "-assistant-message-<turn>-<variant>"; its heading reuses the id with a "heading-" prefix.
   messageSelector: 'div[id*="-assistant-message-"]:not([id^="heading-"])',
-  // The rendered Markdown. The Reasoning panel and the Read More cards sit outside it.
-  contentSelector: "[data-dark-theme]",
+  contentSelector: CONTENT_SELECTOR,
   nativeCopyButtonSelector: COPY_BUTTON_SELECTOR,
   // Every toolbar item has its own wrapper div in a flex row; the button goes in the row, right after Copy's wrapper.
   findButtonAnchor(message) {
@@ -104,5 +147,7 @@ export const duckAiAdapter: SiteAdapter = {
   stripSelectors: ['[data-streamdown="code-block-header"]', '[data-streamdown="code-block-actions"]', "[aria-live]"],
   preprocess: rewriteDuckAiCodeBlocks,
   turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context) }),
+  // Everything is in the page already, so there's no slower reader or page script.
+  readReferences: readDuckAiReferences,
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };
