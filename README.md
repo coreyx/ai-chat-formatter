@@ -82,7 +82,7 @@ Copilot's citation chips don't always name their pages: a chip like `photovault+
 
 1. **Copilot's live page data**, read by a small script that runs in Copilot's own page context (the extension's second content script). This covers every reply.
 2. **The conversation data embedded in the page when it loaded.** This covers every reply that existed when you opened the conversation, but not ones written since.
-3. **The reply's Sources panel**, which **Copy as Markdown** opens for about a second, reads and closes again. The panel shows no URLs for its **More** entries, so those come through as `Title — domain` without a link.
+3. **The reply's Sources panel**, which **Copy as Markdown** opens, reads and closes again. It's usually closed before it finishes sliding into view, so you may not see it at all. The panel shows no URLs for its **More** entries, so those come through as `Title — domain` without a link.
 
 If none of these works, the copy still goes ahead, with the titles the chips themselves carry. The **Use for Copilot's own Copy button** option never opens the panel: it has to decide instantly, before Copilot's own handler runs.
 
@@ -134,7 +134,7 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 ## Limitations
 
 - **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When Copilot changes its markup, the Copilot adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to Copilot's own copy.
-- **Source titles and More sources depend on Copilot's internal data**, which is even more likely to change than its markup. If the live page data stops working, replies that existed when the page loaded still get full titles and links from the page's embedded data. Replies written since then fall back to the Sources panel with Copy as Markdown (a brief flash of the panel, and More entries without links), or to the titles on the citation chips with the Copy-button override, with no More sources.
+- **Source titles and More sources depend on Copilot's internal data**, which is even more likely to change than its markup. If the live page data stops working, replies that existed when the page loaded still get full titles and links from the page's embedded data. Replies written since then fall back to the Sources panel with Copy as Markdown (More entries without links), or to the titles on the citation chips with the Copy-button override, with no More sources.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
 - **Very long code blocks.** Copilot may not keep every line of a long code block in the page. If any line is missing, the copy stops with a message instead of copying a shortened block. Scroll through the code block and try again, or use Copilot's own Copy button.
 
