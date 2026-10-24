@@ -131,7 +131,7 @@ None at this time.
 ### Release
 
 #### [MODIFY] GitHub repository `coreyx/ai-chat-formatter`
-- [ ] **TASK-9:** After your test of the build, and after `wrap-up` and `prepare-release` have produced the 0.4.0 `CHANGELOG.md` and `RELEASE_NOTES.md` sections:
+- [x] **TASK-9:** After your test of the build, and after `wrap-up` and `prepare-release` have produced the 0.4.0 `CHANGELOG.md` and `RELEASE_NOTES.md` sections:
   1. Confirm the effective `git config user.email` is the GitHub noreply address.
   2. Scan the outgoing commits and the zip for private details.
   3. Run `npm run package`.

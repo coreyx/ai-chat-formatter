@@ -92,6 +92,9 @@ To repeat the main checks:
 3. Copy a reply with a popup chip (a domain plus a count). Each of its sources should be a linked citation, with no `domain1` text, and its cards shouldn't be under More.
 4. Turn on **Use for Duck.ai's own Copy button** and check that Duck.ai's Copy gives the same Markdown.
 
+## Release
+Released as [0.4.0](https://github.com/coreyx/ai-chat-formatter/releases/tag/0.4.0) on 2026-10-24, together with the Copilot button order change, with `ai-chat-formatter-0.4.0.zip` attached. The asset's SHA-256 matches the local package.
+
 ## Follow-ups
 - The two checks above, once Duck.ai's model is back.
 - If DuckDuckGo stops redirecting `duckduckgo.com/?ia=chat` to `duck.ai`, add `duckduckgo.com` match patterns.
