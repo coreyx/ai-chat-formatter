@@ -73,7 +73,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
   - `SiteAdapter` (`id`, `name`, `matches: string[]` as MV3 match patterns; `messageSelector`; `contentSelector` for the reply body inside a message; `nativeCopyButtonSelector`; `findButtonAnchor(message): { parent: Element; before: Node | null } | null` for where the extension's button goes; `stripSelectors: string[]` for page chrome removed before conversion; `turndownRules(ctx): Record<string, Turndown.Rule>`; `rules: FormatRule[]`).
 
 #### [NEW] `src/core/citations.ts`
-- [ ] **TASK-5:** Add citation handling:
+- [x] **TASK-5:** Add citation handling:
   - `CitationCollector` numbers citations by first appearance and de-duplicates by normalized URL (lower-case host, no trailing `/`, no `#fragment`). `register()` returns a placeholder `⟦cite:N⟧`; Turndown doesn't escape `⟦`/`⟧`.
   - `renderCitations(markdown, citations, style)`:
     - Drops whitespace before a placeholder and collapses repeats of the same citation in a row.
