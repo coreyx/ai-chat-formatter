@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../src/core/references-protocol";
 import { extractCopilotReferences, installCopilotPageScript } from "../src/page/copilot";
-import { copilotAdapter, parseReferencesAttribute } from "../src/sites/copilot";
+import { copilotAdapter, panelTiming, parseReferencesAttribute } from "../src/sites/copilot";
 import { CitationCollector, renderCitations, sourceDomain } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
@@ -285,6 +285,103 @@ check("copilot: without a source list a multi-source chip falls back to source n
   assert.ok(out.includes("[^1]: [photovault.example](https://photovault.example/)\n"), "a title that's just the domain isn't repeated");
   assert.ok(out.includes("[^2]: [github.com](https://github.com/photovault/photovault)\n"));
   assert.ok(!out.includes("More sources"));
+});
+
+// ---------------------------------------------------------------------------
+// Copilot adapter: the Sources panel fallback
+// ---------------------------------------------------------------------------
+
+const PANEL_HTML = readFileSync("scratch/fixtures/copilot-sources-panel.html", "utf8");
+const TERRENCE = "https://github.com/example-dev/deploykit/blob/main/docs/sandbox-setup.md";
+const ISSUE = "https://github.com/deploykit/deploykit/issues/123";
+
+/**
+ * The Copilot fixture page with its chips citing the two github.com sources of
+ * the panel fixture (index 1 and 2), and a Sources button whose click inserts
+ * the panel after `openDelayMs`. `panelHtml` null makes the panel never
+ * appear. The panel's Close button removes it. `openWith` starts the page with
+ * a panel already open.
+ */
+function panelPage(options: { openDelayMs?: number; panelHtml?: string | null; openWith?: string; chipUrls?: [string, string] } = {}) {
+  const { openDelayMs = 60, panelHtml = PANEL_HTML, openWith, chipUrls = [TERRENCE, ISSUE] } = options;
+  const document = new JSDOM(readFileSync("scratch/fixtures/copilot-message.html", "utf8")).window.document;
+  const chips = document.querySelectorAll("button[data-grouped-citations]");
+  chips.forEach((chip, i) => {
+    const which = i % 2;
+    chip.setAttribute("data-grouped-citations", JSON.stringify([{ index: `${which + 1}-abc${which}`, occurrence: i, url: chipUrls[which], name: "github.com" }]));
+  });
+  const message = document.querySelectorAll(copilotAdapter.messageSelector)[0];
+  const sources = document.createElement("div");
+  sources.setAttribute("data-testid", "sources-button-testid");
+  sources.setAttribute("role", "button");
+  message.querySelector('[role="toolbar"]')!.append(sources);
+
+  let clicks = 0;
+  /** Replaces any open panel with `html`, wiring its Close button to remove it. */
+  const showPanel = (html: string) => {
+    document.querySelector("[data-test-panel-root]")?.remove();
+    document.body.insertAdjacentHTML("beforeend", html);
+    const root = document.querySelector("[data-test-panel-root]")!;
+    root.querySelector('button[aria-label="Close"]')!.addEventListener("click", () => root.remove());
+  };
+  sources.addEventListener("click", () => {
+    clicks++;
+    if (panelHtml !== null) setTimeout(() => showPanel(panelHtml), openDelayMs);
+  });
+  if (openWith) showPanel(openWith);
+  return { document, message, clickCount: () => clicks, panelOpen: () => document.querySelector('[data-testid="search-widget-drawer-test-id"]') !== null };
+}
+
+const EXPECTED_PANEL_REFERENCES = [
+  { url: TERRENCE, title: "deploykit/docs/sandbox-setup.md at main · example-dev/deploykit", domain: "github.com", cited: true },
+  { url: ISSUE, title: "[Bug]: Install fails in a sandbox · Issue #123 · deploykit/deploykit", domain: "github.com", cited: true },
+  { url: null, title: "Installation | DeployKit Docs", domain: "deploykit.example", cited: false },
+  { url: null, title: "Install Script Failed | DeployKit Docs", domain: "deploykit.example", cited: false },
+  { url: null, title: "Set up the sandbox | Example Learn", domain: "learn.example.com", cited: false },
+  { url: null, title: "Cannot start the sandbox - Example Q&A", domain: "learn.example.com", cited: false },
+];
+
+panelTiming.timeoutMs = 400;
+panelTiming.pollMs = 20;
+
+await checkAsync("panel: opens the panel, pairs same-domain citations by index, and closes it", async () => {
+  const page = panelPage();
+  assert.deepEqual(await copilotAdapter.readReferencesSlowly!(page.message), EXPECTED_PANEL_REFERENCES);
+  assert.equal(page.clickCount(), 1);
+  assert.equal(page.panelOpen(), false, "the panel the extension opened is closed again");
+});
+
+await checkAsync("panel: a panel showing another reply is switched and left open", async () => {
+  const other = PANEL_HTML.replace(/github\.com/g, "example.org").replace(/example-dev/g, "someone-else");
+  const page = panelPage({ openWith: other });
+  assert.deepEqual(await copilotAdapter.readReferencesSlowly!(page.message), EXPECTED_PANEL_REFERENCES);
+  assert.equal(page.clickCount(), 1);
+  assert.equal(page.panelOpen(), true, "a panel the user had open stays open");
+});
+
+await checkAsync("panel: a panel already showing this reply is read without a click", async () => {
+  const page = panelPage({ openWith: PANEL_HTML });
+  assert.deepEqual(await copilotAdapter.readReferencesSlowly!(page.message), EXPECTED_PANEL_REFERENCES);
+  assert.equal(page.clickCount(), 0);
+});
+
+await checkAsync("panel: null when the panel never appears, doesn't line up, or there's no Sources button", async () => {
+  const never = panelPage({ panelHtml: null });
+  assert.equal(await copilotAdapter.readReferencesSlowly!(never.message), null);
+  const mismatched = panelPage({ chipUrls: ["https://docs.example.com/a", "https://docs.example.com/b"] });
+  assert.equal(await copilotAdapter.readReferencesSlowly!(mismatched.message), null);
+  assert.equal(mismatched.panelOpen(), false, "closed again even when reading fails");
+  const noButton = panelPage();
+  noButton.message.querySelector('[data-testid="sources-button-testid"]')!.remove();
+  assert.equal(await copilotAdapter.readReferencesSlowly!(noButton.message), null);
+});
+
+await checkAsync("panel: More entries without URLs render as plain text", async () => {
+  const page = panelPage();
+  const references = await copilotAdapter.readReferencesSlowly!(page.message);
+  const out = convertMessage(copilotAdapter, page.message, { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references });
+  assert.ok(out.includes("[^1]: [deploykit/docs/sandbox-setup.md at main · example-dev/deploykit](" + TERRENCE + ") — github.com\n"));
+  assert.ok(out.includes("- Cannot start the sandbox - Example Q&A — learn.example.com\n"));
 });
 
 // ---------------------------------------------------------------------------

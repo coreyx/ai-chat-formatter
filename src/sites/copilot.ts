@@ -146,6 +146,151 @@ function readCopilotReferences(message: Element): SourceReference[] | null {
   return parseReferencesAttribute(json);
 }
 
+/*
+ * The Sources panel fallback. The panel lists a reply's sources under
+ * "Citations" and "More", each item showing the page title and domain as
+ * `title` attributes, but it carries no URLs and only exists while open.
+ * Citations are paired with the chips' URLs by position: a chip source's
+ * `index` ("1-a1b2c3", "2-d4e5f6", …) is its place in the panel's Citations
+ * list, which tells apart two citations from the same domain.
+ */
+
+const SOURCES_BUTTON_SELECTOR = '[data-testid="sources-button-testid"]';
+const PANEL_SELECTOR = '[data-testid="search-widget-drawer-test-id"]';
+const PANEL_ITEM_SELECTOR = '[data-testid="search-widget-item"]';
+const PANEL_CLOSE_SELECTOR = 'button[aria-label="Close"]';
+
+/** How long to wait for the panel and how often to look; exported so the regression script can shorten them. */
+export const panelTiming = { timeoutMs: 3000, pollMs: 50 };
+
+/** One entry as the Sources panel shows it. */
+interface PanelEntry {
+  title: string;
+  domain: string;
+}
+
+/** A chip source: its position in the panel's Citations list and its URL. */
+interface ChipSource {
+  position: number;
+  url: string;
+}
+
+/** Every distinct source `message`'s chips cite, with its position taken from the chip's `index`. */
+function chipSources(message: Element): ChipSource[] {
+  const byPosition = new Map<number, string>();
+  for (const chip of Array.from(message.querySelectorAll("button[data-grouped-citations]"))) {
+    try {
+      const group: unknown = JSON.parse(chip.getAttribute("data-grouped-citations") ?? "");
+      for (const entry of Array.isArray(group) ? group : []) {
+        const position = /^(\d+)-/.exec(String(entry?.index ?? ""))?.[1];
+        if (position && typeof entry.url === "string" && /^https?:\/\//.test(entry.url)) byPosition.set(Number(position), entry.url);
+      }
+    } catch {
+      // A chip with unreadable data just contributes nothing here.
+    }
+  }
+  return Array.from(byPosition, ([position, url]) => ({ position, url }));
+}
+
+/** Reads the open Sources panel's Citations and More lists, or null when no panel is open. */
+function readPanel(document: Document): { citations: PanelEntry[]; more: PanelEntry[] } | null {
+  const panel = document.querySelector(PANEL_SELECTOR);
+  if (!panel) return null;
+  const lists = { citations: [] as PanelEntry[], more: [] as PanelEntry[] };
+  let section: keyof typeof lists | null = null;
+  // Headings and lists are siblings: "Citations", its list, "More", its list.
+  for (const child of Array.from((panel.querySelector('[data-testid="search-widget-scrollable-container"]') ?? panel).children)) {
+    if (child.getAttribute("role") === "list") {
+      if (!section) continue;
+      for (const item of Array.from(child.querySelectorAll(PANEL_ITEM_SELECTOR))) {
+        const [title, domain] = Array.from(item.querySelectorAll("[title]"), (element) => element.getAttribute("title")?.trim() ?? "");
+        if (title && domain) lists[section].push({ title, domain });
+      }
+    } else {
+      const heading = child.textContent?.trim().toLowerCase();
+      if (heading === "citations") section = "citations";
+      else if (heading === "more") section = "more";
+    }
+  }
+  return lists;
+}
+
+/**
+ * Pairs the panel's lists with `sources` and returns the reply's references,
+ * or null when the panel doesn't belong to this reply: every chip source's
+ * position must exist in the Citations list, with the same domain.
+ */
+function pairPanel(panel: { citations: PanelEntry[]; more: PanelEntry[] }, sources: ChipSource[]): SourceReference[] | null {
+  const references: SourceReference[] = [];
+  for (const { position, url } of sources) {
+    const entry = panel.citations[position - 1];
+    if (!entry || entry.domain.toLowerCase() !== sourceDomain(url).toLowerCase()) return null;
+    references.push({ url, title: entry.title, domain: sourceDomain(url), cited: true });
+  }
+  for (const entry of panel.more) references.push({ url: null, title: entry.title, domain: entry.domain, cited: false });
+  return references;
+}
+
+/** A fingerprint of what the open panel shows, to tell when a click has swapped in another reply's sources. */
+function panelFingerprint(document: Document): string {
+  return Array.from(document.querySelectorAll(`${PANEL_SELECTOR} ${PANEL_ITEM_SELECTOR} [title]`), (element) => element.getAttribute("title")).join("\n");
+}
+
+/** Clicks the panel's Close button, which sits in a header just above the list. */
+function closePanel(document: Document): void {
+  let container: Element | null = document.querySelector(PANEL_SELECTOR);
+  for (let level = 0; container && level < 4; level++, container = container.parentElement) {
+    const close = container.querySelector<HTMLElement>(PANEL_CLOSE_SELECTOR);
+    if (close) {
+      close.click();
+      return;
+    }
+  }
+}
+
+/** Resolves after `ms` milliseconds. */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Reads `message`'s sources by opening its Sources panel, for when the page
+ * script can't. If the panel is already showing this reply, it's read as is.
+ * Otherwise the reply's Sources button is clicked and the panel polled until
+ * it shows entries that pair with this reply's chips, for up to
+ * {@link panelTiming}.timeoutMs. A panel the extension opened is closed again,
+ * whatever happens; one the user had open is left open. Returns null when the
+ * reply has no Sources button or chips, or the panel never lines up.
+ */
+async function readCopilotReferencesFromPanel(message: Element): Promise<SourceReference[] | null> {
+  const document = message.ownerDocument;
+  const button = message.querySelector<HTMLElement>(SOURCES_BUTTON_SELECTOR);
+  const sources = chipSources(message);
+  if (!button || sources.length === 0) return null;
+
+  const wasOpen = document.querySelector(PANEL_SELECTOR) !== null;
+  if (wasOpen) {
+    const current = readPanel(document);
+    const paired = current && pairPanel(current, sources);
+    if (paired) return paired;
+  }
+
+  const before = wasOpen ? panelFingerprint(document) : null;
+  button.click();
+  try {
+    for (let waited = 0; waited <= panelTiming.timeoutMs; waited += panelTiming.pollMs) {
+      const panel = readPanel(document);
+      const changed = before === null || panelFingerprint(document) !== before;
+      const paired = panel && changed ? pairPanel(panel, sources) : null;
+      if (paired) return paired;
+      await delay(panelTiming.pollMs);
+    }
+    return null;
+  } finally {
+    if (!wasOpen) closePanel(document);
+  }
+}
+
 export const copilotAdapter: SiteAdapter = {
   id: "copilot",
   name: "Copilot",
@@ -163,6 +308,7 @@ export const copilotAdapter: SiteAdapter = {
   preprocess: rewriteCodeBlocks,
   turndownRules: (context) => ({ copilotCitationChip: citationChipRule(context) }),
   readReferences: readCopilotReferences,
+  readReferencesSlowly: readCopilotReferencesFromPanel,
   pageScript: "copilot",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };

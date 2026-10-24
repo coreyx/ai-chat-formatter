@@ -104,7 +104,7 @@ None at this time.
   - `pageScript: "copilot"`.
   - `readReferences(message)`: dispatches `new CustomEvent("acf:request-references", { bubbles: true })` on the reply body, then reads, parses and removes `data-acf-references`, using an exported `parseReferencesAttribute(json): SourceReference[] | null`. That validates the shape, drops hidden entries and entries without an http(s) URL, fills in `domain`, and returns null on any problem.
   - The citation-chip rule takes each source's title from `context.findReference(url)?.title` when it's non-empty, and otherwise falls back to the 0.1.0 logic (the chip's `aria-label`, then the source name).
-- [ ] **TASK-7:** Add the panel fallback for Copilot, `readReferencesSlowly(message)`:
+- [x] **TASK-7:** Add the panel fallback for Copilot, `readReferencesSlowly(message)`:
   - Return null right away when the message has no `[data-testid="sources-button-testid"]` or no citation chips.
   - Note whether `[data-testid="search-widget-drawer-test-id"]` is already open and what its first item's title is. Click the Sources button, then poll every 50 ms, for up to 3 seconds, until the drawer's items differ from the noted ones and its Citations list has at least as many items as the highest chip index.
   - Read each section's items, the text after a "Citations" or "More" heading. Every item's `[title]` elements give the title (first) and the domain (second).

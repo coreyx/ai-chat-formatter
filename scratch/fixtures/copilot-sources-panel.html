@@ -1,0 +1,30 @@
+<!--
+  Copilot's Sources panel reduced to the structure observed on copilot.com on
+  2026-10-24 (a reply with two same-domain citations in a test
+  chat): a header with the Close button, then the drawer listing "Citations"
+  and "More". Items have no URLs; each shows its title and domain as `title`
+  attributes. Two citations share the github.com domain.
+-->
+<div data-test-panel-root="">
+  <header role="none">
+    <div><h2>Sources</h2><div data-testid="popover-trigger" role="button"></div></div>
+    <div><button aria-label="Close"><span></span></button></div>
+  </header>
+  <div data-testid="search-widget-drawer-test-id">
+    <div data-testid="search-widget-scrollable-container">
+      <div></div>
+      <div><span>Citations</span></div>
+      <div role="list">
+        <div data-testid="search-widget-item" role="listitem"><div role="link" data-testid="references-search-widget-item"><div><img alt="" src="data:image/png;base64,"><div><div><div role="link" title="deploykit/docs/sandbox-setup.md at main · example-dev/deploykit">deploykit/docs/sandbox-setup.md at main · example-dev/deploykit</div></div><div><div title="github.com">github.com</div></div></div></div></div></div>
+        <div data-testid="search-widget-item" role="listitem"><div role="link" data-testid="references-search-widget-item"><div><img alt="" src="data:image/png;base64,"><div><div><div role="link" title="[Bug]: Install fails in a sandbox · Issue #123 · deploykit/deploykit">[Bug]: Install fails in a sandbox · Issue #123 · deploykit/deploykit</div></div><div><div title="github.com">github.com</div></div></div></div></div></div>
+      </div>
+      <div><span>More</span></div>
+      <div role="list">
+        <div data-testid="search-widget-item" role="listitem"><div role="link" data-testid="references-search-widget-item"><div><div><div><div role="link" title="Installation | DeployKit Docs">Installation | DeployKit Docs</div></div><div><div title="deploykit.example">deploykit.example</div></div></div></div></div></div>
+        <div data-testid="search-widget-item" role="listitem"><div role="link" data-testid="references-search-widget-item"><div><div><div><div role="link" title="Install Script Failed | DeployKit Docs">Install Script Failed | DeployKit Docs</div></div><div><div title="deploykit.example">deploykit.example</div></div></div></div></div></div>
+        <div data-testid="search-widget-item" role="listitem"><div role="link" data-testid="references-search-widget-item"><div><div><div><div role="link" title="Set up the sandbox | Example Learn">Set up the sandbox | Example Learn</div></div><div><div title="learn.example.com">learn.example.com</div></div></div></div></div></div>
+        <div data-testid="search-widget-item" role="listitem"><div role="link" data-testid="references-search-widget-item"><div><div><div><div role="link" title="Cannot start the sandbox - Example Q&amp;A">Cannot start the sandbox - Example Q&amp;A</div></div><div><div title="learn.example.com">learn.example.com</div></div></div></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
