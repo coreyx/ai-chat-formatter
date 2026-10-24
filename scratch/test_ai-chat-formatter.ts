@@ -10,6 +10,7 @@ import { CitationCollector, normalizeCitationUrl, parseCitationTitle, renderCita
 import { convertMessage } from "../src/core/convert";
 import { collapseBlankLinesRule, invisibleCharactersRule, runRules } from "../src/core/rules";
 import { ContentController } from "../src/content/controller";
+import { renderOptions } from "../src/options/options";
 import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
 import { ConversionError, type Citation, type SiteAdapter } from "../src/core/types";
 import { copilotAdapter, copilotLanguageId } from "../src/sites/copilot";
@@ -495,6 +496,44 @@ await checkAsync("controller: with the override on, a failed conversion falls ba
   await flush();
   assert.deepEqual(written, []);
   assert.deepEqual(siteClicks, ["native copy ran"]);
+});
+
+// ---------------------------------------------------------------------------
+// Options page
+// ---------------------------------------------------------------------------
+
+check("options: the form shows the settings and reports each change as a full settings object", () => {
+  const { document } = new JSDOM("<!doctype html><body></body>").window;
+  const changes: Settings[] = [];
+  const form = renderOptions(document, SITE_ADAPTERS, (settings) => changes.push(settings));
+  document.body.append(form.root);
+  form.fill(buildDefaultSettings(SITE_ADAPTERS));
+
+  const input = (name: string) => document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+  assert.equal(input("enabled").checked, true);
+  assert.equal(document.querySelector<HTMLInputElement>('input[name="citationStyle"]:checked')!.value, "footnotes");
+  assert.equal(input("copilot.showCopyButton").checked, true);
+  assert.equal(input("copilot.overrideNativeCopy").checked, false);
+  assert.equal(input("copilot.rules.collapse-blank-lines").checked, true);
+  assert.match(document.querySelector('section[data-site="copilot"] .hosts')!.textContent!, /copilot\.microsoft\.com, copilot\.com/);
+
+  const toggle = (element: HTMLInputElement) => {
+    element.checked = !element.checked;
+    element.dispatchEvent(new document.defaultView!.Event("change"));
+  };
+  toggle(input("copilot.overrideNativeCopy"));
+  document.querySelector<HTMLInputElement>('input[value="sources-only"]')!.checked = true;
+  document.querySelector<HTMLInputElement>('input[value="sources-only"]')!.dispatchEvent(new document.defaultView!.Event("change"));
+  toggle(input("copilot.rules.invisible-characters"));
+  toggle(input("copilot.enabled"));
+
+  const last = changes[changes.length - 1];
+  assert.equal(changes.length, 4);
+  assert.equal(last.citationStyle, "sources-only");
+  assert.equal(last.sites.copilot.overrideNativeCopy, true);
+  assert.equal(last.sites.copilot.rules["invisible-characters"], false);
+  assert.equal(last.sites.copilot.enabled, false);
+  assert.equal(document.querySelector<HTMLFieldSetElement>('section[data-site="copilot"] fieldset.site')!.disabled, true, "site details grey out when the site is off");
 });
 
 // ---------------------------------------------------------------------------

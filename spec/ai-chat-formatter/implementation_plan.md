@@ -129,7 +129,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
 - [x] **TASK-12:** Style `.acf-copy-button` to sit with Copilot's toolbar icons: 32px square, transparent background, `currentColor` icon, rounded hover background, visible focus ring. Add the copied (checkmark) state and the `.acf-toast` (fixed bottom-center, readable in light and dark). Class names are prefixed `acf-` so they don't clash with the page.
 
 #### [NEW] `src/options/options.html` + `src/options/options.ts`
-- [ ] **TASK-13:** Add the options page, built from `SITE_ADAPTERS` and the stored settings. Every change saves immediately.
+- [x] **TASK-13:** Add the options page, built from `SITE_ADAPTERS` and the stored settings. Every change saves immediately.
   - A master **Enable AI Chat Formatter** toggle.
   - **Citation style**: three radio buttons with a one-line example of each, footnotes by default.
   - One section per site listing its URL patterns, with toggles for **Enabled**, **Show "Copy as Markdown" button** (on), **Use for the site's own Copy button** (off), and one per rule (name plus description).

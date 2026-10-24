@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Chat Formatter options</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f7f8;
+      --surface: #ffffff;
+      --text: #1d1d20;
+      --muted: #5f5f68;
+      --border: #dcdce1;
+      --accent: #2f6fde;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #17171a;
+        --surface: #202024;
+        --text: #ececf0;
+        --muted: #a1a1aa;
+        --border: #34343a;
+        --accent: #7aa7ff;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
+    h1 { margin: 0 0 4px; font-size: 24px; }
+    h2 { margin: 0 0 12px; font-size: 17px; }
+    h3 { margin: 16px 0 8px; font-size: 14px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .lead { margin: 0 0 24px; color: var(--muted); }
+    section {
+      margin-bottom: 16px;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+    fieldset:disabled { opacity: 0.5; }
+    .option { display: flex; gap: 12px; align-items: flex-start; padding: 6px 0; cursor: pointer; }
+    .option input { margin: 4px 0 0; accent-color: var(--accent); flex: none; }
+    .option-text { display: flex; flex-direction: column; }
+    .hint { color: var(--muted); font-size: 13px; }
+    code {
+      font: 12.5px/1.4 ui-monospace, "Cascadia Code", Consolas, monospace;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--text) 8%, transparent);
+    }
+    .hosts { margin: -8px 0 8px; }
+    #status { min-height: 1.5em; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>AI Chat Formatter</h1>
+    <p class="lead">Copies replies from AI chat sites as clean Markdown, with their citations, ready to paste into Obsidian.</p>
+    <div id="options"></div>
+    <p id="status" role="status"></p>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
