@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "AI Chat Formatter",
+  "version": "0.0.0",
+  "description": "Copies AI chat replies as clean Markdown, with their citations, ready to paste into Obsidian.",
+  "minimum_chrome_version": "120",
+  "permissions": ["storage", "clipboardWrite"],
+  "content_scripts": [
+    {
+      "matches": [],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
