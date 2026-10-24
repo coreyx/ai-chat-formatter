@@ -3,7 +3,7 @@
  * site with its button, override and rule toggles. Every change is saved as
  * soon as it's made, and open chat tabs pick it up without a reload.
  */
-import { loadSettings, onSettingsChanged, saveSettings, type Settings } from "../core/settings";
+import { canReadReferences, loadSettings, onSettingsChanged, saveSettings, type Settings } from "../core/settings";
 import { CITATION_STYLES, type CitationStyle, type SiteAdapter } from "../core/types";
 import { SITE_ADAPTERS } from "../sites/index";
 
@@ -108,6 +108,18 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
         update((s) => (s.sites[adapter.id].overrideNativeCopy = input.checked)),
       ),
     );
+    if (canReadReferences(adapter)) {
+      details.append(
+        option(
+          document,
+          "checkbox",
+          `${adapter.id}.includeMoreSources`,
+          'Include "More" sources',
+          `Adds the sources ${adapter.name} lists under More in its Sources panel but doesn't cite in the reply.`,
+          (input) => update((s) => (s.sites[adapter.id].includeMoreSources = input.checked)),
+        ),
+      );
+    }
     if (adapter.rules.length) {
       details.append(el(document, "h3", undefined, "Formatting rules"));
       for (const rule of adapter.rules) {
@@ -131,6 +143,8 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
       input(`${adapter.id}.enabled`)!.checked = site.enabled;
       input(`${adapter.id}.showCopyButton`)!.checked = site.showCopyButton;
       input(`${adapter.id}.overrideNativeCopy`)!.checked = site.overrideNativeCopy;
+      const includeMore = input(`${adapter.id}.includeMoreSources`);
+      if (includeMore) includeMore.checked = site.includeMoreSources;
       for (const rule of adapter.rules) input(`${adapter.id}.rules.${rule.id}`)!.checked = site.rules[rule.id];
       root.querySelector<HTMLFieldSetElement>(`section[data-site="${attr(adapter.id)}"] fieldset.site`)!.disabled = !site.enabled;
     }

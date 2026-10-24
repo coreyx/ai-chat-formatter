@@ -309,6 +309,16 @@ export const copilotAdapter: SiteAdapter = {
   turndownRules: (context) => ({ copilotCitationChip: citationChipRule(context) }),
   readReferences: readCopilotReferences,
   readReferencesSlowly: readCopilotReferencesFromPanel,
+  // A chip grouping several sources ("photovault+1") names only the first in its label.
+  hasUntitledCitations: (message) =>
+    Array.from(message.querySelectorAll("button[data-grouped-citations]")).some((chip) => {
+      try {
+        const group: unknown = JSON.parse(chip.getAttribute("data-grouped-citations") ?? "");
+        return Array.isArray(group) && group.length > 1;
+      } catch {
+        return false;
+      }
+    }),
   pageScript: "copilot",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };

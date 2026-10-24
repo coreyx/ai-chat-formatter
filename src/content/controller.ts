@@ -1,6 +1,6 @@
 import { convertMessage } from "../core/convert";
 import type { Settings, SiteSettings } from "../core/settings";
-import { ConversionError, type SiteAdapter } from "../core/types";
+import { ConversionError, type SiteAdapter, type SourceReference } from "../core/types";
 
 /** Prefix for console messages, so the extension's output is easy to filter in a busy page console. */
 const LOG_PREFIX = "[AI Chat Formatter]";
@@ -113,32 +113,75 @@ export class ContentController {
     return button;
   }
 
-  /** Converts `message` and writes it to the clipboard, showing the outcome on `button` or in a toast. */
+  /**
+   * Gathers `message`'s sources, converts it and writes it to the clipboard,
+   * showing the outcome on `button` or in a toast. Gathering may take a moment
+   * when it falls back to the slower path, so the button is disabled and
+   * marked busy meanwhile, and a click on a busy button is ignored.
+   */
   async copy(message: Element, button?: HTMLButtonElement): Promise<void> {
-    let markdown: string;
+    if (button?.getAttribute("aria-busy") === "true") return;
+    button?.setAttribute("aria-busy", "true");
+    if (button) button.disabled = true;
     try {
-      markdown = this.convert(message);
-    } catch (error) {
-      this.showToast(describeError(error, `Couldn't convert this ${this.adapter.name} reply`));
-      return;
+      const references = await this.gatherReferences(message);
+      let markdown: string;
+      try {
+        markdown = this.convert(message, references);
+      } catch (error) {
+        this.showToast(describeError(error, `Couldn't convert this ${this.adapter.name} reply`));
+        return;
+      }
+      try {
+        await this.env.writeClipboard(markdown);
+      } catch (error) {
+        this.showToast(describeError(error, "Couldn't write to the clipboard"));
+        return;
+      }
+      if (button) this.flashCopied(button);
+    } finally {
+      button?.removeAttribute("aria-busy");
+      if (button) button.disabled = false;
     }
-    try {
-      await this.env.writeClipboard(markdown);
-    } catch (error) {
-      this.showToast(describeError(error, "Couldn't write to the clipboard"));
-      return;
-    }
-    if (button) this.flashCopied(button);
   }
 
-  /** Converts `message` with the current settings; throws as {@link convertMessage} does. */
-  private convert(message: Element): string {
+  /**
+   * Reads `message`'s source list: the adapter's synchronous reader first,
+   * then its slower one, but only when the result would show — the More list
+   * is on, or some citation has no title without it. A reader that throws
+   * counts as having found nothing.
+   */
+  private async gatherReferences(message: Element): Promise<SourceReference[] | null> {
+    const quick = this.readReferencesNow(message);
+    if (quick || !this.adapter.readReferencesSlowly) return quick;
+    const site = this.settings.sites[this.adapter.id];
+    if (!site?.includeMoreSources && !this.adapter.hasUntitledCitations?.(message)) return null;
+    try {
+      return await this.adapter.readReferencesSlowly(message);
+    } catch (error) {
+      console.warn(`${LOG_PREFIX} Couldn't read the sources from the page:`, error);
+      return null;
+    }
+  }
+
+  /** The adapter's synchronous source reader, guarded so a failure never blocks a copy. */
+  private readReferencesNow(message: Element): SourceReference[] | null {
+    try {
+      return this.adapter.readReferences?.(message) ?? null;
+    } catch (error) {
+      console.warn(`${LOG_PREFIX} Couldn't read the sources from the page:`, error);
+      return null;
+    }
+  }
+
+  /** Converts `message` with the current settings and `references`; throws as {@link convertMessage} does. */
+  private convert(message: Element, references: SourceReference[] | null): string {
     const site = this.settings.sites[this.adapter.id];
     return convertMessage(this.adapter, message, {
       style: this.settings.citationStyle,
-      includeMoreSources: false,
+      includeMoreSources: site?.includeMoreSources ?? false,
       isRuleEnabled: (ruleId) => site?.rules[ruleId] ?? true,
-      references: null,
+      references,
     });
   }
 
@@ -147,6 +190,8 @@ export class ContentController {
    * Conversion runs synchronously, before deciding anything: only a successful
    * conversion stops the click, so if the reply can't be converted the site's
    * own copy still happens and the user is never left with nothing copied.
+   * For the same reason only the synchronous source reader is used here; the
+   * slower one couldn't finish before the site's handler runs.
    */
   private readonly onNativeCopyClick = (event: Event): void => {
     if (!this.activeSiteSettings?.overrideNativeCopy) return;
@@ -157,7 +202,7 @@ export class ContentController {
 
     let markdown: string;
     try {
-      markdown = this.convert(message);
+      markdown = this.convert(message, this.readReferencesNow(message));
     } catch (error) {
       console.warn(`${LOG_PREFIX} Falling back to ${this.adapter.name}'s own copy:`, error);
       return;

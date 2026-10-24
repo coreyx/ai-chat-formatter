@@ -118,7 +118,7 @@ None at this time.
 - [x] **TASK-8:** Bundle each adapter's `pageScript` (`src/page/<name>.ts` → `dist/page-<name>.js`, IIFE). For each one, add a second `content_scripts` entry `{ matches: <that adapter's matches>, js: ["page-<name>.js"], run_at: "document_idle", world: "MAIN" }` after the isolated entry.
 
 #### [MODIFY] `src/content/controller.ts` + `src/options/options.ts`
-- [ ] **TASK-9:** Wire up the controller and options page:
+- [x] **TASK-9:** Wire up the controller and options page:
   - **Copy as Markdown** gathers references with `adapter.readReferences(message)`. When that returns null and `includeMoreSources` is on or a chip has no title, it awaits `adapter.readReferencesSlowly(message)`. Then it converts.
   - While it waits, the button is disabled and shows `aria-busy="true"`, so a second click doesn't start a second copy.
   - The native Copy override uses `readReferences` only.

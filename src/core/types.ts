@@ -121,6 +121,12 @@ export interface SiteAdapter {
    */
   readReferencesSlowly?(message: Element): Promise<SourceReference[] | null>;
   /**
+   * Whether some citation in `message` has no title of its own on the page,
+   * so the slower reader is worth running even when the "More sources" list
+   * is off.
+   */
+  hasUntitledCitations?(message: Element): boolean;
+  /**
    * Name of a script under `src/page/` that the build bundles and the manifest
    * runs in the page's own JavaScript world, for data the isolated content
    * script can't see (such as a framework's internal state).

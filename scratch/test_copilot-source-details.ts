@@ -13,7 +13,10 @@ import { extractCopilotReferences, installCopilotPageScript } from "../src/page/
 import { copilotAdapter, panelTiming, parseReferencesAttribute } from "../src/sites/copilot";
 import { CitationCollector, renderCitations, sourceDomain } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
-import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
+import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
+import { ContentController } from "../src/content/controller";
+import { renderOptions } from "../src/options/options";
+import { SITE_ADAPTERS } from "../src/sites/index";
 import type { Citation, SiteAdapter, SourceReference } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -396,6 +399,94 @@ check("settings: More sources defaults on only where the adapter can read source
   assert.equal(defaults.sites.without.includeMoreSources, false);
   assert.equal(mergeSettings({ sites: { with: { includeMoreSources: false } } }, defaults).sites.with.includeMoreSources, false);
   assert.equal(mergeSettings({ sites: { with: { includeMoreSources: "no" } } }, defaults).sites.with.includeMoreSources, true);
+});
+
+// ---------------------------------------------------------------------------
+// Controller: gathering sources for Copy as Markdown and the native override
+// ---------------------------------------------------------------------------
+
+const STUB_MORE = [ref("https://docs.photovault.example/backup", "Backup and Restore | PhotoVault Docs", false)];
+
+/**
+ * A controller on the Copilot fixture with stubbed source readers that record
+ * their calls. `quick` is what the synchronous reader returns; the slow reader
+ * resolves with STUB_MORE when `release()` is called.
+ */
+function stubbedController(quick: SourceReference[] | null, configure: (settings: Settings) => void = () => {}) {
+  const document = new JSDOM(readFileSync("scratch/fixtures/copilot-message.html", "utf8")).window.document;
+  const calls = { quick: 0, slow: 0 };
+  let release: () => void = () => {};
+  const adapter: SiteAdapter = {
+    ...copilotAdapter,
+    readReferences: () => (calls.quick++, quick),
+    readReferencesSlowly: () => (calls.slow++, new Promise((resolve) => (release = () => resolve(STUB_MORE)))),
+  };
+  const settings = buildDefaultSettings([adapter]);
+  configure(settings);
+  const written: string[] = [];
+  const controller = new ContentController(adapter, settings, { document, writeClipboard: async (text) => void written.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  const button = document.querySelector<HTMLButtonElement>(".acf-copy-button")!;
+  return { document, calls, written, button, release: () => release() };
+}
+
+/** Lets pending timers and promise callbacks run. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+await checkAsync("controller: a successful quick read skips the panel fallback", async () => {
+  const page = stubbedController(STUB_MORE);
+  page.button.click();
+  await flush();
+  assert.deepEqual(page.calls, { quick: 1, slow: 0 });
+  assert.ok(page.written[0].includes("## More sources\n\n- [Backup and Restore | PhotoVault Docs]"));
+});
+
+await checkAsync("controller: Copy as Markdown waits for the fallback, ignoring clicks meanwhile", async () => {
+  const page = stubbedController(null);
+  page.button.click();
+  await flush();
+  assert.equal(page.button.getAttribute("aria-busy"), "true");
+  assert.equal(page.button.disabled, true);
+  page.button.disabled = false; // A click that slips through anyway must still be ignored.
+  page.button.click();
+  await flush();
+  assert.equal(page.calls.slow, 1, "the second click didn't start another read");
+  page.release();
+  await flush();
+  await flush();
+  assert.equal(page.written.length, 1);
+  assert.ok(page.written[0].includes("## More sources"));
+  assert.equal(page.button.hasAttribute("aria-busy"), false);
+});
+
+await checkAsync("controller: no fallback when it couldn't add anything", async () => {
+  const page = stubbedController(null, (settings) => (settings.sites.copilot.includeMoreSources = false));
+  page.button.click();
+  await flush();
+  assert.equal(page.calls.slow, 0, "More sources off and no multi-source chips");
+  assert.equal(page.written.length, 1);
+});
+
+await checkAsync("controller: the native override uses only the quick read", async () => {
+  const page = stubbedController(null, (settings) => (settings.sites.copilot.overrideNativeCopy = true));
+  page.document.querySelector<HTMLButtonElement>(copilotAdapter.nativeCopyButtonSelector)!.click();
+  await flush();
+  assert.deepEqual(page.calls, { quick: 1, slow: 0 });
+  assert.equal(page.written.length, 1);
+  assert.ok(!page.written[0].includes("More sources"));
+});
+
+check("options: the Include More sources toggle shows and reports changes", () => {
+  const { document } = new JSDOM("<!doctype html><body></body>").window;
+  const changes: Settings[] = [];
+  const form = renderOptions(document, SITE_ADAPTERS, (settings) => changes.push(settings));
+  document.body.append(form.root);
+  form.fill(buildDefaultSettings(SITE_ADAPTERS));
+  const toggle = document.querySelector<HTMLInputElement>('input[name="copilot.includeMoreSources"]')!;
+  assert.equal(toggle.checked, true);
+  toggle.checked = false;
+  toggle.dispatchEvent(new document.defaultView!.Event("change"));
+  assert.equal(changes.at(-1)!.sites.copilot.includeMoreSources, false);
 });
 
 // ---------------------------------------------------------------------------
