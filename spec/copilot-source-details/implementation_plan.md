@@ -169,7 +169,7 @@ None at this time.
   - The inline `[N](url)` and `[^N]` markers in the body are unchanged.
 
 #### [MODIFY] `src/sites/copilot.ts`
-- [ ] **TASK-14:** Read sources from the page's load-time data:
+- [x] **TASK-14:** Read sources from the page's load-time data:
   - An exported `readPageDataReferences(message)` finds the reply's `data-message-id`, then the `<script>` whose text contains `window.__staticRouterHydrationData = JSON.parse(`. It takes the string literal passed to `JSON.parse`, decodes it, and parses the result. The parsed data is cached per script element, since it's about 350 KB and doesn't change while the page is open.
   - It finds the message whose `messageId` matches in `loaderData["chat-history"].store.rawConversationResponse.messages`, and maps each `references` value to `{ url: targetLink, title, domain, cited: isCitedInResponse === true }`. The title comes from `displayData.content` parsed as JSON: `providerDisplayName`, then `Title`, then `""`. Values without an http(s) `targetLink` are dropped.
   - It returns null for anything missing or malformed, and never throws.

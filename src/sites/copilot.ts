@@ -147,6 +147,98 @@ function readCopilotReferences(message: Element): SourceReference[] | null {
 }
 
 /*
+ * Load-time data. Copilot embeds the conversation it loaded with the page in
+ * a script, `window.__staticRouterHydrationData = JSON.parse("…")`. Its text
+ * is ordinary page content, so the isolated content script can read it
+ * without React. Under
+ * `loaderData["chat-history"].store.rawConversationResponse.messages`, each
+ * message has the `messageId` its reply element carries as
+ * `data-message-id`, and a `references` map: cited sources keyed by the
+ * chips' own index, uncited ones `uncite-…`, each with `targetLink`,
+ * `isCitedInResponse` and `displayData.content`, a JSON string holding the
+ * page title. It only covers replies that existed when the page loaded.
+ */
+
+const PAGE_DATA_MARKER = "window.__staticRouterHydrationData = JSON.parse(";
+
+/**
+ * The string literal passed to `JSON.parse` in the page-data script, quotes
+ * included, or null when it isn't there. A character scan rather than a regex,
+ * since the script runs to hundreds of kilobytes.
+ */
+function pageDataLiteral(text: string): string | null {
+  const start = text.indexOf(PAGE_DATA_MARKER) + PAGE_DATA_MARKER.length;
+  if (start < PAGE_DATA_MARKER.length || text[start] !== '"') return null;
+  for (let i = start + 1; i < text.length; i++) {
+    if (text[i] === "\\") i++;
+    else if (text[i] === '"') return text.slice(start, i + 1);
+  }
+  return null;
+}
+
+/** Parsed page data per script element; the data is large and doesn't change while the page is open. */
+const pageDataCache = new WeakMap<Element, unknown>();
+
+/** The page's load-time data, parsed once per script, or null when the page has none or it can't be read. */
+function pageData(document: Document): unknown {
+  const script = Array.from(document.scripts).find((element) => element.textContent?.includes(PAGE_DATA_MARKER));
+  if (!script) return null;
+  if (!pageDataCache.has(script)) {
+    let parsed: unknown = null;
+    try {
+      const literal = pageDataLiteral(script.textContent ?? "");
+      // The literal is a JSON string whose value is the JSON text of the data, so it takes two parses.
+      if (literal) parsed = JSON.parse(JSON.parse(literal));
+    } catch {
+      parsed = null;
+    }
+    pageDataCache.set(script, parsed);
+  }
+  return pageDataCache.get(script) ?? null;
+}
+
+/** The page title in a reference's `displayData.content` JSON, or "" when it can't be read. */
+function pageDataTitle(displayData: unknown): string {
+  try {
+    const content = JSON.parse((displayData as { content?: unknown })?.content as string);
+    const title = content?.providerDisplayName ?? content?.Title;
+    return typeof title === "string" ? title : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Reads `message`'s sources from the page's load-time data, or returns null
+ * when the page has no such data, the reply isn't in it (it was written after
+ * the page loaded), or anything about it is unexpected. Never throws.
+ */
+export function readPageDataReferences(message: Element): SourceReference[] | null {
+  try {
+    const reply = message.matches(REPLY_SELECTOR) ? message : message.querySelector(REPLY_SELECTOR);
+    const messageId = reply?.getAttribute("data-message-id");
+    if (!reply || !messageId) return null;
+    const data = pageData(reply.ownerDocument) as {
+      loaderData?: { "chat-history"?: { store?: { rawConversationResponse?: { messages?: unknown } } } };
+    } | null;
+    const messages = data?.loaderData?.["chat-history"]?.store?.rawConversationResponse?.messages;
+    if (!Array.isArray(messages)) return null;
+    const found = messages.find((entry) => entry?.messageId === messageId);
+    if (!found?.references || typeof found.references !== "object") return null;
+
+    const references: SourceReference[] = [];
+    for (const entry of Object.values(found.references as Record<string, Record<string, unknown>>)) {
+      const url = entry?.targetLink;
+      if (typeof url !== "string" || !/^https?:\/\//i.test(url)) continue;
+      references.push({ url, title: pageDataTitle(entry.displayData), domain: sourceDomain(url), cited: entry.isCitedInResponse === true });
+    }
+    return references;
+  } catch {
+    return null;
+  }
+}
+
+/*
  * The Sources panel fallback. The panel lists a reply's sources under
  * "Citations" and "More", each item showing the page title and domain as
  * `title` attributes, but it carries no URLs and only exists while open.
@@ -307,7 +399,8 @@ export const copilotAdapter: SiteAdapter = {
   stripSelectors: ['[role="status"]', "[aria-live]"],
   preprocess: rewriteCodeBlocks,
   turndownRules: (context) => ({ copilotCitationChip: citationChipRule(context) }),
-  readReferences: readCopilotReferences,
+  // React state through the page script first; it covers every reply. The load-time data is the synchronous backup.
+  readReferences: (message) => readCopilotReferences(message) ?? readPageDataReferences(message),
   readReferencesSlowly: readCopilotReferencesFromPanel,
   // A chip grouping several sources ("photovault+1") names only the first in its label.
   hasUntitledCitations: (message) =>

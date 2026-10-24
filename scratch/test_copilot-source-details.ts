@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../src/core/references-protocol";
 import { extractCopilotReferences, installCopilotPageScript } from "../src/page/copilot";
-import { copilotAdapter, panelTiming, parseReferencesAttribute } from "../src/sites/copilot";
+import { copilotAdapter, panelTiming, parseReferencesAttribute, readPageDataReferences } from "../src/sites/copilot";
 import { CitationCollector, renderCitations, sourceDomain } from "../src/core/citations";
 import { convertMessage } from "../src/core/convert";
 import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
@@ -488,6 +488,66 @@ check("options: the Include More sources toggle shows and reports changes", () =
   toggle.checked = false;
   toggle.dispatchEvent(new document.defaultView!.Event("change"));
   assert.equal(changes.at(-1)!.sites.copilot.includeMoreSources, false);
+});
+
+// ---------------------------------------------------------------------------
+// Copilot adapter: the page's load-time data
+// ---------------------------------------------------------------------------
+
+const PAGE_DATA_HTML = readFileSync("scratch/fixtures/copilot-page-data.html", "utf8");
+
+/** The Copilot fixture page with the load-time data script added (or `scriptHtml` in its place). */
+function pageWithData(scriptHtml: string | null = PAGE_DATA_HTML) {
+  const document = new JSDOM(readFileSync("scratch/fixtures/copilot-message.html", "utf8") + (scriptHtml ?? "")).window.document;
+  return { document, message: document.querySelectorAll(copilotAdapter.messageSelector)[0] };
+}
+
+check("page data: reads the reply's sources with titles, URLs and cited flags", () => {
+  assert.deepEqual(readPageDataReferences(pageWithData().message), [
+    { url: "https://widget.example/releases/5.0.0", title: "Widget — Widget 5.0.0 (Current)", domain: "widget.example", cited: true },
+    { url: "https://docs.widget.example/api/path-matcher", title: "PathMatcher - API Reference | Widget Docs", domain: "docs.widget.example", cited: true },
+    { url: "https://learn.example.com/sandbox/install", title: "Set up the sandbox | Example Learn", domain: "learn.example.com", cited: false },
+    { url: "https://www.example-blog.com/photovault", title: "PhotoVault Backups · Example Blog", domain: "example-blog.com", cited: false },
+  ]);
+});
+
+check("page data: null for an unknown reply, no script or a broken literal; bad content means an empty title", () => {
+  const unknown = pageWithData();
+  unknown.message.querySelector('[data-testid="markdown-reply"]')!.setAttribute("data-message-id", "not-in-the-data");
+  assert.equal(readPageDataReferences(unknown.message), null);
+  assert.equal(readPageDataReferences(pageWithData(null).message), null);
+  assert.equal(readPageDataReferences(pageWithData('<script>window.__staticRouterHydrationData = JSON.parse("{broken");</script>').message), null);
+  const data = {
+    loaderData: {
+      "chat-history": {
+        store: {
+          rawConversationResponse: {
+            messages: [{ messageId: "11111111-2222-4333-8444-555555555555", references: { "uncite-1": { targetLink: "https://a.example/x", displayData: { content: "{not json" }, isCitedInResponse: false } } }],
+          },
+        },
+      },
+    },
+  };
+  const badContent = `<script>window.__staticRouterHydrationData = JSON.parse(${JSON.stringify(JSON.stringify(data))});</script>`;
+  assert.deepEqual(readPageDataReferences(pageWithData(badContent).message), [{ url: "https://a.example/x", title: "", domain: "a.example", cited: false }]);
+});
+
+await checkAsync("page data: with no page script, Copy as Markdown gets linked More sources and never opens the panel", async () => {
+  const { document } = pageWithData();
+  let panelReads = 0;
+  const adapter: SiteAdapter = { ...copilotAdapter, readReferencesSlowly: async () => (panelReads++, null) };
+  const written: string[] = [];
+  const controller = new ContentController(adapter, buildDefaultSettings([adapter]), { document, writeClipboard: async (text) => void written.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  document.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+  await flush();
+  assert.equal(panelReads, 0);
+  assert.ok(written[0].includes("[^1]: [Widget — Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n"));
+  assert.ok(
+    written[0].endsWith(
+      "### More\n\n- [Set up the sandbox | Example Learn](https://learn.example.com/sandbox/install) — learn.example.com\n- [PhotoVault Backups · Example Blog](https://www.example-blog.com/photovault) — example-blog.com",
+    ),
+  );
 });
 
 // ---------------------------------------------------------------------------
