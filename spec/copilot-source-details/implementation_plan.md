@@ -163,7 +163,7 @@ None at this time.
 ### Revision after first testing
 
 #### [MODIFY] `src/core/citations.ts`
-- [ ] **TASK-13:** Lay out the closing sections like Copilot's Sources panel, in every style. After the body come `## Sources`, then `### Citations` (the footnote definitions, or the numbered `N. [Title](url) — domain` list), then `### More` (the `- …` list), each separated by a blank line.
+- [x] **TASK-13:** Lay out the closing sections like Copilot's Sources panel, in every style. After the body come `## Sources`, then `### Citations` (the footnote definitions, or the numbered `N. [Title](url) — domain` list), then `### More` (the `- …` list), each separated by a blank line.
   - Leave out a subsection with nothing in it, and leave out `## Sources` when both are empty.
   - `moreSourcesList` returns just the list lines; the headings are added in `renderCitations`.
   - The inline `[N](url)` and `[^N]` markers in the body are unchanged.

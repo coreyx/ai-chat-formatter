@@ -66,25 +66,25 @@ function photovaultReply(): { body: string; citations: Citation[] } {
 }
 
 const MORE_SECTION =
-  "## More sources\n\n" +
+  "### More\n\n" +
   "- [PhotoVault: A Complete Setup Guide](https://guides.example.net/photovault) — guides.example.net\n" +
   "- [PhotoVault Backups · Example Blog](https://www.example-blog.com/photovault) — example-blog.com\n" +
   "- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example";
 
-check("render: footnotes put More sources before the definitions", () => {
+check("render: footnotes go under Sources > Citations, with More after them", () => {
   const { body, citations } = photovaultReply();
   assert.equal(
     renderCitations(body, citations, "footnotes", more),
     "PhotoVault is a strong choice.[^1][^2]\n\n" +
-      MORE_SECTION +
-      "\n\n[^1]: [PhotoVault](https://photovault.example/) — photovault.example\n" +
-      "[^2]: [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com",
+      "## Sources\n\n### Citations\n\n[^1]: [PhotoVault](https://photovault.example/) — photovault.example\n" +
+      "[^2]: [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com\n\n" +
+      MORE_SECTION,
   );
 });
 
-check("render: the list styles put More sources after the Sources list", () => {
+check("render: the list styles put the numbered list under Citations, with More after it", () => {
   const { body, citations } = photovaultReply();
-  const sources = "## Sources\n\n1. [PhotoVault](https://photovault.example/) — photovault.example\n2. [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com";
+  const sources = "## Sources\n\n### Citations\n\n1. [PhotoVault](https://photovault.example/) — photovault.example\n2. [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com";
   assert.equal(
     renderCitations(body, citations, "inline-links-and-sources", more),
     "PhotoVault is a strong choice.[1](https://photovault.example/)[2](https://github.com/photovault/photovault)\n\n" + sources + "\n\n" + MORE_SECTION,
@@ -96,21 +96,22 @@ check("render: More sources skips cited and repeated sources; empty list adds no
   const { body, citations } = photovaultReply();
   const withDuplicates = [ref("https://photovault.example", "PhotoVault", false), ...more, more[0], ref(null, "No URL", false, "a.example"), ref(null, "no url", false, "a.example")];
   const out = renderCitations(body, citations, "sources-only", withDuplicates);
-  assert.equal(out.split("## More sources\n\n")[1].split("\n").length, 4, "three linked plus one unlinked entry");
-  assert.ok(!out.split("## More sources")[1].includes("](https://photovault.example"), "a cited source isn't repeated under More");
-  assert.ok(!renderCitations(body, citations, "footnotes", []).includes("More sources"));
+  assert.equal(out.split("### More\n\n")[1].split("\n").length, 4, "three linked plus one unlinked entry");
+  assert.ok(!out.split("### More")[1].includes("](https://photovault.example"), "a cited source isn't repeated under More");
+  const withoutMore = renderCitations(body, citations, "footnotes", []);
+  assert.ok(withoutMore.includes("### Citations") && !withoutMore.includes("### More"), "citations only: no More subsection");
 });
 
-check("render: a source without a URL is plain, escaped text", () => {
+check("render: a source without a URL is plain, escaped text; More alone has no Citations subsection", () => {
   const out = renderCitations("Text.", [], "footnotes", [ref(null, "Set up *the sandbox* | [Example] Learn", false, "learn.example.com")]);
-  assert.equal(out, "Text.\n\n## More sources\n\n- Set up \\*the sandbox\\* | \\[Example\\] Learn — learn.example.com");
+  assert.equal(out, "Text.\n\n## Sources\n\n### More\n\n- Set up \\*the sandbox\\* | \\[Example\\] Learn — learn.example.com");
 });
 
 check("render: a title that is just the domain isn't repeated", () => {
   const collector = new CitationCollector();
   const p = collector.register({ url: "https://photovault.example/", title: "photovault.example", sourceName: "photovault.example" });
-  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n[^1]: [photovault.example](https://photovault.example/)");
-  assert.equal(renderCitations("x", [], "footnotes", [ref("https://www.example.com/", "", false)]), "x\n\n## More sources\n\n- [example.com](https://www.example.com/)");
+  assert.equal(renderCitations(p, collector.citations, "footnotes"), "[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [photovault.example](https://photovault.example/)");
+  assert.equal(renderCitations("x", [], "footnotes", [ref("https://www.example.com/", "", false)]), "x\n\n## Sources\n\n### More\n\n- [example.com](https://www.example.com/)");
 });
 
 check("render: sourceDomain drops www. and survives a bad URL", () => {
@@ -157,14 +158,14 @@ const lookupReferences = [ref("https://photovault.example", "PhotoVault", true),
 
 check("convert: titles come from the source list, matched by normalized URL", () => {
   const out = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: false, isRuleEnabled: () => true, references: lookupReferences });
-  assert.equal(out, "Cited.[^1]\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
+  assert.equal(out, "Cited.[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
 });
 
 check("convert: uncited sources become More sources only when asked", () => {
   const on = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: lookupReferences });
-  assert.equal(on, "Cited.[^1]\n\n## More sources\n\n- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example");
+  assert.equal(on, "Cited.[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [PhotoVault](https://photovault.example/#top) — photovault.example\n\n### More\n\n- [Backup and Restore | PhotoVault Docs](https://docs.photovault.example/backup) — docs.photovault.example");
   const none = convertMessage(lookupAdapter, lookupMessage(), { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: null });
-  assert.equal(none, "Cited.[^1]\n\n[^1]: [fallback](https://photovault.example/#top) — photovault.example");
+  assert.equal(none, "Cited.[^1]\n\n## Sources\n\n### Citations\n\n[^1]: [fallback](https://photovault.example/#top) — photovault.example");
 });
 
 // ---------------------------------------------------------------------------
@@ -273,7 +274,7 @@ check("copilot: a multi-source chip gets every title from the source list", () =
   assert.ok(out.includes("The main changes include:[^1][^2]"), "both sources of the chip are cited");
   assert.ok(out.includes("[^1]: [PhotoVault](https://photovault.example/) — photovault.example\n"));
   assert.ok(out.includes("[^2]: [GitHub - photovault/photovault: Self-hosted photo library.](https://github.com/photovault/photovault) — github.com\n"));
-  const moreSection = out.split("## More sources\n\n")[1].split("\n\n")[0];
+  const moreSection = out.split("### More\n\n")[1].split("\n\n")[0];
   // Copilot flags example-user/photovault-fork as cited, so it isn't a More source even though this fixture has no chip for it.
   assert.deepEqual(moreSection.split("\n"), [
     "- [PhotoVault: A Complete Setup Guide](https://guides.example.net/photovault) — guides.example.net",
@@ -287,7 +288,7 @@ check("copilot: without a source list a multi-source chip falls back to source n
   const out = convertMessage(copilotAdapter, message, { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references: null });
   assert.ok(out.includes("[^1]: [photovault.example](https://photovault.example/)\n"), "a title that's just the domain isn't repeated");
   assert.ok(out.includes("[^2]: [github.com](https://github.com/photovault/photovault)\n"));
-  assert.ok(!out.includes("More sources"));
+  assert.ok(!out.includes("### More"));
 });
 
 // ---------------------------------------------------------------------------
@@ -384,7 +385,7 @@ await checkAsync("panel: More entries without URLs render as plain text", async 
   const references = await copilotAdapter.readReferencesSlowly!(page.message);
   const out = convertMessage(copilotAdapter, page.message, { style: "footnotes", includeMoreSources: true, isRuleEnabled: () => true, references });
   assert.ok(out.includes("[^1]: [deploykit/docs/sandbox-setup.md at main · example-dev/deploykit](" + TERRENCE + ") — github.com\n"));
-  assert.ok(out.includes("- Cannot start the sandbox - Example Q&A — learn.example.com\n"));
+  assert.ok(out.endsWith("- Cannot start the sandbox - Example Q&A — learn.example.com"), "More comes last");
 });
 
 // ---------------------------------------------------------------------------
@@ -438,7 +439,7 @@ await checkAsync("controller: a successful quick read skips the panel fallback",
   page.button.click();
   await flush();
   assert.deepEqual(page.calls, { quick: 1, slow: 0 });
-  assert.ok(page.written[0].includes("## More sources\n\n- [Backup and Restore | PhotoVault Docs]"));
+  assert.ok(page.written[0].includes("### More\n\n- [Backup and Restore | PhotoVault Docs]"));
 });
 
 await checkAsync("controller: Copy as Markdown waits for the fallback, ignoring clicks meanwhile", async () => {
@@ -455,7 +456,7 @@ await checkAsync("controller: Copy as Markdown waits for the fallback, ignoring 
   await flush();
   await flush();
   assert.equal(page.written.length, 1);
-  assert.ok(page.written[0].includes("## More sources"));
+  assert.ok(page.written[0].includes("### More\n\n"));
   assert.equal(page.button.hasAttribute("aria-busy"), false);
 });
 
@@ -473,7 +474,7 @@ await checkAsync("controller: the native override uses only the quick read", asy
   await flush();
   assert.deepEqual(page.calls, { quick: 1, slow: 0 });
   assert.equal(page.written.length, 1);
-  assert.ok(!page.written[0].includes("More sources"));
+  assert.ok(!page.written[0].includes("### More"));
 });
 
 check("options: the Include More sources toggle shows and reports changes", () => {

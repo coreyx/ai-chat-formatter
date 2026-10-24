@@ -107,13 +107,18 @@ function citationLink(citation: Citation): string {
   return sourceEntry(citation.title, citation.url, sourceDomain(citation.url));
 }
 
-/** The "Sources" section listing every citation as a numbered link. */
-function sourcesList(citations: Citation[]): string {
-  return "## Sources\n\n" + citations.map((citation, i) => `${i + 1}. ${citationLink(citation)}`).join("\n");
+/** Every citation as a numbered `N. [Title](url) — domain` line, for the list styles. */
+function numberedCitations(citations: Citation[]): string {
+  return citations.map((citation, i) => `${i + 1}. ${citationLink(citation)}`).join("\n");
+}
+
+/** Every citation as a `[^N]: [Title](url) — domain` footnote definition. */
+function footnoteDefinitions(citations: Citation[]): string {
+  return citations.map((citation, i) => `[^${i + 1}]: ${citationLink(citation)}`).join("\n");
 }
 
 /**
- * The "More sources" section: sources the reply's site lists but the reply
+ * The lines of the More list: sources the reply's site lists but the reply
  * doesn't cite. Sources already cited are left out, as are repeats, matched by
  * URL or, for sources without one, by title and domain. Empty when nothing is
  * left.
@@ -127,18 +132,29 @@ function moreSourcesList(moreSources: readonly SourceReference[], citations: rea
     seen.add(key);
     lines.push(`- ${sourceEntry(source.title, source.url, source.domain)}`);
   }
-  return lines.length ? "## More sources\n\n" + lines.join("\n") : "";
+  return lines.join("\n");
+}
+
+/**
+ * The closing section, laid out like Copilot's Sources panel: `## Sources`,
+ * then `### Citations`, then `### More`. A subsection with nothing in it is
+ * left out, and the whole section when both are empty.
+ */
+function sourcesSection(citationLines: string, moreLines: string): string {
+  const parts: string[] = [];
+  if (citationLines) parts.push(`### Citations\n\n${citationLines}`);
+  if (moreLines) parts.push(`### More\n\n${moreLines}`);
+  return parts.length ? `## Sources\n\n${parts.join("\n\n")}` : "";
 }
 
 /**
  * Swaps the citation placeholders in `markdown` for `style` and appends the
- * closing sections: the Sources list (for the list styles), then the More
- * sources list, then footnote definitions (for footnotes, which go last so
- * Obsidian's footnote rendering isn't affected). Placeholders attach to the
- * text before them (`release.[^1]`, not `release. [^1]`), and the same
- * citation repeated back to back, as when a chip is cited twice in a row,
- * collapses into one marker. With no citations and no More sources the
- * Markdown is unchanged.
+ * Sources section (see {@link sourcesSection}): the footnote definitions or
+ * numbered list under Citations, then the uncited sources under More.
+ * Placeholders attach to the text before them (`release.[^1]`, not
+ * `release. [^1]`), and the same citation repeated back to back, as when a
+ * chip is cited twice in a row, collapses into one marker. With no citations
+ * and no More sources the Markdown is unchanged.
  */
 export function renderCitations(
   markdown: string,
@@ -153,27 +169,27 @@ export function renderCitations(
   const more = moreSourcesList(moreSources, citations);
   if (citations.length === 0) {
     body = body.replace(PLACEHOLDER, "");
-    return more ? `${body.trimEnd()}\n\n${more}` : body;
+    return more ? `${body.trimEnd()}\n\n${sourcesSection("", more)}` : body;
   }
 
   const citationFor = (n: string) => citations[Number(n) - 1];
-  const sections: string[] = [];
+  let citationLines: string;
   switch (style) {
     case "footnotes":
       body = body.replace(PLACEHOLDER, (_, n: string) => (citationFor(n) ? `[^${n}]` : ""));
-      sections.push(more, citations.map((citation, i) => `[^${i + 1}]: ${citationLink(citation)}`).join("\n"));
+      citationLines = footnoteDefinitions(citations);
       break;
     case "inline-links-and-sources":
       body = body.replace(PLACEHOLDER, (_, n: string) => {
         const citation = citationFor(n);
         return citation ? `[${n}](${encodeLinkDestination(citation.url)})` : "";
       });
-      sections.push(sourcesList(citations), more);
+      citationLines = numberedCitations(citations);
       break;
     case "sources-only":
       body = body.replace(PLACEHOLDER, "");
-      sections.push(sourcesList(citations), more);
+      citationLines = numberedCitations(citations);
       break;
   }
-  return [body.trimEnd(), ...sections.filter(Boolean)].join("\n\n");
+  return `${body.trimEnd()}\n\n${sourcesSection(citationLines, more)}`;
 }
