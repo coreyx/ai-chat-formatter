@@ -65,7 +65,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
 ### Core (site-independent)
 
 #### [NEW] `src/core/types.ts`
-- [ ] **TASK-4:** Define the shared types:
+- [x] **TASK-4:** Define the shared types:
   - `Citation` (`url`, `title`, `sourceName`).
   - `CitationStyle` (`"footnotes" | "inline-links-and-sources" | "sources-only"`).
   - `FormatRule` (`id`, `name`, `description`, `defaultEnabled`, `apply(markdown): string`).
