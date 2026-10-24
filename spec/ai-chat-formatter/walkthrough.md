@@ -21,7 +21,7 @@ A Manifest V3 Chrome extension that adds a **Copy as Markdown** button to each M
 - **`src/sites/copilot.ts`**: selectors from inspecting copilot.com on 2026-10-24:
   - a reply is `div[role="article"]` containing `[data-testid="markdown-reply"]`;
   - the native Copy button is `button[data-testid="CopyButtonTestId"]`;
-  - the extension's button goes directly after the native Copy button, in the flex row it shares with the feedback buttons. The plan put it after `[data-testid="CopyButtonContainerTestId"]`; that container turned out to hold Copy, the feedback buttons and Regenerate, which put the button too far from Copy. Moved at Corey's request after his first test.
+  - the extension's button goes directly after the native Copy button, in the flex row it shares with the feedback buttons. The plan put it after `[data-testid="CopyButtonContainerTestId"]`; that container turned out to hold Copy, the feedback buttons and Regenerate, which put the button too far from Copy. Moved at the maintainer's request after the first test.
 
   Citation chips (`button[data-grouped-citations]`) register every source in their JSON. A chip with unreadable JSON keeps its text rather than failing the copy.
 
@@ -66,7 +66,7 @@ On copilot.com, using the conversation created for the plan's inspection (no new
 - The button markup and stylesheet were injected by hand. The button matched Copilot's toolbar buttons (32×32, same color), and the toast showed below the message box. Placed directly after Copy, it sits 8px from it, the same spacing as the other toolbar icons, in the order Copy, M↓, thumbs, Regenerate.
 
 ## Manual Verification
-Corey loaded `dist/` with **Load unpacked**, used **Copy as Markdown** on the test conversation, pasted into Obsidian and confirmed it works (2026-10-24). The plan's other manual steps haven't been confirmed yet:
+The maintainer loaded `dist/` with **Load unpacked**, used **Copy as Markdown** on the test conversation, pasted into Obsidian and confirmed it works (2026-10-24). The plan's other manual steps haven't been confirmed yet:
 1. Options page: switch the citation style to **Inline links + Sources list**, then **Sources list only**. Copy the same reply after each change and confirm the output matches, with no page reload.
 2. Turn on **Use for Copilot's own Copy button**, click Copilot's Copy and paste: expect the same Markdown plus a "Copied as Markdown" toast. Turn it off: expect Copilot's native output.
 3. Turn off **Show a "Copy as Markdown" button**: the buttons disappear live and return when it's turned back on. The master switch turns off both features.
@@ -82,4 +82,4 @@ Corey loaded `dist/` with **Load unpacked**, used **Copy as Markdown** on the te
 - **Long code blocks:** if manual step 5 shows Copilot leaves lines out of very long blocks, a follow-up could read the block through its own Copy code button.
 - **Math** conversion follows standard KaTeX markup but hasn't been seen in a Copilot reply yet.
 - **Extension icons** weren't part of the plan; Chrome shows its default icon.
-- The test conversation remains in Corey's Copilot history.
+- The test conversation remains in the maintainer's Copilot history.
