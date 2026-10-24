@@ -543,7 +543,7 @@ await checkAsync("page data: with no page script, Copy as Markdown gets linked M
   document.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
   await flush();
   assert.equal(panelReads, 0);
-  assert.ok(written[0].includes("[^1]: [Widget — Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n"));
+  assert.ok(written[0].includes("1. [Widget — Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-"));
   assert.ok(
     written[0].includes(
       "### More\n\n- [Set up the sandbox | Example Learn](https://learn.example.com/sandbox/install) — learn.example.com\n- [PhotoVault Backups · Example Blog](https://www.example-blog.com/photovault) — example-blog.com",

@@ -364,7 +364,7 @@ check("settings: defaults come from each adapter and its rules", () => {
   const defaults = buildDefaultSettings([testAdapter]);
   assert.deepEqual(defaults, {
     enabled: true,
-    citationStyle: "footnotes",
+    citationStyle: "linked-citations",
     sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: false, includeMoreSources: false, rules: { "invisible-characters": true, "collapse-blank-lines": true } } },
   });
 });
@@ -377,7 +377,7 @@ check("settings: merge keeps stored values and fills in what's missing or invali
   );
   assert.deepEqual(merged, {
     enabled: false,
-    citationStyle: "footnotes",
+    citationStyle: "linked-citations",
     sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: true, includeMoreSources: false, rules: { "invisible-characters": true, "collapse-blank-lines": false } } },
   });
   assert.deepEqual(mergeSettings(undefined, defaults), defaults);
@@ -459,7 +459,7 @@ await checkAsync("controller: Copy as Markdown writes the converted reply and do
   await flush();
   assert.equal(written.length, 1);
   assert.ok(written[0].startsWith("**Widget 5** was released"));
-  assert.ok(written[0].endsWith("(https://docs.widget.example/api/path-matcher) — docs.widget.example"));
+  assert.match(written[0], /\(https:\/\/docs\.widget\.example\/api\/path-matcher\) — docs\.widget\.example \^c-[a-z0-9]{4}-2$/);
   assert.deepEqual(siteClicks, []);
   assert.equal(document.querySelector(".acf-copy-button")!.getAttribute("aria-label"), "Copied as Markdown");
 });
@@ -486,7 +486,7 @@ await checkAsync("controller: with the override on, native Copy writes the Markd
   (document.querySelector(copilotAdapter.nativeCopyButtonSelector) as HTMLButtonElement).click();
   await flush();
   assert.equal(written.length, 1);
-  assert.ok(written[0].includes("[^1]: [Widget 5.0.0 (Current)]"));
+  assert.ok(written[0].includes("1. [Widget 5.0.0 (Current)]"));
   assert.deepEqual(siteClicks, []);
 });
 
@@ -518,7 +518,7 @@ check("options: the form shows the settings and reports each change as a full se
 
   const input = (name: string) => document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
   assert.equal(input("enabled").checked, true);
-  assert.equal(document.querySelector<HTMLInputElement>('input[name="citationStyle"]:checked')!.value, "footnotes");
+  assert.equal(document.querySelector<HTMLInputElement>('input[name="citationStyle"]:checked')!.value, "linked-citations");
   assert.equal(input("copilot.showCopyButton").checked, true);
   assert.equal(input("copilot.overrideNativeCopy").checked, false);
   assert.equal(input("copilot.rules.collapse-blank-lines").checked, true);

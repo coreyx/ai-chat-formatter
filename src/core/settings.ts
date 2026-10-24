@@ -47,7 +47,7 @@ export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings
       rules: Object.fromEntries(adapter.rules.map((rule) => [rule.id, rule.defaultEnabled])),
     };
   }
-  return { enabled: true, citationStyle: "footnotes", sites };
+  return { enabled: true, citationStyle: "linked-citations", sites };
 }
 
 /** `value` when it is a boolean, otherwise `fallback`. */

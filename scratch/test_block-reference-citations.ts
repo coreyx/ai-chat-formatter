@@ -10,6 +10,9 @@ import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { CitationCollector, citationBlockId, renderCitations, sourceDomain, superscriptDigits } from "../src/core/citations";
 import { convertMessage, randomIdToken } from "../src/core/convert";
+import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
+import { renderOptions } from "../src/options/options";
+import { SITE_ADAPTERS } from "../src/sites/index";
 import type { Citation, SourceReference } from "../src/core/types";
 import { copilotAdapter } from "../src/sites/copilot";
 
@@ -131,6 +134,33 @@ check("convert: each linked-citations copy gets its own 4-character token; a fix
   assert.deepEqual(tokensIn(fixed), ["k3f9"]);
   assert.ok(fixed.includes("### Citations\n\n1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-k3f9-1"));
   assert.match(randomIdToken(), /^[a-z0-9]{4}$/);
+});
+
+// ---------------------------------------------------------------------------
+// Settings and options page
+// ---------------------------------------------------------------------------
+
+check("settings: linked citations is the default, and a saved footnotes choice is kept", () => {
+  const defaults = buildDefaultSettings(SITE_ADAPTERS);
+  assert.equal(defaults.citationStyle, "linked-citations");
+  assert.equal(mergeSettings({ citationStyle: "footnotes" }, defaults).citationStyle, "footnotes");
+  assert.equal(mergeSettings({}, defaults).citationStyle, "linked-citations");
+});
+
+check("options: Linked citations is listed first, checked by default, and reports its value", () => {
+  const { document } = new JSDOM("<!doctype html><body></body>").window;
+  const changes: Settings[] = [];
+  const form = renderOptions(document, SITE_ADAPTERS, (settings) => changes.push(settings));
+  document.body.append(form.root);
+  form.fill(mergeSettings({ citationStyle: "footnotes" }, buildDefaultSettings(SITE_ADAPTERS)));
+  const radios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="citationStyle"]'));
+  assert.equal(radios[0].value, "linked-citations");
+  assert.match(radios[0].closest("label")!.textContent!, /Linked citations \(Obsidian\)/);
+  radios[0].checked = true;
+  radios[0].dispatchEvent(new document.defaultView!.Event("change"));
+  assert.equal(changes.at(-1)!.citationStyle, "linked-citations");
+  form.fill(buildDefaultSettings(SITE_ADAPTERS));
+  assert.equal(document.querySelector<HTMLInputElement>('input[name="citationStyle"]:checked')!.value, "linked-citations");
 });
 
 // ---------------------------------------------------------------------------
