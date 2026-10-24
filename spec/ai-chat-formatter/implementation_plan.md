@@ -50,7 +50,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
 ### Project scaffolding
 
 #### [NEW] `package.json`
-- [ ] **TASK-1:** Add the package manifest (`name: "ai-chat-formatter"`, `version: "0.1.0"`, `private: true`, MIT, author Corey Struzan).
+- [x] **TASK-1:** Add the package manifest (`name: "ai-chat-formatter"`, `version: "0.1.0"`, `private: true`, MIT, author Corey Struzan).
   - Dependencies: `turndown`, `turndown-plugin-gfm`.
   - Dev dependencies: `typescript`, `esbuild`, `@types/chrome`, `@types/turndown`, `jsdom`, `@types/jsdom`, `fflate`.
   - Scripts: `build` (`tsc --noEmit && node scripts/build.mjs`), `watch`, `test` (bundles `scratch/test_ai-chat-formatter.ts` for Node into `scratch/.out/` and runs it), `package` (build, then zip `dist/` into `release/ai-chat-formatter-<version>.zip` with `fflate`).

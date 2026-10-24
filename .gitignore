@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build and release output
+dist/
+release/
+scratch/.out/
+
+# Logs
+npm-debug.log*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.sw?
