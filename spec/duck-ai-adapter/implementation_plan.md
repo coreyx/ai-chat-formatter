@@ -77,7 +77,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/fixtures/duckai-message.html`
-- [ ] **TASK-6:** A synthetic page modeled on the inspected structure, with generated-looking class names:
+- [x] **TASK-6:** A synthetic page modeled on the inspected structure, with generated-looking class names:
   - a user message;
   - a reply with a Reasoning panel holding links, a paragraph with two chips (one source cited twice), a bullet list with a chip, an ordinary Markdown link, a code block with an indented line, a Read More section with three cards (one uncited), and the toolbar row with the copy button;
   - a second reply with Read More cards and no chips.
