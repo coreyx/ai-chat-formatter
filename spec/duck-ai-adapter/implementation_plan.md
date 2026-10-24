@@ -53,7 +53,7 @@ None at this time.
   - `findButtonAnchor`: the toolbar row is the copy button's wrapper's parent. Insert directly after the copy button's wrapper `div`, or return null when there's no copy button yet (still streaming).
   - `stripSelectors`: `[data-streamdown="code-block-header"]`, `[data-streamdown="code-block-actions"]` and `[aria-live]`.
   - `rules`: `invisibleCharactersRule`, `collapseBlankLinesRule`.
-- [ ] **TASK-2:** `preprocess: rewriteDuckAiCodeBlocks`:
+- [x] **TASK-2:** `preprocess: rewriteDuckAiCodeBlocks`:
   - Replace each `[data-streamdown="code-block"]` with `<pre><code class="language-…">`.
   - Join the line `span`s under `code` with `\n`. Fall back to `code.textContent` when there are no line spans.
   - Take the language from `data-language` through an exported `duckAiLanguageId`: lowercased, with `text`/`plaintext` mapping to none.
