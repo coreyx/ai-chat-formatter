@@ -77,7 +77,7 @@ Corey loaded `dist/` with **Load unpacked**, used **Copy as Markdown** on the te
 8. After the release, install from the zip in a clean Chrome profile and repeat the basic copy.
 
 ## Follow-ups
-- **TASK-16 (release 0.1.0) is still open.** The plan sequences it after this walkthrough and `prepare-release`.
+- **Released as 0.1.0** on 2026-10-24: https://github.com/coreyx/ai-chat-formatter/releases/tag/0.1.0 (asset `ai-chat-formatter-0.1.0.zip`, checksum verified against the local build).
 - **Microsoft 365 Copilot** (`m365.cloud.microsoft`) needs its own adapter. Its markup couldn't be inspected without a work account.
 - **Long code blocks:** if manual step 5 shows Copilot leaves lines out of very long blocks, a follow-up could read the block through its own Copy code button.
 - **Math** conversion follows standard KaTeX markup but hasn't been seen in a Copilot reply yet.

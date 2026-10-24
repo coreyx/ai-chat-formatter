@@ -153,7 +153,7 @@ A Manifest V3 Chrome extension (it also loads in Edge) that adds a **Copy as Mar
   - **Adding a site:** write a `SiteAdapter`, register it in `src/sites/index.ts`, and add a fixture and tests.
 
 #### [MODIFY] GitHub repository `coreyx/ai-chat-formatter`
-- [ ] **TASK-16:** After `wrap-up` and `prepare-release` have produced `CHANGELOG.md` and `RELEASE_NOTES.md` for `0.1.0`:
+- [x] **TASK-16:** After `wrap-up` and `prepare-release` have produced `CHANGELOG.md` and `RELEASE_NOTES.md` for `0.1.0`:
   1. Run `npm run package`.
   2. Push `main`.
   3. Create the release tag in the form `prepare-release` uses.
