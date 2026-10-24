@@ -57,7 +57,7 @@ None at this time.
   - Replace each `[data-streamdown="code-block"]` with `<pre><code class="language-…">`.
   - Join the line `span`s under `code` with `\n`. Fall back to `code.textContent` when there are no line spans.
   - Take the language from `data-language` through an exported `duckAiLanguageId`: lowercased, with `text`/`plaintext` mapping to none.
-- [ ] **TASK-3:** A `duckAiCitationChip` Turndown rule. It matches an `a` with an `http(s)` `href`, an `aria-label` and a `tabindex`, whose only element child is a `span`, and registers `{ url, title, sourceName }`:
+- [x] **TASK-3:** A `duckAiCitationChip` Turndown rule. It matches an `a` with an `http(s)` `href`, an `aria-label` and a `tabindex`, whose only element child is a `span`, and registers `{ url, title, sourceName }`:
   - `title` is `context.findReference(url)?.title`, or the chip's label when there's none.
   - `sourceName` is the chip's text.
 

@@ -1,5 +1,6 @@
+import type TurndownService from "turndown";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import type { SiteAdapter } from "../core/types";
+import type { ConversionContext, SiteAdapter } from "../core/types";
 
 /*
  * Duck.ai, DuckDuckGo's AI chat. Every selector here comes from duck.ai's
@@ -48,6 +49,43 @@ function rewriteDuckAiCodeBlocks(root: HTMLElement): void {
   }
 }
 
+/**
+ * Whether `node` is one of Duck.ai's inline source chips: a link to an
+ * `http(s)` page with an `aria-label` and a `tabindex`, wrapping a single
+ * `<span>` with the site's name. Ordinary links in a reply carry neither
+ * attribute, so they're left to the normal link conversion.
+ */
+function isCitationChip(node: HTMLElement): boolean {
+  return (
+    node.nodeName === "A" &&
+    /^https?:\/\//.test(node.getAttribute("href") ?? "") &&
+    node.hasAttribute("aria-label") &&
+    node.hasAttribute("tabindex") &&
+    node.childElementCount === 1 &&
+    node.firstElementChild?.nodeName === "SPAN"
+  );
+}
+
+/**
+ * Turndown rule for Duck.ai's source chips. Each chip is registered as a
+ * citation and replaced by its placeholder. The chip shows only a short site
+ * name ("GitHub", "widget.example"), so the page title comes from the reply's
+ * Read More card for the same URL, when the caller read them; otherwise the
+ * chip's label stands in.
+ */
+function citationChipRule(context: ConversionContext): TurndownService.Rule {
+  return {
+    filter: (node) => isCitationChip(node),
+    replacement: (_content, node) => {
+      const element = node as HTMLElement;
+      const url = element.getAttribute("href") ?? "";
+      const name = (element.textContent ?? "").trim();
+      const title = context.findReference(url)?.title.trim() || (element.getAttribute("aria-label") ?? "").trim() || name;
+      return context.registerCitation({ url, title, sourceName: name });
+    },
+  };
+}
+
 export const duckAiAdapter: SiteAdapter = {
   id: "duckai",
   name: "Duck.ai",
@@ -65,6 +103,6 @@ export const duckAiAdapter: SiteAdapter = {
   },
   stripSelectors: ['[data-streamdown="code-block-header"]', '[data-streamdown="code-block-actions"]', "[aria-live]"],
   preprocess: rewriteDuckAiCodeBlocks,
-  turndownRules: () => ({}),
+  turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context) }),
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };
