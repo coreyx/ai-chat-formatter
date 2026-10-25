@@ -140,7 +140,7 @@ None at this time.
 ### Docs
 
 #### [MODIFY] `README.md`
-- [ ] **TASK-11:** Update the README:
+- [x] **TASK-11:** Update the README:
   - Add Search Assist to the intro and to Supported sites. Explain collapsed, expanded and More, where chip titles come from, and the off-by-default More with its untitled links.
   - Note the gap in Search Assist's own Copy, and add a limitations line: the extension loads on every DuckDuckGo search page but acts only on Search Assist.
   - Add the new files to the development tree.

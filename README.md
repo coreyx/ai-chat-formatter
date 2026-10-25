@@ -2,7 +2,7 @@
 
 A Chrome extension (it also runs in Edge and Brave) that copies replies from AI chat sites as clean Markdown, citations included, ready to paste into Obsidian.
 
-It adds a **Copy as Markdown** button to every reply. If you prefer, it can also take over the site's own Copy button. It supports Microsoft Copilot and Duck.ai; each site is a separate adapter, so more can be added.
+It adds a **Copy as Markdown** button to every reply. If you prefer, it can also take over the site's own Copy button. It supports Microsoft Copilot, Duck.ai and DuckDuckGo's Search Assist; each site is a separate adapter, so more can be added.
 
 ## Why
 
@@ -12,7 +12,7 @@ Copilot's Copy button doesn't produce Markdown, and what it does produce falls a
 - **Code blocks lose their formatting.** Every line of a code block is copied as a separate paragraph, so an ASCII directory tree pastes with blank lines between its lines, and the code fence and language are gone.
 - **The plain-text version is no better.** It has no heading or list markers, no link URLs and no citations at all.
 
-Duck.ai's Copy button does write Markdown, but it leaves out every link and source.
+Duck.ai's Copy button does write Markdown, but it leaves out every link and source. So does the Copy button on Search Assist, the AI answer at the top of DuckDuckGo's search results.
 
 AI Chat Formatter reads the reply from the page instead, where the structure and the citation details are still intact, and writes proper Markdown to the clipboard.
 
@@ -21,7 +21,7 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 - **Copy as Markdown** button on every reply, next to the site's own buttons.
 - Optionally, **the site's own Copy button copies Markdown too**. If a reply can't be converted, the site's normal copy runs instead, so the button always copies something.
 - **Citations kept**, in the style you choose (see below), each with its page title and domain: `[Title](url) — domain`. A page cited several times gets one number.
-- **"More" sources too**: sources the site lists without citing them in the reply (Copilot's **More** in its Sources panel, Duck.ai's uncited **Read More** cards) come along after the citations, laid out like Copilot's panel.
+- **"More" sources too**: sources the site lists without citing them in the reply (Copilot's **More** in its Sources panel, Duck.ai's uncited **Read More** cards) come along after the citations, laid out like Copilot's panel. For Search Assist, the other pages it consulted can come along too, off by default.
 - **Code blocks** come through as fenced blocks with their language and exact indentation.
 - **Headings, lists, tables, links, inline code and math** (`$…$` and `$$…$$`) convert to their Markdown equivalents.
 - **Clean-up rules** you can switch on and off per site: normalizing invisible characters (non-breaking and zero-width spaces) and collapsing runs of blank lines.
@@ -33,8 +33,17 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 |---|---|
 | Microsoft Copilot | `copilot.microsoft.com`, `copilot.com` |
 | Duck.ai | `duck.ai` (Duck.ai opened from DuckDuckGo, `duckduckgo.com/?ia=chat`, redirects there) |
+| DuckDuckGo Search Assist | `duckduckgo.com` search results |
 
 Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different markup, and isn't supported yet.
+
+### Search Assist
+
+Search Assist answers only some searches. Where it does, its answer gets the **Copy as Markdown** button, just left of its own Copy button.
+
+- **Collapsed or expanded**, the copy holds the whole short answer: a collapsed answer is only clipped on screen, so nothing needs opening first.
+- **After More**, the extended answer that **More** writes follows the short answer in the copy, with its headings, tables and lists. While it's still being written (the button shows **Stop**), Copy as Markdown says so and copies nothing; copy again once it's finished.
+- The toolbar, the More button, the "Ask Duck.ai" box and the follow-up questions are left out.
 
 ## Citation styles
 
@@ -100,6 +109,8 @@ A subsection with nothing in it is left out. Turn off the More list with **Inclu
 
 Some chips open a popup instead of linking, showing a domain and a count of further sources (`widget.example` with `1`). Their links aren't in the page's markup, so a small script running in Duck.ai's own page context (the extension's second content script on Duck.ai) reads them from Duck.ai's page data when you copy. Each source becomes its own citation, titled from its Read More card or from Duck.ai's own title for it. If that data can't be read, the chip gets the Read More card for the domain it shows, or is left out if there's none.
 
+**Search Assist.** Each source chip (a favicon and a domain) becomes a citation. The chip shows its page's title only in a tooltip while you hover it, so a small script running in DuckDuckGo's own page context (the extension's second content script on DuckDuckGo) reads the titles from Search Assist's page data when you copy. If that data can't be read, the chip's domain stands in. Search Assist's data also lists every page it consulted, most of them not shown on the page and without titles. With **Include "More" sources** turned on for Search Assist, the ones no chip cites go under **More** as links named by their domain: `[forum.example](https://forum.example/…)`. That setting starts off for Search Assist.
+
 **Copilot.** Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, is in Copilot's own data. The extension looks for it in three places, in order:
 
 1. **Copilot's live page data**, read by a small script that runs in Copilot's own page context (the extension's second content script). This covers every reply.
@@ -118,7 +129,7 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
   - **Use for _site_'s own Copy button**: off by default.
-  - **Include "More" sources**: on by default.
+  - **Include "More" sources**: on by default, except for Search Assist.
   - **Formatting rules**: one switch per clean-up rule.
 
 ## Installation
@@ -130,13 +141,13 @@ AI Chat Formatter isn't in the Chrome Web Store. Install it from a GitHub releas
 3. Open `chrome://extensions` (in Edge, `edge://extensions`; in Brave, `brave://extensions`).
 4. Turn on **Developer mode**.
 5. Click **Load unpacked** and choose the folder from step 2.
-6. Open a Copilot or Duck.ai conversation. Finished replies now have a **Copy as Markdown** button.
+6. Open a Copilot or Duck.ai conversation, or a DuckDuckGo search with a Search Assist answer. Finished replies now have a **Copy as Markdown** button.
 
 ### Updating
 
 1. Download the newer release's zip and extract it over the same folder, replacing its files.
 2. On `chrome://extensions`, click the reload icon on the **AI Chat Formatter** card.
-3. Reload any open Copilot or Duck.ai tabs.
+3. Reload any open Copilot, Duck.ai or DuckDuckGo tabs.
 
 ### Building from source
 
@@ -155,9 +166,11 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 
 ## Limitations
 
-- **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When a site changes its markup, its adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to the site's own copy. Duck.ai's class names change between its releases, so its adapter relies only on ids, `data-*` and ARIA attributes, and page structure.
+- **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When a site changes its markup, its adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to the site's own copy. Duck.ai's and DuckDuckGo's class names change between their releases, so their adapters rely only on ids, `data-*` and ARIA attributes, and page structure.
 - **Source titles and More sources depend on Copilot's internal data**, which is even more likely to change than its markup. If the live page data stops working, replies that existed when the page loaded still get full titles and links from the page's embedded data. Replies written since then fall back to the Sources panel with Copy as Markdown (More entries without links), or to the titles on the citation chips with the Copy-button override, with no More sources.
 - **Duck.ai's popup chips depend on Duck.ai's internal data** in the same way. If reading it stops working, a popup chip falls back to the Read More card for the domain it shows, so a chip standing for several sources keeps only that one.
+- **Search Assist's chip titles and More sources depend on DuckDuckGo's internal data** in the same way. If reading it stops working, chips are titled with their domains and there are no More sources.
+- **The extension loads on every DuckDuckGo search page**, since Search Assist can appear on any of them. It does nothing on a page without a Search Assist answer.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
 - **Very long code blocks.** Copilot may not keep every line of a long code block in the page. If any line is missing, the copy stops with a message instead of copying a shortened block. Scroll through the code block and try again, or use Copilot's own Copy button.
 
@@ -179,7 +192,7 @@ ai-chat-formatter/
 ├── src/
 │   ├── manifest.json    # Manifest template; version, match patterns and page scripts are filled in at build
 │   ├── core/            # Site-independent: types, conversion, citations, rules, settings
-│   ├── sites/           # One adapter per site (copilot.ts, duckai.ts), plus the registry (index.ts)
+│   ├── sites/           # One adapter per site (copilot.ts, duckai.ts, duckduckgo.ts), shared Streamdown helpers (streamdown.ts), and the registry (index.ts)
 │   ├── page/            # Page-world scripts, for site data the isolated content script can't see
 │   ├── content/         # Content script: button injection and the Copy override
 │   └── options/         # Options page
@@ -188,7 +201,8 @@ ai-chat-formatter/
     ├── test_ai-chat-formatter.ts
     ├── test_block-reference-citations.ts
     ├── test_copilot-source-details.ts
-    └── test_duck-ai-adapter.ts
+    ├── test_duck-ai-adapter.ts
+    └── test_duckduckgo-search-assist.ts
 ```
 
 ### Adding a site
@@ -202,6 +216,7 @@ ai-chat-formatter/
    - an optional `preprocess` step for whitespace-sensitive markup like code viewers,
    - its post-processing rules,
    - optionally, ways to read each reply's full source list: `readReferences` (synchronous, used by both buttons), `readReferencesSlowly` (asynchronous fallback, used by Copy as Markdown only), and `hasUntitledCitations` (whether the fallback is worth running when More sources is off),
+   - optionally, `moreSources`: whether the More sources option starts on for this site, and how the options page describes it,
    - optionally, a `pageScript`: the name of a script in `src/page/` that the manifest runs in the page's own JavaScript world, for data only the page can see.
 3. Add it to `SITE_ADAPTERS` in `src/sites/index.ts`. The build adds its match patterns and page script to the manifest, and the options page gives it a section automatically.
 4. Save a trimmed copy of the site's markup under `scratch/fixtures/` and add a `scratch/test_<name>.ts` script with checks for it; `npm test` runs it.
