@@ -124,7 +124,7 @@ None at this time.
     - Cited entries become citations through `findReference`. Uncited ones are the More list, which `convertMessage` already gates on `includeMoreSources`.
 
 #### [MODIFY] `src/sites/index.ts`
-- [ ] **TASK-8:** List `duckDuckGoAdapter` after `duckAiAdapter` in `SITE_ADAPTERS`. The build then adds `https://duckduckgo.com/*` to the content script's matches, and adds a `world: "MAIN"` entry for `page-duckduckgo.js` on that pattern only.
+- [x] **TASK-8:** List `duckDuckGoAdapter` after `duckAiAdapter` in `SITE_ADAPTERS`. The build then adds `https://duckduckgo.com/*` to the content script's matches, and adds a `world: "MAIN"` entry for `page-duckduckgo.js` on that pattern only.
 
 ### Tests
 

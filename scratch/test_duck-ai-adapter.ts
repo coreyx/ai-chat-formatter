@@ -329,7 +329,8 @@ check("registration: Duck.ai's pages pick the adapter, DuckDuckGo search doesn't
   assert.equal(findAdapterForUrl("https://duck.ai/"), duckAiAdapter);
   assert.equal(findAdapterForUrl("https://duck.ai/?chatID=00000000-0000-4000-8000-000000000000"), duckAiAdapter);
   assert.equal(findAdapterForUrl("https://duck.ai/chat?ia=chat"), duckAiAdapter);
-  assert.equal(findAdapterForUrl("https://duckduckgo.com/?q=widget"), undefined);
+  // DuckDuckGo search belongs to the Search Assist adapter.
+  assert.notEqual(findAdapterForUrl("https://duckduckgo.com/?q=widget"), duckAiAdapter);
 });
 
 check("registration: the manifest runs the content script and Duck.ai's page script on duck.ai, and More sources default on", () => {
