@@ -135,7 +135,7 @@ None at this time.
   3. **Writing:** the extended answer, partly written, with the pill labeled `Stop`.
 
 #### [NEW] `scratch/test_duckduckgo-search-assist.ts`
-- [ ] **TASK-10:** Add the regression script, run by `npm test` and covering the checks in the Verification Plan. It gives the fixture's short-answer elements a fake `__reactFiber$test` chain ending in `item.data.data`, with `sources` and `all_source_urls`.
+- [x] **TASK-10:** Add the regression script, run by `npm test` and covering the checks in the Verification Plan. It gives the fixture's short-answer elements a fake `__reactFiber$test` chain ending in `item.data.data`, with `sources` and `all_source_urls`.
 
 ### Docs
 
