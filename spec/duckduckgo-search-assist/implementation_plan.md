@@ -78,7 +78,7 @@ None at this time.
 - [x] **TASK-2:** Move `parseReferencesAttribute` from `src/sites/copilot.ts` to `src/core/citations.ts`, unchanged. Reword its doc comment to say "sources the site itself hides". `copilot.ts` imports it and re-exports it, so `scratch/test_copilot-source-details.ts` keeps its import.
 
 #### [MODIFY] `src/core/types.ts`, `src/core/settings.ts`, `src/options/options.ts`, `src/sites/duckai.ts`
-- [ ] **TASK-3:** Let each adapter set its More sources default and description:
+- [x] **TASK-3:** Let each adapter set its More sources default and description:
   - **`SiteAdapter`:** add an optional `moreSources?: { defaultEnabled: boolean; description: string }`, documented as applying only when the adapter can read references.
   - **`buildDefaultSettings`:** sets `includeMoreSources` to `canReadReferences(adapter) && (adapter.moreSources?.defaultEnabled ?? true)`.
   - **The options page:** uses `adapter.moreSources?.description`, falling back to today's text.

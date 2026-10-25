@@ -224,6 +224,7 @@ export const duckAiAdapter: SiteAdapter = {
   preprocess: preprocessDuckAi,
   turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context), duckAiPopupChip: popupChipRule(context) }),
   readReferences: readDuckAiReferences,
+  moreSources: { defaultEnabled: true, description: "Adds the Read More cards that the reply doesn't cite." },
   // Popup chips name their sources only in React state, which src/page/duckai.ts reads.
   pageScript: "duckai",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],

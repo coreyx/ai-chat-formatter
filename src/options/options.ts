@@ -124,7 +124,7 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
           "checkbox",
           `${adapter.id}.includeMoreSources`,
           'Include "More" sources',
-          `Adds the sources ${adapter.name} lists under More in its Sources panel but doesn't cite in the reply.`,
+          adapter.moreSources?.description ?? `Adds the sources ${adapter.name} lists under More in its Sources panel but doesn't cite in the reply.`,
           (input) => update((s) => (s.sites[adapter.id].includeMoreSources = input.checked)),
         ),
       );

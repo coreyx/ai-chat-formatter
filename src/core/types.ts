@@ -132,6 +132,13 @@ export interface SiteAdapter {
    */
   hasUntitledCitations?(message: Element): boolean;
   /**
+   * How this site's "More sources" option starts out and how the options page
+   * describes it, since each site's uncited sources come from a different
+   * place. Applies only when the adapter can read references. Without it the
+   * option starts on, with a generic description.
+   */
+  moreSources?: { defaultEnabled: boolean; description: string };
+  /**
    * Name of a script under `src/page/` that the build bundles and the manifest
    * runs in the page's own JavaScript world, for data the isolated content
    * script can't see (such as a framework's internal state).

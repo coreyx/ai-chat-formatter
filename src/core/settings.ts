@@ -43,7 +43,7 @@ export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings
       enabled: true,
       showCopyButton: true,
       overrideNativeCopy: false,
-      includeMoreSources: canReadReferences(adapter),
+      includeMoreSources: canReadReferences(adapter) && (adapter.moreSources?.defaultEnabled ?? true),
       rules: Object.fromEntries(adapter.rules.map((rule) => [rule.id, rule.defaultEnabled])),
     };
   }
