@@ -1,5 +1,6 @@
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import type { SiteAdapter } from "../core/types";
+import { ConversionError, type SiteAdapter } from "../core/types";
+import { rewriteStreamdownCodeBlocks, rewriteStreamdownStrong } from "./streamdown";
 
 /*
  * Search Assist, the AI answer at the top of DuckDuckGo's search results.
@@ -15,6 +16,32 @@ const COPY_BUTTON_SELECTOR = 'button[aria-label="Copy to clipboard"]';
 
 /** The short answer: shown clipped when collapsed, but always in the page in full. */
 const ANSWER_SELECTOR = '[data-testid="duckassist-answer-content"]';
+
+/** The extended answer, in the page only once More has been pressed. */
+const EXPANDED_ANSWER_SELECTOR = '[data-testid="duckassist-expanded-answer-content"]';
+
+/** The More pill while the extended answer is still being written; it's removed once the answer is finished. */
+const WRITING_PILL_SELECTOR = '[data-testid="duckassist-stream-more-pill"][aria-label="Stop"]';
+
+/**
+ * Prepares a copy of the answers' wrapper for conversion. A half-written
+ * extended answer isn't copied, so the user doesn't paste an answer that ends
+ * mid-sentence. Otherwise only the short answer and the extended answer are
+ * kept, in that order, which drops the Expand button, the More pill, the
+ * "Ask Duck.ai" box and anything DuckDuckGo adds to the wrapper later. The
+ * answers' Streamdown markup is then rewritten for Turndown.
+ *
+ * @throws ConversionError while the extended answer is still being written.
+ */
+function preprocessSearchAssist(root: HTMLElement): void {
+  if (root.querySelector(WRITING_PILL_SELECTOR)) {
+    throw new ConversionError("Search Assist is still writing its answer. Copy again once it's finished.");
+  }
+  const answers = [root.querySelector(ANSWER_SELECTOR), root.querySelector(EXPANDED_ANSWER_SELECTOR)].filter((answer) => answer !== null);
+  root.replaceChildren(...answers);
+  rewriteStreamdownCodeBlocks(root);
+  rewriteStreamdownStrong(root);
+}
 
 export const duckDuckGoAdapter: SiteAdapter = {
   id: "duckduckgo",
@@ -33,6 +60,7 @@ export const duckDuckGoAdapter: SiteAdapter = {
   },
   // The preprocess step keeps only the two answers, so there's nothing to strip first.
   stripSelectors: [],
+  preprocess: preprocessSearchAssist,
   turndownRules: () => ({}),
   pageScript: "duckduckgo",
   moreSources: { defaultEnabled: false, description: "Adds the other pages Search Assist consulted but doesn't show, as links without titles." },

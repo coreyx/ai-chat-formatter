@@ -111,7 +111,7 @@ None at this time.
   - `rules: [invisibleCharactersRule, collapseBlankLinesRule]`.
   - `pageScript: "duckduckgo"`.
   - `moreSources: { defaultEnabled: false, description: "Adds the other pages Search Assist consulted but doesn't show, as links without titles." }`.
-- [ ] **TASK-6:** Add `preprocessSearchAssist(root)`, in this order:
+- [x] **TASK-6:** Add `preprocessSearchAssist(root)`, in this order:
   1. If `root` holds `[data-testid="duckassist-stream-more-pill"][aria-label="Stop"]`, throw `ConversionError("Search Assist is still writing its answer. Copy again once it's finished.")`.
   2. Replace `root`'s children with just its `[data-testid="duckassist-answer-content"]` and, when present, `[data-testid="duckassist-expanded-answer-content"]`, in that order. This drops the More pill, the ask box, the Expand button and anything DuckDuckGo adds there later.
   3. Run `rewriteStreamdownCodeBlocks` and `rewriteStreamdownStrong`.
