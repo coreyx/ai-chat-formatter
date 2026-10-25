@@ -100,7 +100,7 @@ None at this time.
 ### Search Assist adapter
 
 #### [NEW] `src/sites/duckduckgo.ts`
-- [ ] **TASK-5:** Add `duckDuckGoAdapter: SiteAdapter`, with a header comment naming the inspection date:
+- [x] **TASK-5:** Add `duckDuckGoAdapter: SiteAdapter`, with a header comment naming the inspection date:
   - `id: "duckduckgo"` and `name: "DuckDuckGo Search Assist"`.
   - `matches: ["https://duckduckgo.com/*"]`.
   - `messageSelector: '[data-react-module-id="wikinlp"]:has([data-testid="duckassist-answer-content"])'`.
