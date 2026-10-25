@@ -1,0 +1,142 @@
+<!--
+  A DuckDuckGo results page reduced to the structure observed on
+  duckduckgo.com on 2026-10-24: organic results around three Search Assist
+  modules, each in its own wikinlp list item.
+    1. Collapsed: the toolbar, the short answer (Streamdown paragraphs, then a
+       span of source chips) and, below it, only the Expand button.
+    2. After More: the same short answer, then the finished extended answer
+       (headings, a table, lists, a code block and one chip) and the
+       "Ask Duck.ai" box. The More pill is gone once the answer is finished.
+    3. Writing: a partly written extended answer, with the More pill labeled
+       Stop.
+  The chips' page titles live in React state on the real page; the tests
+  attach a fake React fiber holding them. Class names imitate DuckDuckGo's
+  generated hashes; every attribute the adapter relies on is kept as observed.
+  All names, titles and URLs are made up.
+-->
+<div id="react-layout">
+  <section data-testid="mainline" class="Wo6ZAEmESLNUuWBkbMxx">
+    <ol class="react-results--main">
+      <li data-layout="organic" class="wLL07_0Xnd1QZpzpfR4W">
+        <article data-testid="result">
+          <h2><a href="https://organic.example/before" data-testid="result-title-a"><span>An organic result before</span></a></h2>
+          <div data-result="snippet"><span>Organic snippet text that isn't part of Search Assist.</span></div>
+        </article>
+      </li>
+
+      <li data-layout="wikinlp" class="ikg2IXiCD14iVX7AdZo1">
+        <div data-react-module-id="wikinlp" id="collapsed" class="Rn_JXVtoPVAFyGkcaXyK">
+          <div class="Ee2e63EzQ9F3xq9wsGDY">
+            <h2 class="QJWJIf_hYXxNMUP6_bj9">Search Assist</h2>
+            <div class="nJZvjW9ckZ3Db1nNhKRz">
+              <button type="button" aria-label="Copy to clipboard" class="ffON2NH02oMAcqyoh2UU"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+              <button type="button" aria-label="Share link" class="ffON2NH02oMAcqyoh2UU"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+              <button type="button" aria-label="Learn more about Search Assist and Explore More" class="ffON2NH02oMAcqyoh2UU"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+              <button type="button" aria-label="Change Search Assist settings" class="ffON2NH02oMAcqyoh2UU"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+            </div>
+          </div>
+          <div class="OHGlXZSKTFpAxxYvBQXu" style="max-height: 80px; overflow: hidden">
+            <div data-testid="duckassist-answer-content" class="Vk1kSN0aBX9OHjr0wpvw">
+              <div data-dark-theme="">
+                <div class="aZ9kQe2ltYp0XvB7wR1c">
+                  <p><span data-streamdown="strong">Widgets</span> are small parts that fit into gadgets.</p>
+                  <p>Most gadgets need two of them.</p>
+                </div>
+                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-1" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span><span tabindex="0" aria-describedby="tip-2" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://gadget.example/parts#widgets" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/gadget.example.ico" alt="" width="14" height="14"><span><span>gadget.example</span></span></a></span></span>
+              </div>
+            </div>
+            <div class="T3ylZqfVHiSYAaVNqC1Q">
+              <button type="button" aria-label="Expand content" class="wJ4q6pjfsXwVkIfrXKBb"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+            </div>
+          </div>
+          <div class="g0tZ6zBYqLTAwzL1MSO6"><span>Auto-generated based on listed sources. May contain inaccuracies.</span><button type="button">Give feedback</button></div>
+        </div>
+      </li>
+
+      <li data-layout="wikinlp" class="ikg2IXiCD14iVX7AdZo1">
+        <div data-react-module-id="wikinlp" id="after-more" class="Rn_JXVtoPVAFyGkcaXyK">
+          <div class="Ee2e63EzQ9F3xq9wsGDY">
+            <h2 class="QJWJIf_hYXxNMUP6_bj9">Search Assist</h2>
+            <div class="nJZvjW9ckZ3Db1nNhKRz">
+              <button type="button" aria-label="Copy to clipboard" class="ffON2NH02oMAcqyoh2UU"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+              <button type="button" aria-label="Share link" class="ffON2NH02oMAcqyoh2UU"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+            </div>
+          </div>
+          <div class="OHGlXZSKTFpAxxYvBQXu">
+            <div data-testid="duckassist-answer-content" class="Vk1kSN0aBX9OHjr0wpvw">
+              <div data-dark-theme="">
+                <div class="aZ9kQe2ltYp0XvB7wR1c">
+                  <p><span data-streamdown="strong">Widgets</span> are small parts that fit into gadgets.</p>
+                  <p>Most gadgets need two of them.</p>
+                </div>
+                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-3" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span><span tabindex="0" aria-describedby="tip-4" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://gadget.example/parts#widgets" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/gadget.example.ico" alt="" width="14" height="14"><span><span>gadget.example</span></span></a></span></span>
+              </div>
+            </div>
+            <div class="T3ylZqfVHiSYAaVNqC1Q">
+              <div data-testid="duckassist-expanded-answer-content" data-dark-theme="" class="Lh3Vf0WuRUkVwxOHvTo6">
+                <div class="aZ9kQe2ltYp0XvB7wR1c">
+                  <h2 data-streamdown="heading-2">How widgets work</h2>
+                  <p>A widget turns once for every turn of the gadget.</p>
+                  <h3 data-streamdown="heading-3">Sizes</h3>
+                  <div data-streamdown="table-wrapper">
+                    <table data-streamdown="table">
+                      <thead data-streamdown="table-header"><tr data-streamdown="table-row"><th data-streamdown="table-header-cell">Size</th><th data-streamdown="table-header-cell">Teeth</th></tr></thead>
+                      <tbody data-streamdown="table-body"><tr data-streamdown="table-row"><td data-streamdown="table-cell">Small</td><td data-streamdown="table-cell">12</td></tr><tr data-streamdown="table-row"><td data-streamdown="table-cell">Large</td><td data-streamdown="table-cell">24</td></tr></tbody>
+                    </table>
+                  </div>
+                  <ol data-streamdown="ordered-list">
+                    <li data-streamdown="list-item">Pick a size.</li>
+                    <li data-streamdown="list-item">Fit the widget.</li>
+                  </ol>
+                  <ul data-streamdown="unordered-list">
+                    <li data-streamdown="list-item"><span data-streamdown="strong">Small widgets:</span> for pocket gadgets.</li>
+                    <li data-streamdown="list-item"><span data-streamdown="strong">Large widgets:</span> for desk gadgets.</li>
+                  </ul>
+                  <p>Check the fit:</p>
+                  <div data-streamdown="code-block" data-language="bash">
+                    <div data-streamdown="code-block-body" data-language="bash"><pre><code><span><span>if</span><span> widget --fits; then</span></span><span><span>  echo</span><span> "fits"</span></span><span><span>fi</span></span></code></pre></div>
+                  </div>
+                  <p>The guide has more detail.</p>
+                </div>
+                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-5" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span></span>
+              </div>
+              <div data-testid="ask" class="kq9q1aXaVd0pJO4E8bGh"><textarea placeholder="Ask Duck.ai a follow-up"></textarea><button type="button">Ask Duck.ai</button></div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li data-layout="wikinlp" class="ikg2IXiCD14iVX7AdZo1">
+        <div data-react-module-id="wikinlp" id="writing" class="Rn_JXVtoPVAFyGkcaXyK">
+          <div class="Ee2e63EzQ9F3xq9wsGDY">
+            <h2 class="QJWJIf_hYXxNMUP6_bj9">Search Assist</h2>
+            <div class="nJZvjW9ckZ3Db1nNhKRz">
+              <button type="button" aria-label="Copy to clipboard" class="ffON2NH02oMAcqyoh2UU"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+            </div>
+          </div>
+          <div class="OHGlXZSKTFpAxxYvBQXu">
+            <div data-testid="duckassist-answer-content" class="Vk1kSN0aBX9OHjr0wpvw">
+              <div data-dark-theme="">
+                <div class="aZ9kQe2ltYp0XvB7wR1c"><p>Gadgets hold widgets.</p></div>
+              </div>
+            </div>
+            <div class="T3ylZqfVHiSYAaVNqC1Q">
+              <div data-testid="duckassist-expanded-answer-content" data-dark-theme="" class="Lh3Vf0WuRUkVwxOHvTo6">
+                <div class="aZ9kQe2ltYp0XvB7wR1c"><h2 data-streamdown="heading-2">How gadgets</h2></div>
+              </div>
+              <button type="button" data-testid="duckassist-stream-more-pill" aria-label="Stop" class="nS3Uq4bWfzT9iTgC6ZpG"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg><span>Stop</span></button>
+              <div data-testid="ask" class="kq9q1aXaVd0pJO4E8bGh"><textarea placeholder="Ask Duck.ai a follow-up"></textarea></div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li data-layout="organic" class="wLL07_0Xnd1QZpzpfR4W">
+        <article data-testid="result">
+          <h2><a href="https://organic.example/after" data-testid="result-title-a"><span>An organic result after</span></a></h2>
+          <div data-result="snippet"><span>More organic snippet text.</span></div>
+        </article>
+      </li>
+    </ol>
+  </section>
+</div>

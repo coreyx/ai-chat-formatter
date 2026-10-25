@@ -129,7 +129,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/fixtures/duckduckgo-search-assist.html`
-- [ ] **TASK-9:** A synthetic results page modeled on the inspected structure, with `*.example` content. It holds an organic result before and after, and three Search Assist modules, each in its own `li[data-layout="wikinlp"]`:
+- [x] **TASK-9:** A synthetic results page modeled on the inspected structure, with `*.example` content. It holds an organic result before and after, and three Search Assist modules, each in its own `li[data-layout="wikinlp"]`:
   1. **Collapsed:** the toolbar, and a short answer with a bold span and two chips (`widget.example`, `gadget.example`). Below it, the second `div` holds only the `Expand content` button.
   2. **After More:** the same short answer. The second `div` holds the extended answer, with an `h2`, an `h3`, a two-column table, an ordered list, an unordered list with bold lead-ins, a Streamdown code block, and one chip (`widget.example` again). It also holds the ask box. The More pill is gone.
   3. **Writing:** the extended answer, partly written, with the pill labeled `Stop`.
