@@ -88,7 +88,7 @@ None at this time.
 ### Search Assist page script
 
 #### [NEW] `src/page/duckduckgo.ts`
-- [ ] **TASK-4:** Add `extractSearchAssistReferences(module: Element): RawReference[] | null`, with a header comment naming the inspection date.
+- [x] **TASK-4:** Add `extractSearchAssistReferences(module: Element): RawReference[] | null`, with a header comment naming the inspection date.
   1. From the module's `[data-testid="duckassist-answer-content"]`, find the `__reactFiber$` key and walk up to `MAX_LEVELS = 40` fibers to the first `memoizedProps.item.data.data` whose `sources` is an array.
   2. Return, in order:
      - each `sources[i].article` as `{ url: link, title: text, cited: true, hidden: false }`;
