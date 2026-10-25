@@ -1,5 +1,8 @@
+import type TurndownService from "turndown";
+import { parseReferencesAttribute } from "../core/citations";
+import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import { ConversionError, type SiteAdapter } from "../core/types";
+import { ConversionError, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
 import { rewriteStreamdownCodeBlocks, rewriteStreamdownStrong } from "./streamdown";
 
 /*
@@ -24,12 +27,34 @@ const EXPANDED_ANSWER_SELECTOR = '[data-testid="duckassist-expanded-answer-conte
 const WRITING_PILL_SELECTOR = '[data-testid="duckassist-stream-more-pill"][aria-label="Stop"]';
 
 /**
+ * Moves each run of chips that follows a block of paragraphs into the block's
+ * last paragraph. Search Assist puts its chips in a `<span>` after the
+ * paragraphs' container, where they show at the end of the text; left there,
+ * their markers would copy as a paragraph of their own instead of at the end
+ * of the last sentence.
+ */
+function attachTrailingChips(root: HTMLElement): void {
+  const runs = new Set<Element>();
+  for (const chip of Array.from(root.querySelectorAll("a")).filter(isSearchAssistChip)) {
+    // The run is the outermost <span> around the chip.
+    let run: Element = chip;
+    while (run.parentElement?.nodeName === "SPAN") run = run.parentElement;
+    if (run !== chip) runs.add(run);
+  }
+  for (const run of runs) {
+    const paragraph = run.previousElementSibling?.lastElementChild;
+    if (paragraph?.nodeName === "P") paragraph.append(run);
+  }
+}
+
+/**
  * Prepares a copy of the answers' wrapper for conversion. A half-written
  * extended answer isn't copied, so the user doesn't paste an answer that ends
  * mid-sentence. Otherwise only the short answer and the extended answer are
  * kept, in that order, which drops the Expand button, the More pill, the
  * "Ask Duck.ai" box and anything DuckDuckGo adds to the wrapper later. The
- * answers' Streamdown markup is then rewritten for Turndown.
+ * answers' Streamdown markup is then rewritten for Turndown, and each run of
+ * chips joins the paragraph it follows.
  *
  * @throws ConversionError while the extended answer is still being written.
  */
@@ -41,6 +66,59 @@ function preprocessSearchAssist(root: HTMLElement): void {
   root.replaceChildren(...answers);
   rewriteStreamdownCodeBlocks(root);
   rewriteStreamdownStrong(root);
+  attachTrailingChips(root);
+}
+
+/**
+ * Whether `node` is one of Search Assist's inline source chips: a link to an
+ * http(s) page, wrapped in a focusable `<span>` (which names the chip's hover
+ * tooltip), holding the site's favicon and its domain. Ordinary links have no
+ * favicon or wrapper, so they're left to the normal link conversion.
+ */
+function isSearchAssistChip(node: Element): boolean {
+  return (
+    node.nodeName === "A" &&
+    /^https?:\/\//i.test(node.getAttribute("href") ?? "") &&
+    node.parentElement?.nodeName === "SPAN" &&
+    node.parentElement.hasAttribute("tabindex") &&
+    node.querySelector("img") !== null
+  );
+}
+
+/**
+ * Turndown rule for Search Assist's source chips. Each chip is registered as a
+ * citation and replaced by its placeholder. The chip shows only a domain, so
+ * the page title comes from the answer's data, read by the page script;
+ * without it the domain stands in.
+ */
+function searchAssistChipRule(context: ConversionContext): TurndownService.Rule {
+  return {
+    filter: (node) => isSearchAssistChip(node),
+    replacement: (_content, node) => {
+      const element = node as HTMLElement;
+      const url = element.getAttribute("href") ?? "";
+      const name = (element.textContent ?? "").trim();
+      const title = context.findReference(url)?.title.trim() || name;
+      return context.registerCitation({ url, title, sourceName: name });
+    },
+  };
+}
+
+/**
+ * Asks the page script (src/page/duckduckgo.ts) for the source list of the
+ * Search Assist answer in `message`. Synchronous: the page script answers
+ * while the event is being dispatched. The chips' sources come back cited and
+ * titled; the other pages Search Assist consulted come back uncited, and are
+ * the More list. Returns null when the page script isn't there or found
+ * nothing, so chips fall back to their domains and More stays empty.
+ */
+export function readSearchAssistReferences(message: Element): SourceReference[] | null {
+  message.removeAttribute(REFERENCES_ATTRIBUTE);
+  message.dispatchEvent(new (message.ownerDocument.defaultView ?? window).CustomEvent(REFERENCES_EVENT, { bubbles: true }));
+  const json = message.getAttribute(REFERENCES_ATTRIBUTE);
+  message.removeAttribute(REFERENCES_ATTRIBUTE);
+  const references = parseReferencesAttribute(json);
+  return references && references.length > 0 ? references : null;
 }
 
 export const duckDuckGoAdapter: SiteAdapter = {
@@ -61,7 +139,9 @@ export const duckDuckGoAdapter: SiteAdapter = {
   // The preprocess step keeps only the two answers, so there's nothing to strip first.
   stripSelectors: [],
   preprocess: preprocessSearchAssist,
-  turndownRules: () => ({}),
+  turndownRules: (context) => ({ searchAssistChip: searchAssistChipRule(context) }),
+  readReferences: readSearchAssistReferences,
+  // The chips' page titles are only in React state, which src/page/duckduckgo.ts reads.
   pageScript: "duckduckgo",
   moreSources: { defaultEnabled: false, description: "Adds the other pages Search Assist consulted but doesn't show, as links without titles." },
   rules: [invisibleCharactersRule, collapseBlankLinesRule],

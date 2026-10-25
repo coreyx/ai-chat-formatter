@@ -115,7 +115,7 @@ None at this time.
   1. If `root` holds `[data-testid="duckassist-stream-more-pill"][aria-label="Stop"]`, throw `ConversionError("Search Assist is still writing its answer. Copy again once it's finished.")`.
   2. Replace `root`'s children with just its `[data-testid="duckassist-answer-content"]` and, when present, `[data-testid="duckassist-expanded-answer-content"]`, in that order. This drops the More pill, the ask box, the Expand button and anything DuckDuckGo adds there later.
   3. Run `rewriteStreamdownCodeBlocks` and `rewriteStreamdownStrong`.
-- [ ] **TASK-7:** Add the chip rule and the reference reader:
+- [x] **TASK-7:** Add the chip rule and the reference reader:
   - **`isSearchAssistChip(node)`:** an `A` whose `href` is http(s), whose parent is a `span[tabindex]`, and which contains an `img`.
   - **The `searchAssistChip` Turndown rule:** registers `{ url, title: context.findReference(url)?.title.trim() || name, sourceName: name }`, where `name` is the chip's trimmed text (its domain).
   - **`readSearchAssistReferences(message)`:**
