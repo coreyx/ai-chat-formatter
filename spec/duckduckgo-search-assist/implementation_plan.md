@@ -75,7 +75,7 @@ None at this time.
   Each keeps its doc comment, reworded to say any Streamdown site rather than Duck.ai. `src/sites/duckai.ts` imports them and keeps `export const duckAiLanguageId = streamdownLanguageId`, so its test is unchanged.
 
 #### [MODIFY] `src/core/citations.ts`, `src/sites/copilot.ts`
-- [ ] **TASK-2:** Move `parseReferencesAttribute` from `src/sites/copilot.ts` to `src/core/citations.ts`, unchanged. Reword its doc comment to say "sources the site itself hides". `copilot.ts` imports it and re-exports it, so `scratch/test_copilot-source-details.ts` keeps its import.
+- [x] **TASK-2:** Move `parseReferencesAttribute` from `src/sites/copilot.ts` to `src/core/citations.ts`, unchanged. Reword its doc comment to say "sources the site itself hides". `copilot.ts` imports it and re-exports it, so `scratch/test_copilot-source-details.ts` keeps its import.
 
 #### [MODIFY] `src/core/types.ts`, `src/core/settings.ts`, `src/options/options.ts`, `src/sites/duckai.ts`
 - [ ] **TASK-3:** Let each adapter set its More sources default and description:

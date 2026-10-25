@@ -1,8 +1,11 @@
 import type TurndownService from "turndown";
-import { parseCitationTitle, sourceDomain } from "../core/citations";
-import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT, type RawReference } from "../core/references-protocol";
+import { parseCitationTitle, parseReferencesAttribute, sourceDomain } from "../core/citations";
+import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
 import { ConversionError, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
+
+// Re-exported for the Copilot tests, which import it from this module.
+export { parseReferencesAttribute };
 
 /*
  * Microsoft Copilot (consumer). Every selector here comes from copilot.com's
@@ -105,30 +108,6 @@ function citationChipRule(context: ConversionContext): TurndownService.Rule {
         .join("");
     },
   };
-}
-
-/**
- * Validates the JSON the page script wrote and turns it into source
- * references, leaving out sources Copilot itself hides. Returns null for
- * anything malformed, so a surprise in the data falls back to chip-only
- * citations rather than producing wrong ones.
- */
-export function parseReferencesAttribute(json: string | null): SourceReference[] | null {
-  if (!json) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(parsed)) return null;
-  const references: SourceReference[] = [];
-  for (const entry of parsed as Partial<RawReference>[]) {
-    if (typeof entry?.url !== "string" || typeof entry.title !== "string" || typeof entry.cited !== "boolean") return null;
-    if (!/^https?:\/\//i.test(entry.url) || entry.hidden === true) continue;
-    references.push({ url: entry.url, title: entry.title, domain: sourceDomain(entry.url), cited: entry.cited });
-  }
-  return references;
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { RawReference } from "./references-protocol";
 import type { Citation, CitationStyle, SourceReference } from "./types";
 
 /**
@@ -239,4 +240,28 @@ export function renderCitations(
       break;
   }
   return `${body.trimEnd()}\n\n${sourcesSection(citationLines, more)}`;
+}
+
+/**
+ * Validates the JSON the page script wrote and turns it into source
+ * references, leaving out the sources the site itself hides. Returns null for
+ * anything malformed, so a surprise in the data falls back to chip-only
+ * citations rather than producing wrong ones.
+ */
+export function parseReferencesAttribute(json: string | null): SourceReference[] | null {
+  if (!json) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed)) return null;
+  const references: SourceReference[] = [];
+  for (const entry of parsed as Partial<RawReference>[]) {
+    if (typeof entry?.url !== "string" || typeof entry.title !== "string" || typeof entry.cited !== "boolean") return null;
+    if (!/^https?:\/\//i.test(entry.url) || entry.hidden === true) continue;
+    references.push({ url: entry.url, title: entry.title, domain: sourceDomain(entry.url), cited: entry.cited });
+  }
+  return references;
 }
