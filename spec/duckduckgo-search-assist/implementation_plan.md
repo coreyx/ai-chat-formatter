@@ -67,7 +67,7 @@ None at this time.
 ### Shared code
 
 #### [NEW] `src/sites/streamdown.ts`
-- [ ] **TASK-1:** Move Duck.ai's Streamdown helpers here:
+- [x] **TASK-1:** Move Duck.ai's Streamdown helpers here:
   - `duckAiLanguageId` becomes `streamdownLanguageId`;
   - `rewriteDuckAiCodeBlocks` becomes `rewriteStreamdownCodeBlocks`;
   - `rewriteDuckAiStrong` becomes `rewriteStreamdownStrong`.

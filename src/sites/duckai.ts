@@ -3,6 +3,7 @@ import { normalizeCitationUrl, sourceDomain } from "../core/citations";
 import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT, type RawChipSource } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
 import type { ConversionContext, SiteAdapter, SourceReference } from "../core/types";
+import { rewriteStreamdownCodeBlocks, rewriteStreamdownStrong, streamdownLanguageId } from "./streamdown";
 
 /*
  * Duck.ai, DuckDuckGo's AI chat. Every selector here comes from duck.ai's
@@ -21,54 +22,12 @@ const CONTENT_SELECTOR = "[data-dark-theme]";
 /** The cards in a reply's Read More section, a `<section>` headed by an `<h4>`. */
 const READ_MORE_CARD_SELECTOR = "section:has(> h4) a[data-handled-by-react]";
 
-/** Code block labels that mean "no particular language", so the fence gets no info string. */
-const PLAIN_LANGUAGES = new Set(["text", "plaintext", "plain", "txt"]);
-
 /**
- * The fence info string for a code block's `data-language` value: lowercased,
- * or empty when the block names no real language.
+ * The fence info string for a Duck.ai code block's `data-language` value.
+ * Kept under its old name for the Duck.ai tests; the logic is shared in
+ * ./streamdown.ts.
  */
-export function duckAiLanguageId(language: string | null | undefined): string {
-  const id = (language ?? "").trim().toLowerCase();
-  return PLAIN_LANGUAGES.has(id) ? "" : id;
-}
-
-/**
- * Rewrites Duck.ai's code blocks as `<pre><code>` that Turndown fences.
- *
- * Duck.ai renders each line as its own `<span>` under `<code>`, with no
- * newline characters between them, so the block's text alone would run every
- * line together. The lines are joined with newlines here instead, keeping each
- * line's own leading spaces. A block without line spans falls back to its text.
- */
-function rewriteDuckAiCodeBlocks(root: HTMLElement): void {
-  const document = root.ownerDocument;
-  for (const block of Array.from(root.querySelectorAll<HTMLElement>('[data-streamdown="code-block"]'))) {
-    const source = block.querySelector("code");
-    const lines = source ? Array.from(source.children).map((line) => line.textContent ?? "") : [];
-
-    const pre = document.createElement("pre");
-    const code = document.createElement("code");
-    const language = duckAiLanguageId(block.getAttribute("data-language"));
-    if (language) code.className = `language-${language}`;
-    code.textContent = lines.length > 0 ? lines.join("\n") : (source?.textContent ?? block.textContent ?? "");
-    pre.appendChild(code);
-    block.replaceWith(pre);
-  }
-}
-
-/**
- * Turns Streamdown's bold text back into `<strong>`. Streamdown renders `**…**`
- * as a `<span data-streamdown="strong">` styled bold, and Turndown only knows
- * bold from the tag, so without this every bold run would copy as plain text.
- */
-function rewriteDuckAiStrong(root: HTMLElement): void {
-  for (const span of Array.from(root.querySelectorAll('span[data-streamdown="strong"]'))) {
-    const strong = root.ownerDocument.createElement("strong");
-    strong.append(...Array.from(span.childNodes));
-    span.replaceWith(strong);
-  }
-}
+export const duckAiLanguageId = streamdownLanguageId;
 
 /**
  * Removes popup chips that have no readable sources, together with the `<span>`
@@ -87,8 +46,8 @@ function removeUnreadablePopupChips(root: HTMLElement): void {
 
 /** Rewrites the reply body's Streamdown markup into HTML that Turndown converts faithfully. */
 function preprocessDuckAi(root: HTMLElement): void {
-  rewriteDuckAiCodeBlocks(root);
-  rewriteDuckAiStrong(root);
+  rewriteStreamdownCodeBlocks(root);
+  rewriteStreamdownStrong(root);
   removeUnreadablePopupChips(root);
 }
 
