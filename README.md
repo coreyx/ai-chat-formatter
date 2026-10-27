@@ -22,6 +22,7 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 - Optionally, **the site's own Copy button copies Markdown too**. If a reply can't be converted, the site's normal copy runs instead, so the button always copies something.
 - **Citations kept**, in the style you choose (see below), each with its page title and domain: `[Title](url) — domain`. A page cited several times gets one number.
 - **"More" sources too**: sources the site lists without citing them in the reply (Copilot's **More** in its Sources panel, Duck.ai's uncited **Read More** cards) come along after the citations, laid out like Copilot's panel. For Search Assist, the other pages it consulted can come along too, off by default.
+- **Your prompt comes along**, above the reply: as a heading (H2 by default, with the reply nested below it), a blockquote, bold text or plain text. On Search Assist, the search query stands in for the prompt. You can turn this off.
 - **Code blocks** come through as fenced blocks with their language and exact indentation.
 - **Headings, lists, tables, links, inline code and math** (`$…$` and `$$…$$`) convert to their Markdown equivalents.
 - **Clean-up rules** you can switch on and off per site: normalizing invisible characters (non-breaking and zero-width spaces) and collapsing runs of blank lines.
@@ -125,7 +126,10 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
 
 - **Enable AI Chat Formatter**: turns everything on or off.
 - **Citation style**: one of the four styles above (Linked citations by default).
-- **Minimum heading level**: H1 to H6, for every site; **H1 (no change)** by default. When a copy has a heading above this level, every heading shifts down by the same amount, Sources included, so the reply can sit under your note's own headings with its hierarchy kept. With H2, a reply's `# Title` becomes `## Title`, its `##` headings become `###`, and `## Sources` becomes `### Sources`. Headings that would go past H6 stay at H6, and `#` lines in code blocks are left alone.
+- **Minimum heading level**: H1 to H6, for every site; **H1 (no change)** by default. When a copy has a heading above this level, every heading shifts down by the same amount, Sources included, so the reply can sit under your note's own headings with its hierarchy kept. With H2, a reply's `# Title` becomes `## Title`, its `##` headings become `###`, and `## Sources` becomes `### Sources`. Headings that would go past H6 stay at H6, and `#` lines in code blocks are left alone. Not used while the prompt is copied as a heading, since the reply then starts one level below the prompt.
+- **Copy the prompt with the response**: on by default, for every site. Each copy starts with the prompt the reply answers; on Search Assist, the search query from the page address. If the prompt can't be found, for example an old message Copilot no longer shows, the copy is the reply alone.
+  - **Prompt format**: **Heading** (the default), **Blockquote**, **Bold** or **Plain text**. As a heading, a prompt of several lines puts its first line in the heading and quotes the rest below it. The prompt is copied as typed, except that a line starting with `# ` is escaped so it doesn't become a heading.
+  - **Prompt heading level**: H1 to H6, H2 by default, for the Heading format. The reply and its Sources start one level below it: with H2, a reply's `# Title` becomes `### Title`. Headings above that level shift down by the same amount, and headings already deeper stay where they are.
 - Per site:
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
@@ -172,6 +176,7 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 
 - **The extension depends on each site's page markup**, which isn't a documented API and can change without notice. When a site changes its markup, its adapter needs an update. Until then, Copy as Markdown shows an error rather than copying a broken reply, and an overridden Copy button falls back to the site's own copy. Duck.ai's and DuckDuckGo's class names change between their releases, so their adapters rely only on ids, `data-*` and ARIA attributes, and page structure.
 - **Source titles and More sources depend on Copilot's internal data**, which is even more likely to change than its markup. If the live page data stops working, replies that existed when the page loaded still get full titles and links from the page's embedded data. Replies written since then fall back to the Sources panel with Copy as Markdown (More entries without links), or to the titles on the citation chips with the Copy-button override, with no More sources.
+- **The prompt is read from each site's page markup** too. If a site changes how it shows prompts, copies come without the prompt until its adapter is updated; the reply is still copied.
 - **Duck.ai's popup chips depend on Duck.ai's internal data** in the same way. If reading it stops working, a popup chip falls back to the Read More card for the domain it shows, so a chip standing for several sources keeps only that one.
 - **Search Assist's chip titles and More sources depend on DuckDuckGo's internal data** in the same way. If reading it stops working, chips are titled with their domains and there are no More sources.
 - **The extension loads on every DuckDuckGo search page**, since Search Assist can appear on any of them. It does nothing on a page without a Search Assist answer.

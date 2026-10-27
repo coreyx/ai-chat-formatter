@@ -12,9 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The copy holds the whole short answer, collapsed or expanded, and the extended answer once **More** has finished writing it. While More is still writing, Copy as Markdown says so and copies nothing.
 - Search Assist's source chips become citations titled with their page titles, read through a small script in DuckDuckGo's page. The other pages Search Assist consulted can go under **More** as untitled links, with **Include "More" sources**, which is off by default for Search Assist.
 - **Minimum heading level** setting, H1 to H6, for every site. When a copy has a heading above it, every heading shifts down by the same amount, the Sources section's included, keeping the hierarchy; headings past H6 stay at H6. The default, H1, changes nothing.
+- **The prompt is copied with the response**, on by default: each copy starts with the prompt the reply answers, on Copilot, Duck.ai and Search Assist (where the search query stands in for it). **Copy the prompt with the response** turns it off.
+- **Prompt format**: Heading (the default), Blockquote, Bold or Plain text. As a heading, at the **Prompt heading level** (H2 by default), the reply and its Sources start one level below the prompt, and a prompt of several lines puts its first line in the heading and quotes the rest.
 
 ### Changed
 
+- Copies now start with the prompt by default. Turn off **Copy the prompt with the response** to copy the reply alone, as before.
 - The **Include "More" sources** description on the options page is now specific to each site. Duck.ai's now refers to its Read More cards.
 - Building from source uses [pnpm](https://pnpm.io/) instead of npm: `pnpm install`, then `pnpm run build`. The pnpm version is pinned in `package.json`, and `corepack enable` sets it up. Dependency versions are unchanged.
 
