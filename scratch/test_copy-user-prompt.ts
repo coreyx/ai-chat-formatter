@@ -11,7 +11,9 @@ import { JSDOM } from "jsdom";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
 import { formatPrompt, promptText } from "../src/core/prompt";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
+import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
+import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -240,6 +242,27 @@ check("convert: blockquote, bold and plain prompts leave the response's headings
 
 check("convert: with no prompt, the copy is the response alone, as before", () => {
   assert.ok(convertReply().startsWith("# Widgets\n"));
+});
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+
+check("settings: the prompt is on by default, as a heading at H2", () => {
+  const defaults = buildDefaultSettings(SITE_ADAPTERS);
+  assert.equal(defaults.includePrompt, true);
+  assert.equal(defaults.promptFormat, "heading");
+  assert.equal(defaults.promptHeadingLevel, 2);
+});
+
+check("settings: stored values are kept; settings saved before this change, or invalid values, get the defaults", () => {
+  const defaults = buildDefaultSettings(SITE_ADAPTERS);
+  const stored = mergeSettings({ includePrompt: false, promptFormat: "bold", promptHeadingLevel: 4 }, defaults);
+  assert.deepEqual([stored.includePrompt, stored.promptFormat, stored.promptHeadingLevel], [false, "bold", 4]);
+  const older = mergeSettings({ enabled: true, citationStyle: "footnotes", minHeadingLevel: 3, sites: {} }, defaults);
+  assert.deepEqual([older.includePrompt, older.promptFormat, older.promptHeadingLevel, older.minHeadingLevel], [true, "heading", 2, 3]);
+  const invalid = mergeSettings({ includePrompt: "yes", promptFormat: "italic", promptHeadingLevel: 7 }, defaults);
+  assert.deepEqual([invalid.includePrompt, invalid.promptFormat, invalid.promptHeadingLevel], [true, "heading", 2]);
 });
 
 // ---------------------------------------------------------------------------

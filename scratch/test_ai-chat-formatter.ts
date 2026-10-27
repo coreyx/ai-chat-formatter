@@ -366,6 +366,9 @@ check("settings: defaults come from each adapter and its rules", () => {
     enabled: true,
     citationStyle: "linked-citations",
     minHeadingLevel: 1,
+    includePrompt: true,
+    promptFormat: "heading",
+    promptHeadingLevel: 2,
     sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: false, includeMoreSources: false, rules: { "invisible-characters": true, "collapse-blank-lines": true } } },
   });
 });
@@ -380,6 +383,9 @@ check("settings: merge keeps stored values and fills in what's missing or invali
     enabled: false,
     citationStyle: "linked-citations",
     minHeadingLevel: 1,
+    includePrompt: true,
+    promptFormat: "heading",
+    promptHeadingLevel: 2,
     sites: { test: { enabled: true, showCopyButton: true, overrideNativeCopy: true, includeMoreSources: false, rules: { "invisible-characters": true, "collapse-blank-lines": false } } },
   });
   assert.deepEqual(mergeSettings(undefined, defaults), defaults);

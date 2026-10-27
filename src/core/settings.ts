@@ -1,4 +1,4 @@
-import { CITATION_STYLES, HEADING_LEVELS, type CitationStyle, type HeadingLevel, type SiteAdapter } from "./types";
+import { CITATION_STYLES, HEADING_LEVELS, PROMPT_FORMATS, type CitationStyle, type HeadingLevel, type PromptFormat, type SiteAdapter } from "./types";
 
 /** Per-site settings, keyed in {@link Settings.sites} by the adapter's id. */
 export interface SiteSettings {
@@ -24,8 +24,17 @@ export interface Settings {
   enabled: boolean;
   /** How citations are written, for every site. */
   citationStyle: CitationStyle;
-  /** The shallowest heading level a copy may have, for every site; 1 never shifts anything. */
+  /**
+   * The shallowest heading level a copy may have, for every site; 1 never
+   * shifts anything. Not used while the prompt is copied as a heading.
+   */
   minHeadingLevel: HeadingLevel;
+  /** Whether each copy starts with the prompt the reply answers, for every site. */
+  includePrompt: boolean;
+  /** How the prompt is written, when {@link includePrompt} is on. */
+  promptFormat: PromptFormat;
+  /** The prompt's heading level in the `heading` format; the response starts one level below it. */
+  promptHeadingLevel: HeadingLevel;
   sites: Record<string, SiteSettings>;
 }
 
@@ -49,7 +58,7 @@ export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings
       rules: Object.fromEntries(adapter.rules.map((rule) => [rule.id, rule.defaultEnabled])),
     };
   }
-  return { enabled: true, citationStyle: "linked-citations", minHeadingLevel: 1, sites };
+  return { enabled: true, citationStyle: "linked-citations", minHeadingLevel: 1, includePrompt: true, promptFormat: "heading", promptHeadingLevel: 2, sites };
 }
 
 /** `value` when it is a boolean, otherwise `fallback`. */
@@ -85,10 +94,15 @@ export function mergeSettings(stored: unknown, defaults: Settings): Settings {
   }
   const style = saved.citationStyle;
   const level = saved.minHeadingLevel;
+  const promptFormat = saved.promptFormat;
+  const promptLevel = saved.promptHeadingLevel;
   return {
     enabled: bool(saved.enabled, defaults.enabled),
     citationStyle: CITATION_STYLES.includes(style as CitationStyle) ? (style as CitationStyle) : defaults.citationStyle,
     minHeadingLevel: HEADING_LEVELS.includes(level as HeadingLevel) ? (level as HeadingLevel) : defaults.minHeadingLevel,
+    includePrompt: bool(saved.includePrompt, defaults.includePrompt),
+    promptFormat: PROMPT_FORMATS.includes(promptFormat as PromptFormat) ? (promptFormat as PromptFormat) : defaults.promptFormat,
+    promptHeadingLevel: HEADING_LEVELS.includes(promptLevel as HeadingLevel) ? (promptLevel as HeadingLevel) : defaults.promptHeadingLevel,
     sites,
   };
 }

@@ -92,7 +92,7 @@ None at this time. The one open question, about the live markup of a multi-line 
   - Because the prompt is added after the shift, its own heading keeps the chosen level.
 
 #### [MODIFY] `src/core/settings.ts`
-- [ ] **TASK-5:** Add three settings to `Settings`, documented:
+- [x] **TASK-5:** Add three settings to `Settings`, documented:
   - `includePrompt: boolean`, default `true`;
   - `promptFormat: PromptFormat`, default `"heading"`;
   - `promptHeadingLevel: HeadingLevel`, default `2`.
