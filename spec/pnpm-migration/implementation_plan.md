@@ -41,7 +41,7 @@ None at this time.
 - [x] **TASK-1:** Add `"packageManager": "pnpm@12.6.0"`, and change the `package` script to `pnpm run build && node scripts/package.mjs`.
 
 #### [NEW] `pnpm-lock.yaml`, [NEW] `pnpm-workspace.yaml`, [DELETE] `package-lock.json`
-- [ ] **TASK-2:** Move the lockfile and reinstall.
+- [x] **TASK-2:** Move the lockfile and reinstall.
   - Run `pnpm import` to write `pnpm-lock.yaml` from `package-lock.json`, then delete `package-lock.json`.
   - Write `pnpm-workspace.yaml` with `allowBuilds:` / `esbuild: false`, plus a comment on why.
   - Delete `node_modules/` and run `pnpm install --frozen-lockfile`. It must finish without errors and leave the lockfile unchanged.

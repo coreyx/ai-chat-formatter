@@ -1,0 +1,10 @@
+# pnpm's project settings. This is a single package, not a monorepo; pnpm 11
+# and later keep settings such as allowBuilds in this file regardless.
+
+# Which dependencies may run their install scripts. pnpm runs none unless
+# allowed, and stops the install if one is left undecided.
+allowBuilds:
+  # esbuild's script only checks its platform binary and links it for a faster
+  # start. pnpm already installs that binary as an optional dependency, and the
+  # build works without the script, so it stays off.
+  esbuild: false
