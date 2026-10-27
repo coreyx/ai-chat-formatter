@@ -55,6 +55,17 @@
       border-radius: 4px;
       background: color-mix(in srgb, var(--text) 8%, transparent);
     }
+    select {
+      font: inherit;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+    select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .select-hint { margin: 8px 0 0; }
     .hosts { margin: -8px 0 8px; }
     #status { min-height: 1.5em; color: var(--muted); font-size: 13px; }
   </style>

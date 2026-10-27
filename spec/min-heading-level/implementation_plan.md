@@ -59,7 +59,7 @@ None at this time. Scope (one global setting), Sources headings (shifted with th
 ### Options page
 
 #### [MODIFY] `src/options/options.ts` and `src/options/options.html`
-- [ ] **TASK-6:** Add a **Minimum heading level** section after Citation style.
+- [x] **TASK-6:** Add a **Minimum heading level** section after Citation style.
   - A `fieldset.global` (so the master switch greys it out) with an `h2`, a `<select name="minHeadingLevel">` and a hint: "Shifts every heading down by the same amount, Sources included, so none is above this level. Headings past H6 stay at H6."
   - Options: `H1 (no change)`, then `H2` to `H6`, with values `1` to `6`. A change calls `update((s) => (s.minHeadingLevel = level))`.
   - `fill` selects the stored level.
@@ -69,7 +69,7 @@ None at this time. Scope (one global setting), Sources headings (shifted with th
 ### Tests
 
 #### [NEW] `scratch/test_min-heading-level.ts`
-- [ ] **TASK-7:** A regression script, picked up by `npm test`. See Automated Tests below for what it checks.
+- [x] **TASK-7:** A regression script, picked up by `npm test`. See Automated Tests below for what it checks.
 
 ## Verification Plan
 

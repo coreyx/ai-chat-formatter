@@ -1,10 +1,10 @@
 /**
- * The options page: a master switch, the citation style, and one section per
- * site with its button, override and rule toggles. Every change is saved as
+ * The options page: a master switch, the citation style, the minimum heading
+ * level, and one section per site with its button, override and rule toggles. Every change is saved as
  * soon as it's made, and open chat tabs pick it up without a reload.
  */
 import { canReadReferences, loadSettings, onSettingsChanged, saveSettings, type Settings } from "../core/settings";
-import { CITATION_STYLES, type CitationStyle, type SiteAdapter } from "../core/types";
+import { CITATION_STYLES, HEADING_LEVELS, type CitationStyle, type HeadingLevel, type SiteAdapter } from "../core/types";
 import { SITE_ADAPTERS } from "../sites/index";
 
 /** How each citation style is presented: a label, an optional hint and a one-line example of its output. */
@@ -101,6 +101,26 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
   styles.append(styleSet);
   root.append(styles);
 
+  const headings = el(document, "section");
+  const headingSet = el(document, "fieldset", "global");
+  const headingTitle = el(document, "h2", undefined, "Minimum heading level");
+  headingTitle.id = "min-heading-level-title";
+  const levelSelect = el(document, "select");
+  levelSelect.name = "minHeadingLevel";
+  levelSelect.setAttribute("aria-labelledby", headingTitle.id);
+  levelSelect.setAttribute("aria-describedby", "min-heading-level-hint");
+  for (const level of HEADING_LEVELS) {
+    const choice = el(document, "option", undefined, level === 1 ? "H1 (no change)" : `H${level}`);
+    choice.value = String(level);
+    levelSelect.append(choice);
+  }
+  levelSelect.addEventListener("change", () => update((s) => (s.minHeadingLevel = Number(levelSelect.value) as HeadingLevel)));
+  const levelHint = el(document, "p", "hint select-hint", "Shifts every heading down by the same amount, Sources included, so none is above this level. Headings past H6 stay at H6.");
+  levelHint.id = "min-heading-level-hint";
+  headingSet.append(headingTitle, levelSelect, levelHint);
+  headings.append(headingSet);
+  root.append(headings);
+
   for (const adapter of adapters) {
     const section = el(document, "section");
     section.dataset.site = adapter.id;
@@ -146,6 +166,7 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
     const input = (name: string) => root.querySelector<HTMLInputElement>(`input[name="${attr(name)}"]`);
     input("enabled")!.checked = settings.enabled;
     root.querySelectorAll<HTMLInputElement>('input[name="citationStyle"]').forEach((radio) => (radio.checked = radio.value === settings.citationStyle));
+    root.querySelector<HTMLSelectElement>('select[name="minHeadingLevel"]')!.value = String(settings.minHeadingLevel);
     root.querySelectorAll<HTMLFieldSetElement>("fieldset.global").forEach((set) => (set.disabled = !settings.enabled));
     for (const adapter of adapters) {
       const site = settings.sites[adapter.id];

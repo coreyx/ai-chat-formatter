@@ -13,8 +13,9 @@ import { ContentController } from "../src/content/controller";
 import { convertMessage } from "../src/core/convert";
 import { enforceMinHeadingLevel } from "../src/core/headings";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
-import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
+import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
 import type { CitationStyle, HeadingLevel, SiteAdapter, SourceReference } from "../src/core/types";
+import { renderOptions } from "../src/options/options";
 import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
@@ -215,6 +216,54 @@ check("settings: a stored level is kept; anything else falls back to H1", () => 
   }
   // Settings saved before this setting existed have no minHeadingLevel at all.
   assert.equal(mergeSettings({ enabled: true, citationStyle: "footnotes", sites: {} }, defaults).minHeadingLevel, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Options page
+// ---------------------------------------------------------------------------
+
+/** The options form, rendered and filled with `settings`, recording every change it reports. */
+function optionsPage(settings: Settings) {
+  const { window } = new JSDOM("<!doctype html><body></body>");
+  const changes: Settings[] = [];
+  const form = renderOptions(window.document, SITE_ADAPTERS, (next) => changes.push(next));
+  window.document.body.append(form.root);
+  form.fill(settings);
+  const select = window.document.querySelector<HTMLSelectElement>('select[name="minHeadingLevel"]')!;
+  return { window, form, select, changes };
+}
+
+check("options page: a drop-down from H1 (no change) to H6, after Citation style, showing the stored level", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.minHeadingLevel = 4;
+  const page = optionsPage(settings);
+  assert.deepEqual(
+    Array.from(page.select.options).map((option) => [option.value, option.textContent]),
+    [["1", "H1 (no change)"], ["2", "H2"], ["3", "H3"], ["4", "H4"], ["5", "H5"], ["6", "H6"]],
+  );
+  assert.equal(page.select.value, "4");
+  const titles = Array.from(page.window.document.querySelectorAll("h2")).map((heading) => heading.textContent);
+  assert.equal(titles.indexOf("Minimum heading level"), titles.indexOf("Citation style") + 1);
+  assert.equal(page.window.document.getElementById(page.select.getAttribute("aria-labelledby")!)!.textContent, "Minimum heading level");
+  assert.match(page.window.document.getElementById(page.select.getAttribute("aria-describedby")!)!.textContent!, /Headings past H6 stay at H6/);
+});
+
+check("options page: choosing H3 reports minHeadingLevel 3 as a number, leaving the rest as it was", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  const page = optionsPage(settings);
+  page.select.value = "3";
+  page.select.dispatchEvent(new page.window.Event("change"));
+  assert.equal(page.changes.length, 1);
+  assert.equal(page.changes[0].minHeadingLevel, 3);
+  assert.deepEqual({ ...page.changes[0], minHeadingLevel: 1 }, settings);
+});
+
+check("options page: the drop-down is disabled while the master switch is off", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  const page = optionsPage(settings);
+  assert.equal(page.select.matches(":disabled"), false);
+  page.form.fill({ ...settings, enabled: false });
+  assert.equal(page.select.matches(":disabled"), true);
 });
 
 // ---------------------------------------------------------------------------
