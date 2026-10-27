@@ -47,8 +47,6 @@
  */
 .acf-toast {
   position: fixed;
-  left: 50%;
-  bottom: 24px;
   z-index: 2147483647;
   max-width: min(480px, calc(100vw - 32px));
   padding: 10px 16px;
@@ -58,8 +56,25 @@
   color: #f4f4f5;
   box-shadow: 0 6px 24px rgb(0 0 0 / 0.35);
   font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Next to the button that was clicked; the script sets top and left. */
+.acf-toast-anchored {
+  animation: acf-toast-fade-in 160ms ease-out;
+}
+
+/* At the bottom center, when there's no button to place it by. */
+.acf-toast:not(.acf-toast-anchored) {
+  left: 50%;
+  bottom: 24px;
   transform: translateX(-50%);
   animation: acf-toast-in 160ms ease-out;
+}
+
+@keyframes acf-toast-fade-in {
+  from {
+    opacity: 0;
+  }
 }
 
 @keyframes acf-toast-in {
@@ -74,7 +89,9 @@
     transition: none;
   }
 
-  .acf-toast {
+  /* Both selectors are needed: the bottom-center one is more specific than .acf-toast alone. */
+  .acf-toast-anchored,
+  .acf-toast:not(.acf-toast-anchored) {
     animation: none;
   }
 }

@@ -143,6 +143,44 @@ await checkAsync("controller: with the override on, 'Copied as Markdown' goes ne
 });
 
 // ---------------------------------------------------------------------------
+// The style sheet
+// ---------------------------------------------------------------------------
+
+/** A page with the content style sheet the build ships (dist/content.css, written by `pnpm test`'s build). */
+function styledPage() {
+  const css = readFileSync("dist/content.css", "utf8");
+  const { window } = new JSDOM(`<!doctype html><head><style>${css}</style></head><body></body>`);
+  return window;
+}
+
+check("style sheet: the bottom-center placement applies only without the anchored class", () => {
+  const window = styledPage();
+  const floating = window.document.createElement("div");
+  floating.className = "acf-toast";
+  const anchored = window.document.createElement("div");
+  anchored.className = "acf-toast acf-toast-anchored";
+  window.document.body.append(floating, anchored);
+  const style = (element: Element) => window.getComputedStyle(element);
+  assert.equal(style(floating).position, "fixed");
+  assert.equal(style(floating).left, "50%");
+  assert.equal(style(floating).bottom, "24px");
+  assert.equal(style(anchored).position, "fixed");
+  assert.notEqual(style(anchored).left, "50%");
+  assert.notEqual(style(anchored).bottom, "24px");
+});
+
+check("style sheet: reduced motion turns off both placements' animations", () => {
+  const sheet = styledPage().document.styleSheets[0];
+  const media = Array.from(sheet.cssRules).find((rule) => "media" in rule && (rule as CSSMediaRule).media.mediaText.includes("prefers-reduced-motion")) as CSSMediaRule | undefined;
+  assert.ok(media, "has a reduced-motion block");
+  const selectors = Array.from(media.cssRules)
+    .filter((rule) => (rule as CSSStyleRule).style?.getPropertyValue("animation") === "none")
+    .flatMap((rule) => (rule as CSSStyleRule).selectorText.split(/\s*,\s*/));
+  assert.ok(selectors.includes(".acf-toast-anchored"), selectors.join(" | "));
+  assert.ok(selectors.includes(".acf-toast:not(.acf-toast-anchored)"), selectors.join(" | "));
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 

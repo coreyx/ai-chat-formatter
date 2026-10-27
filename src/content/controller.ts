@@ -289,6 +289,10 @@ export function placeToast(toast: HTMLElement, anchor: Element, view: Window): v
   if (!anchor.isConnected) return;
   const button = anchor.getBoundingClientRect();
   if (button.width === 0 && button.height === 0) return;
+  // Measure in the anchored style, at the window's corner: at the bottom center, `left: 50%` would cap the width at half the window.
+  toast.classList.add("acf-toast-anchored");
+  toast.style.top = "0px";
+  toast.style.left = "0px";
   // offsetWidth and offsetHeight ignore the entry animation's transform.
   const width = toast.offsetWidth;
   const height = toast.offsetHeight;
@@ -298,7 +302,6 @@ export function placeToast(toast: HTMLElement, anchor: Element, view: Window): v
   const left = Math.max(TOAST_MARGIN, Math.min(button.left, view.innerWidth - TOAST_MARGIN - width));
   toast.style.top = `${Math.round(top)}px`;
   toast.style.left = `${Math.round(left)}px`;
-  toast.classList.add("acf-toast-anchored");
 }
 
 /** A user-facing message for `error`: a ConversionError's own message, or `prefix` with the error's text. */

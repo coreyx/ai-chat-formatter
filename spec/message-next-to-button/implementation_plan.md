@@ -51,7 +51,7 @@ None at this time. Placement next to the button, rather than at the top center o
   - The doc comments are updated to match.
 
 #### [MODIFY] `src/content/content.css`
-- [ ] **TASK-2:** Split the placements.
+- [x] **TASK-2:** Split the placements.
   - `.acf-toast` keeps the look: colors, border, radius, shadow, font, max width and z-index.
   - The bottom-center position and its slide-up animation move to `.acf-toast:not(.acf-toast-anchored)`, so the fallback is unchanged.
   - `.acf-toast-anchored` uses the coordinates set by the script, with no transform, and a fade-in.
