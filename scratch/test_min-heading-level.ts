@@ -7,7 +7,11 @@
  * exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { JSDOM } from "jsdom";
+import { convertMessage } from "../src/core/convert";
 import { enforceMinHeadingLevel } from "../src/core/headings";
+import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
+import type { CitationStyle, HeadingLevel, SiteAdapter, SourceReference } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -89,6 +93,94 @@ check("headings: inside a blockquote, opening a list item, indented, and empty a
 
 check("headings: closing #s and the heading text are kept as they are", () => {
   assert.equal(enforceMinHeadingLevel("# Title with # inside #", 3), "### Title with # inside #");
+});
+
+// ---------------------------------------------------------------------------
+// Through convertMessage, with the Sources section
+// ---------------------------------------------------------------------------
+
+/** A bare adapter: `.reply` is the body and `.chip[data-url]` is a citation. */
+const testAdapter: SiteAdapter = {
+  id: "test",
+  name: "Test",
+  matches: ["https://chat.example/*"],
+  messageSelector: ".message",
+  contentSelector: ".reply",
+  nativeCopyButtonSelector: ".copy",
+  findButtonAnchor: () => null,
+  stripSelectors: [],
+  turndownRules: (context) => ({
+    chip: {
+      filter: (node) => node.classList.contains("chip"),
+      replacement: (_content, node) =>
+        context.registerCitation({ url: node.getAttribute("data-url")!, title: node.getAttribute("data-title")!, sourceName: "" }),
+    },
+  }),
+  rules: [invisibleCharactersRule, collapseBlankLinesRule],
+};
+
+/** A reply with an H1, an H2 and one citation. */
+function replyWithH1(): Element {
+  const { document } = new JSDOM(
+    `<!doctype html><body><div class="message"><div class="reply">` +
+      `<h1>Widgets</h1><p>Widgets fit gadgets.<span class="chip" data-url="https://widget.example/guide" data-title="Widget guide">widget.example</span></p>` +
+      `<h2>Sizes</h2><p>Two sizes.</p></div></div>`,
+  ).window;
+  return document.querySelector(".message")!;
+}
+
+/** Converts {@link replyWithH1} in `style`, with an uncited source when `more` is set. */
+function convertReply(style: CitationStyle, minHeadingLevel?: HeadingLevel, more = false): string {
+  const references: SourceReference[] = [
+    { url: "https://widget.example/guide", title: "Widget guide", domain: "widget.example", cited: true },
+    { url: "https://parts.example/list", title: "Parts list", domain: "parts.example", cited: false },
+  ];
+  return convertMessage(testAdapter, replyWithH1(), {
+    style,
+    includeMoreSources: more,
+    isRuleEnabled: () => true,
+    references,
+    idToken: "k3f9",
+    ...(minHeadingLevel === undefined ? {} : { minHeadingLevel }),
+  });
+}
+
+check("convert: minimum H2 shifts the reply and the Sources headings together; markers and block IDs are unchanged", () => {
+  assert.equal(
+    convertReply("linked-citations", 2),
+    md(
+      "## Widgets",
+      "",
+      "Widgets fit gadgets.[[#^c-k3f9-1|⁽¹⁾]]",
+      "",
+      "### Sizes",
+      "",
+      "Two sizes.",
+      "",
+      "### Sources",
+      "",
+      "#### Citations",
+      "",
+      "1. [Widget guide](https://widget.example/guide) — widget.example ^c-k3f9-1",
+    ),
+  );
+});
+
+check("convert: footnotes with no More list have no Sources headings, so only the reply's move", () => {
+  assert.equal(
+    convertReply("footnotes", 2),
+    md("## Widgets", "", "Widgets fit gadgets.[^1]", "", "### Sizes", "", "Two sizes.", "", "[^1]: [Widget guide](https://widget.example/guide) — widget.example"),
+  );
+});
+
+check("convert: footnotes with a More list shift Sources and More too", () => {
+  assert.match(convertReply("footnotes", 3, true), /^### Widgets\n[\s\S]*\n#### Sizes\n[\s\S]*\n#### Sources\n\n##### More\n\n- \[Parts list\]/);
+});
+
+check("convert: leaving minHeadingLevel out, or setting H1, gives the same output as before", () => {
+  const before = convertReply("linked-citations");
+  assert.match(before, /^# Widgets\n[\s\S]*\n## Sizes\n[\s\S]*\n## Sources\n\n### Citations\n/);
+  assert.equal(convertReply("linked-citations", 1), before);
 });
 
 // ---------------------------------------------------------------------------

@@ -1,8 +1,9 @@
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 import { CitationCollector, normalizeCitationUrl, renderCitations } from "./citations";
+import { enforceMinHeadingLevel } from "./headings";
 import { runRules } from "./rules";
-import { ConversionError, type CitationStyle, type ConversionContext, type SiteAdapter, type SourceReference } from "./types";
+import { ConversionError, type CitationStyle, type ConversionContext, type HeadingLevel, type SiteAdapter, type SourceReference } from "./types";
 
 /** How {@link convertMessage} writes a message. */
 export interface ConversionOptions {
@@ -14,6 +15,12 @@ export interface ConversionOptions {
   isRuleEnabled: (ruleId: string) => boolean;
   /** The message's full source list, if the caller could read it; titles and the More list come from here. */
   references: SourceReference[] | null;
+  /**
+   * The shallowest heading level the copy may have; headings above it shift
+   * down, Sources included (see {@link enforceMinHeadingLevel}). Absent means
+   * 1, which never shifts anything.
+   */
+  minHeadingLevel?: HeadingLevel;
   /**
    * The token that makes this copy's block IDs unique, for the linked-citations
    * style. Generated randomly when absent; tests pass a fixed one.
@@ -151,6 +158,8 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   const moreSources = includeMoreSources ? (references ?? []).filter((reference) => !reference.cited) : [];
   const idToken = style === "linked-citations" ? (options.idToken ?? randomIdToken()) : "";
   const markdown = renderCitations(service.turndown(clone), collector.citations, style, moreSources, idToken);
+  // Headings shift after citations are rendered, so the Sources headings are measured and moved with the reply's.
+  const shifted = enforceMinHeadingLevel(markdown, options.minHeadingLevel ?? 1);
   // Rules run after citations are rendered so that citation titles are cleaned up too.
-  return runRules(markdown, adapter.rules, isRuleEnabled);
+  return runRules(shifted, adapter.rules, isRuleEnabled);
 }
