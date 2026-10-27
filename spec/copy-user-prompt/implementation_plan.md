@@ -85,7 +85,7 @@ None at this time. The one open question, about the live markup of a multi-line 
     - Blank lines inside a blockquote are written as `>`.
 
 #### [MODIFY] `src/core/convert.ts`
-- [ ] **TASK-4:** Add `prompt?: { text: string; format: PromptFormat; headingLevel: HeadingLevel }` to `ConversionOptions`, documented; leaving it out keeps today's output.
+- [x] **TASK-4:** Add `prompt?: { text: string; format: PromptFormat; headingLevel: HeadingLevel }` to `ConversionOptions`, documented; leaving it out keeps today's output.
   - `convertMessage` renders the response and its citations as now.
   - It shifts them with `enforceMinHeadingLevel`. When there's a prompt in the `heading` format, the level is `headingLevel + 1`, capped at 6, and `minHeadingLevel` isn't used. Otherwise, with no prompt or another format, it's `minHeadingLevel`.
   - It then puts `formatPrompt(...)` and a blank line in front, and runs the site's clean-up rules over the whole copy.

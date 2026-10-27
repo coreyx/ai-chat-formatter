@@ -2,8 +2,9 @@ import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 import { CitationCollector, normalizeCitationUrl, renderCitations } from "./citations";
 import { enforceMinHeadingLevel } from "./headings";
+import { formatPrompt } from "./prompt";
 import { runRules } from "./rules";
-import { ConversionError, type CitationStyle, type ConversionContext, type HeadingLevel, type SiteAdapter, type SourceReference } from "./types";
+import { ConversionError, type CitationStyle, type ConversionContext, type HeadingLevel, type PromptFormat, type SiteAdapter, type SourceReference } from "./types";
 
 /** How {@link convertMessage} writes a message. */
 export interface ConversionOptions {
@@ -18,9 +19,16 @@ export interface ConversionOptions {
   /**
    * The shallowest heading level the copy may have; headings above it shift
    * down, Sources included (see {@link enforceMinHeadingLevel}). Absent means
-   * 1, which never shifts anything.
+   * 1, which never shifts anything. Not used under a prompt heading, which
+   * sets the response's minimum itself.
    */
   minHeadingLevel?: HeadingLevel;
+  /**
+   * The prompt the message answers, written above the response in `format`
+   * (see {@link formatPrompt}). With the `heading` format the response nests
+   * below it. Absent means the copy is the response alone.
+   */
+  prompt?: { text: string; format: PromptFormat; headingLevel: HeadingLevel };
   /**
    * The token that makes this copy's block IDs unique, for the linked-citations
    * style. Generated randomly when absent; tests pass a fixed one.
@@ -94,6 +102,20 @@ const katexInline: TurndownService.Rule = {
   },
 };
 
+/**
+ * The shallowest heading level the response (Sources included) may have.
+ * Under a prompt heading, the prompt is the copy's top heading and the
+ * response starts one level below it, so the note's outline shows the reply
+ * as part of the prompt; the minimum heading level setting isn't used then.
+ * Without a prompt heading (no prompt, or another prompt format) the minimum
+ * applies. Markdown stops at H6, so a prompt heading at H6 leaves the
+ * response at H6 too.
+ */
+function responseMinHeadingLevel(minHeadingLevel: HeadingLevel, prompt: ConversionOptions["prompt"]): HeadingLevel {
+  if (prompt?.format !== "heading") return minHeadingLevel;
+  return Math.min(6, prompt.headingLevel + 1) as HeadingLevel;
+}
+
 /** A Turndown instance with the output conventions shared by every site. */
 function createTurndown(): TurndownService {
   const service = new TurndownService({
@@ -158,8 +180,11 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   const moreSources = includeMoreSources ? (references ?? []).filter((reference) => !reference.cited) : [];
   const idToken = style === "linked-citations" ? (options.idToken ?? randomIdToken()) : "";
   const markdown = renderCitations(service.turndown(clone), collector.citations, style, moreSources, idToken);
+  const { prompt } = options;
   // Headings shift after citations are rendered, so the Sources headings are measured and moved with the reply's.
-  const shifted = enforceMinHeadingLevel(markdown, options.minHeadingLevel ?? 1);
+  const shifted = enforceMinHeadingLevel(markdown, responseMinHeadingLevel(options.minHeadingLevel ?? 1, prompt));
+  // The prompt goes on after the shift, so a prompt heading keeps the level the user chose.
+  const copy = prompt ? `${formatPrompt(prompt.text, prompt.format, prompt.headingLevel)}\n\n${shifted}` : shifted;
   // Rules run after citations are rendered so that citation titles are cleaned up too.
-  return runRules(shifted, adapter.rules, isRuleEnabled);
+  return runRules(copy, adapter.rules, isRuleEnabled);
 }

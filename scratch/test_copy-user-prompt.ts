@@ -8,7 +8,10 @@
  */
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
+import { convertMessage, type ConversionOptions } from "../src/core/convert";
 import { formatPrompt, promptText } from "../src/core/prompt";
+import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
+import type { SiteAdapter } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -112,6 +115,131 @@ check("formatPrompt: lines that would become headings are escaped, in every form
 check("formatPrompt: a heading line ending in ' #' keeps its #", () => {
   assert.equal(formatPrompt("Which is better, C or C #", "heading", 2), "## Which is better, C or C \\#");
   assert.equal(formatPrompt("Learning C#", "heading", 2), "## Learning C#");
+});
+
+// ---------------------------------------------------------------------------
+// Through convertMessage
+// ---------------------------------------------------------------------------
+
+/** A bare adapter: `.reply` is the body and `.chip[data-url]` is a citation. */
+const testAdapter: SiteAdapter = {
+  id: "test",
+  name: "Test",
+  matches: ["https://chat.example/*"],
+  messageSelector: ".message",
+  contentSelector: ".reply",
+  nativeCopyButtonSelector: ".copy",
+  findButtonAnchor: () => null,
+  stripSelectors: [],
+  turndownRules: (context) => ({
+    chip: {
+      filter: (node) => node.classList.contains("chip"),
+      replacement: (_content, node) =>
+        context.registerCitation({ url: node.getAttribute("data-url")!, title: node.getAttribute("data-title")!, sourceName: "" }),
+    },
+  }),
+  rules: [invisibleCharactersRule, collapseBlankLinesRule],
+};
+
+/** A reply with an H1, an H2 and one citation. */
+function reply(): Element {
+  return element(
+    `<div class="message"><div class="reply">` +
+      `<h1>Widgets</h1><p>Widgets fit gadgets.<span class="chip" data-url="https://widget.example/guide" data-title="Widget guide">widget.example</span></p>` +
+      `<h2>Sizes</h2><p>Two sizes.</p></div></div>`,
+  );
+}
+
+/** Converts {@link reply} in linked-citations style with `extra` options. */
+function convertReply(extra: Partial<ConversionOptions> = {}): string {
+  return convertMessage(testAdapter, reply(), { style: "linked-citations", includeMoreSources: false, isRuleEnabled: () => true, references: null, idToken: "k3f9", ...extra });
+}
+
+/** The headings of a copy, in order. */
+const headingsOf = (markdown: string) => markdown.split("\n").filter((line) => /^#{1,6} /.test(line));
+
+check("convert: a prompt heading at H2 comes first, and the response and Sources shift together to start at H3", () => {
+  const copy = convertReply({ prompt: { text: ONE_LINE, format: "heading", headingLevel: 2 } });
+  assert.equal(
+    copy,
+    md(
+      "## What is new in Widget 5?",
+      "",
+      "### Widgets",
+      "",
+      "Widgets fit gadgets.[[#^c-k3f9-1|⁽¹⁾]]",
+      "",
+      "#### Sizes",
+      "",
+      "Two sizes.",
+      "",
+      "#### Sources",
+      "",
+      "##### Citations",
+      "",
+      "1. [Widget guide](https://widget.example/guide) — widget.example ^c-k3f9-1",
+    ),
+  );
+});
+
+check("convert: under a prompt heading at H2, a response with no headings puts Sources at H3", () => {
+  const message = element(
+    `<div class="message"><div class="reply"><p>Short.<span class="chip" data-url="https://widget.example/guide" data-title="Widget guide">widget.example</span></p></div></div>`,
+  );
+  const copy = convertMessage(testAdapter, message, {
+    style: "linked-citations",
+    includeMoreSources: false,
+    isRuleEnabled: () => true,
+    references: null,
+    idToken: "k3f9",
+    prompt: { text: ONE_LINE, format: "heading", headingLevel: 2 },
+  });
+  assert.deepEqual(headingsOf(copy), ["## What is new in Widget 5?", "### Sources", "#### Citations"]);
+});
+
+check("convert: under a prompt heading the minimum heading level isn't used, deeper or shallower", () => {
+  const expected = ["## What is new in Widget 5?", "### Widgets", "#### Sizes", "#### Sources", "##### Citations"];
+  for (const minHeadingLevel of [1, 2, 4, 6] as const) {
+    assert.deepEqual(headingsOf(convertReply({ minHeadingLevel, prompt: { text: ONE_LINE, format: "heading", headingLevel: 2 } })), expected, `minimum H${minHeadingLevel}`);
+  }
+});
+
+check("convert: a prompt heading at H1 puts the response at H2; at H6, everything is capped at H6", () => {
+  assert.deepEqual(headingsOf(convertReply({ prompt: { text: ONE_LINE, format: "heading", headingLevel: 1 } })), [
+    "# What is new in Widget 5?",
+    "## Widgets",
+    "### Sizes",
+    "### Sources",
+    "#### Citations",
+  ]);
+  assert.deepEqual(
+    headingsOf(convertReply({ prompt: { text: ONE_LINE, format: "heading", headingLevel: 6 } })),
+    Array(5).fill("######").map((hashes, i) => `${hashes} ${["What is new in Widget 5?", "Widgets", "Sizes", "Sources", "Citations"][i]}`),
+  );
+});
+
+check("convert: a prompt of several lines as a heading, with the rest quoted before the response", () => {
+  assert.match(convertReply({ prompt: { text: SEVERAL_LINES, format: "heading", headingLevel: 2 } }), /^## Compare these two configs\n\n> Use the YAML below\.\n>\n> Keep it short\.\n\n### Widgets\n/);
+});
+
+check("convert: blockquote, bold and plain prompts leave the response's headings to the minimum heading level", () => {
+  const before = headingsOf(convertReply());
+  for (const format of ["blockquote", "bold", "plain"] as const) {
+    const copy = convertReply({ prompt: { text: ONE_LINE, format, headingLevel: 2 } });
+    assert.ok(copy.startsWith(`${formatPrompt(ONE_LINE, format, 2)}\n\n# Widgets\n`), format);
+    assert.deepEqual(headingsOf(copy), before, format);
+  }
+  // The typed "# " line is escaped, so the shift is measured from the response's H1 alone.
+  assert.deepEqual(headingsOf(convertReply({ minHeadingLevel: 3, prompt: { text: "# Typed hash", format: "plain", headingLevel: 2 } })), [
+    "### Widgets",
+    "#### Sizes",
+    "#### Sources",
+    "##### Citations",
+  ]);
+});
+
+check("convert: with no prompt, the copy is the response alone, as before", () => {
+  assert.ok(convertReply().startsWith("# Widgets\n"));
 });
 
 // ---------------------------------------------------------------------------
