@@ -72,7 +72,7 @@ Adds a **Copy the prompt with the response** setting, on by default, so a copy s
   - Add `readPrompt?(message: Element): string | null` to `SiteAdapter`. Its documentation says it returns the prompt as plain text, with `\n` between lines and `\n\n` between paragraphs, or null when there's none.
 
 #### [NEW] `src/core/prompt.ts`
-- [ ] **TASK-3:** Add two functions.
+- [x] **TASK-3:** Add two functions.
   - `promptText(element: Element): string | null` turns a prompt's markup into that plain text.
     - Block elements (`p`, `div`, `li`, `pre`, and headings) become paragraph breaks.
     - `<br>` becomes a line break. Newlines already in the text are kept, since pre-wrapped prompts carry their line breaks that way.
