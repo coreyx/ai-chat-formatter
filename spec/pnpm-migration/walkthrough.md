@@ -52,7 +52,9 @@ Under pnpm, re-run after every item:
 - `scratch/test_min-heading-level.ts`: **21/21 passed.**
 
 ## Manual Verification
-Not yet done; these are for the maintainer:
+**Passed** (reported by the maintainer on 2026-10-27): steps 1 and 2, `pnpm --version` and `pnpm install`. Step 3, the optional fresh clone, wasn't done.
+
+These were the steps:
 1. In a terminal in the repo, run `corepack enable` (once per machine; optional, since pnpm is already installed globally here), then `pnpm --version`. It should print `12.6.0`.
 2. Run `pnpm install`, then `pnpm run build`. Reload the extension from `brave://extensions` and copy a reply on Copilot to check that the build works.
 3. Optionally, clone the repo into a new folder and follow the README's Building from source steps exactly.
