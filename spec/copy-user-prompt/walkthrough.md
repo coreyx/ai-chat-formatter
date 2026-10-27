@@ -136,7 +136,7 @@ Under pnpm, re-run after every item:
 - `scratch/test_pnpm-migration.ts`: **6/6 passed.**
 
 ## Manual Verification
-Not yet done; these are for the maintainer, in Brave:
+**Passed** (reported by the maintainer on 2026-10-27): every step below, in Brave.
 1. Run `pnpm run build` and reload the extension from `brave://extensions`.
 2. On the options page:
    - **User prompt** should sit under Minimum heading level, set to on, Heading and H2.
@@ -155,4 +155,3 @@ Not yet done; these are for the maintainer, in Brave:
 ## Follow-ups
 - **Single line breaks on Copilot are untested.** Only a blank line was checked. If Copilot renders a single Shift+Enter line break as a newline plus a `<br>`, it would copy as a paragraph break instead of a line break.
 - **Prompts with attachments weren't inspected.** Images are skipped, but a file chip with text in it could end up in the prompt.
-- The manual checks above, before any release.
