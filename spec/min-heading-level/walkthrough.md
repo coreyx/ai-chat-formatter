@@ -63,7 +63,9 @@ A new **Minimum heading level** setting, H1 to H6, applies to every site. When a
 All were re-run after every item.
 
 ## Manual Verification
-Not yet done; these are for the maintainer, in Brave:
+**Passed** (reported by the maintainer on 2026-10-27): the minimum heading levels work, and `#` lines in code are left alone.
+
+These were the steps, in Brave:
 1. Run `npm run build` and reload the extension from `brave://extensions`.
 2. On the options page:
    - **Minimum heading level** should appear under Citation style, with **H1 (no change)** selected.
@@ -78,5 +80,4 @@ Not yet done; these are for the maintainer, in Brave:
 6. Set it back to **H1 (no change)**: a copy should match what it was before this change.
 
 ## Follow-ups
-- The manual checks above, before any release.
 - Not handled: a heading inside a blockquote that is itself inside a list item (`- > ## x`). Turndown wasn't seen producing it; it would stay unshifted.
