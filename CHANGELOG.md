@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - The **Include "More" sources** description on the options page is now specific to each site. Duck.ai's now refers to its Read More cards.
+- Building from source uses [pnpm](https://pnpm.io/) instead of npm: `pnpm install`, then `pnpm run build`. The pnpm version is pinned in `package.json`, and `corepack enable` sets it up. Dependency versions are unchanged.
 
 ## [0.4.0] - 2026-10-24
 
