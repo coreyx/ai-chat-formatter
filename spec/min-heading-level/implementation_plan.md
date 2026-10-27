@@ -49,7 +49,7 @@ None at this time. Scope (one global setting), Sources headings (shifted with th
 - [x] **TASK-3:** Add `minHeadingLevel?: HeadingLevel` to `ConversionOptions` (documented; absent means 1, so existing callers and tests are unaffected). In `convertMessage`, apply `enforceMinHeadingLevel` to the output of `renderCitations`, before `runRules`, so the Sources headings are measured and shifted with the reply's.
 
 #### [MODIFY] `src/core/settings.ts`
-- [ ] **TASK-4:** Add `minHeadingLevel: HeadingLevel` to `Settings` (documented). `buildDefaultSettings` sets it to `1`. `mergeSettings` keeps a stored value only when it's one of `HEADING_LEVELS`, and falls back to the default otherwise, so settings saved by 0.4.0 and earlier load unchanged.
+- [x] **TASK-4:** Add `minHeadingLevel: HeadingLevel` to `Settings` (documented). `buildDefaultSettings` sets it to `1`. `mergeSettings` keeps a stored value only when it's one of `HEADING_LEVELS`, and falls back to the default otherwise, so settings saved by 0.4.0 and earlier load unchanged.
 
 ### Content script
 

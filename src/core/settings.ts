@@ -1,4 +1,4 @@
-import { CITATION_STYLES, type CitationStyle, type SiteAdapter } from "./types";
+import { CITATION_STYLES, HEADING_LEVELS, type CitationStyle, type HeadingLevel, type SiteAdapter } from "./types";
 
 /** Per-site settings, keyed in {@link Settings.sites} by the adapter's id. */
 export interface SiteSettings {
@@ -24,6 +24,8 @@ export interface Settings {
   enabled: boolean;
   /** How citations are written, for every site. */
   citationStyle: CitationStyle;
+  /** The shallowest heading level a copy may have, for every site; 1 never shifts anything. */
+  minHeadingLevel: HeadingLevel;
   sites: Record<string, SiteSettings>;
 }
 
@@ -47,7 +49,7 @@ export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings
       rules: Object.fromEntries(adapter.rules.map((rule) => [rule.id, rule.defaultEnabled])),
     };
   }
-  return { enabled: true, citationStyle: "linked-citations", sites };
+  return { enabled: true, citationStyle: "linked-citations", minHeadingLevel: 1, sites };
 }
 
 /** `value` when it is a boolean, otherwise `fallback`. */
@@ -82,9 +84,11 @@ export function mergeSettings(stored: unknown, defaults: Settings): Settings {
     };
   }
   const style = saved.citationStyle;
+  const level = saved.minHeadingLevel;
   return {
     enabled: bool(saved.enabled, defaults.enabled),
     citationStyle: CITATION_STYLES.includes(style as CitationStyle) ? (style as CitationStyle) : defaults.citationStyle,
+    minHeadingLevel: HEADING_LEVELS.includes(level as HeadingLevel) ? (level as HeadingLevel) : defaults.minHeadingLevel,
     sites,
   };
 }

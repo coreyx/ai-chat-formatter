@@ -11,7 +11,9 @@ import { JSDOM } from "jsdom";
 import { convertMessage } from "../src/core/convert";
 import { enforceMinHeadingLevel } from "../src/core/headings";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
+import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { CitationStyle, HeadingLevel, SiteAdapter, SourceReference } from "../src/core/types";
+import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -181,6 +183,25 @@ check("convert: leaving minHeadingLevel out, or setting H1, gives the same outpu
   const before = convertReply("linked-citations");
   assert.match(before, /^# Widgets\n[\s\S]*\n## Sizes\n[\s\S]*\n## Sources\n\n### Citations\n/);
   assert.equal(convertReply("linked-citations", 1), before);
+});
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+
+check("settings: the default is H1, for every site at once", () => {
+  assert.equal(buildDefaultSettings(SITE_ADAPTERS).minHeadingLevel, 1);
+});
+
+check("settings: a stored level is kept; anything else falls back to H1", () => {
+  const defaults = buildDefaultSettings(SITE_ADAPTERS);
+  assert.equal(mergeSettings({ minHeadingLevel: 3 }, defaults).minHeadingLevel, 3);
+  assert.equal(mergeSettings({ minHeadingLevel: 6 }, defaults).minHeadingLevel, 6);
+  for (const bad of [0, 7, 2.5, "2", null, undefined]) {
+    assert.equal(mergeSettings({ minHeadingLevel: bad }, defaults).minHeadingLevel, 1, `stored ${String(bad)}`);
+  }
+  // Settings saved before this setting existed have no minHeadingLevel at all.
+  assert.equal(mergeSettings({ enabled: true, citationStyle: "footnotes", sites: {} }, defaults).minHeadingLevel, 1);
 });
 
 // ---------------------------------------------------------------------------
