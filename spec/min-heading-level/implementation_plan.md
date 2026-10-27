@@ -39,7 +39,7 @@ None at this time. Scope (one global setting), Sources headings (shifted with th
 - [x] **TASK-1:** Add `export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6` and `export const HEADING_LEVELS: readonly HeadingLevel[] = [1, 2, 3, 4, 5, 6]`, documented next to `CitationStyle`.
 
 #### [NEW] `src/core/headings.ts`
-- [ ] **TASK-2:** Add `enforceMinHeadingLevel(markdown: string, minLevel: HeadingLevel): string`.
+- [x] **TASK-2:** Add `enforceMinHeadingLevel(markdown: string, minLevel: HeadingLevel): string`.
   - Uses `mapOutsideCodeFences` from `src/core/rules.ts`, so fenced code is never touched.
   - Matches ATX headings at the start of a line, after any indent, blockquote markers (`>`) and one list marker (`-`, `*`, `+`, `1.`, `1)`): the `#` run must be 1 to 6 long and followed by a space, a tab or the end of the line.
   - Finds the shallowest heading level in the whole text. The shift is `max(0, minLevel - shallowest)`. With no headings, or a shift of 0, the text comes back unchanged.
