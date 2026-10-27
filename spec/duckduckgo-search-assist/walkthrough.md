@@ -92,7 +92,8 @@ All four were re-run after every item.
 **Partly done** (reported by the maintainer on 2026-10-27):
 - **Passed:** steps 1 and 2 (collapsed), 3 (expanded, without More: the whole text is copied), 4's second part (the copy after More), 5 (More sources) and 6 (the override).
 - **Covered elsewhere:** step 8, by the user-prompt feature's manual checks, which copied replies on Copilot and Duck.ai.
-- **Still open:** 4's first part (the "still writing" message) and 7 (a search with no Search Assist).
+- **Partly passed:** 4's first part. While Stop shows, Copy as Markdown copies nothing, as intended; whether the "still writing" message appears wasn't confirmed.
+- **Still open:** 7 (a search with no Search Assist).
 
 These are for the maintainer, in Brave:
 1. Run `npm run build`, reload the extension from `brave://extensions`, and search DuckDuckGo for something that brings up Search Assist.
