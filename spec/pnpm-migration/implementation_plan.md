@@ -47,7 +47,7 @@ None at this time.
   - Delete `node_modules/` and run `pnpm install --frozen-lockfile`. It must finish without errors and leave the lockfile unchanged.
 
 #### [MODIFY] `.gitignore`
-- [ ] **TASK-3:** Replace `npm-debug.log*` with `pnpm-debug.log*`. Keep `package-lock.json` out of the ignore list, so a stray `npm install` shows up in `git status` instead of slipping by.
+- [x] **TASK-3:** Replace `npm-debug.log*` with `pnpm-debug.log*`. Keep `package-lock.json` out of the ignore list, so a stray `npm install` shows up in `git status` instead of slipping by.
 
 ### Docs and messages
 

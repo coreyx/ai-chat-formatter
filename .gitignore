@@ -7,7 +7,7 @@ release/
 scratch/.out/
 
 # Logs
-npm-debug.log*
+pnpm-debug.log*
 
 # OS-specific files
 .DS_Store
