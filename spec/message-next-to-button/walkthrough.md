@@ -55,7 +55,11 @@ Re-run after every item, under pnpm:
 - `scratch/test_pnpm-migration.ts`: **6/6 passed.**
 
 ## Manual Verification
-Not yet done; these are for the maintainer, in Brave:
+**Passed** (reported by the maintainer on 2026-10-27): steps 1, 2, 3 and 5.
+
+Step 4 can't be tested by hand. On Copilot and Duck.ai, the chat input covers the bottom of the window, so a Copy button scrolled near the bottom is hidden behind it and can't be clicked. The automated check "above" covers placing the message above the button. In practice, a button low enough to need it is mostly behind the chat input anyway.
+
+These were the steps, in Brave:
 1. Run `pnpm run build` and reload the extension from `brave://extensions`.
 2. **Search Assist:** press **More**, and click M↓ while it shows Stop. The "still writing" message should appear just below M↓.
 3. **The override:** turn on **Use for _site_'s own Copy button**, and click the site's Copy button on Copilot or Duck.ai. "Copied as Markdown" should appear next to that Copy button.
@@ -64,4 +68,3 @@ Not yet done; these are for the maintainer, in Brave:
 
 ## Follow-ups
 - **The message doesn't follow the button** if the page scrolls during its 4 seconds. This was accepted in the plan.
-- The manual checks above, before any release.
