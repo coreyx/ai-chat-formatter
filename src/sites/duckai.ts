@@ -1,5 +1,6 @@
 import type TurndownService from "turndown";
 import { normalizeCitationUrl, sourceDomain } from "../core/citations";
+import { promptText } from "../core/prompt";
 import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT, type RawChipSource } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
 import type { ConversionContext, SiteAdapter, SourceReference } from "../core/types";
@@ -206,6 +207,22 @@ export function readDuckAiReferences(message: Element): SourceReference[] | null
   return references.map((reference) => ({ ...reference, cited: citedUrls.has(normalizeCitationUrl(reference.url ?? "")) }));
 }
 
+/**
+ * The prompt that the reply in `message` answers: the last user message
+ * before it in the page. When Duck.ai shows more than one reply to a prompt,
+ * each of them gets that prompt. A user message holds the pre-wrapped text, a
+ * "You said" heading meant only for screen readers (the only heading in it,
+ * so headings are skipped), an icon and a toolbar of icon buttons. Returns
+ * null when no user message comes before the reply.
+ */
+export function readDuckAiPrompt(message: Element): string | null {
+  const before = Array.from(message.ownerDocument.querySelectorAll('[data-testid="user-message"]')).filter(
+    (prompt) => prompt.compareDocumentPosition(message) & prompt.DOCUMENT_POSITION_FOLLOWING,
+  );
+  const prompt = before.at(-1);
+  return prompt ? promptText(prompt, "h1, h2, h3, h4, h5, h6") : null;
+}
+
 export const duckAiAdapter: SiteAdapter = {
   id: "duckai",
   name: "Duck.ai",
@@ -224,6 +241,7 @@ export const duckAiAdapter: SiteAdapter = {
   preprocess: preprocessDuckAi,
   turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context), duckAiPopupChip: popupChipRule(context) }),
   readReferences: readDuckAiReferences,
+  readPrompt: readDuckAiPrompt,
   moreSources: { defaultEnabled: true, description: "Adds the Read More cards that the reply doesn't cite." },
   // Popup chips name their sources only in React state, which src/page/duckai.ts reads.
   pageScript: "duckai",

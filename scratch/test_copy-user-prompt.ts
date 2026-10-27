@@ -15,6 +15,7 @@ import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rul
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 import { copilotAdapter } from "../src/sites/copilot";
+import { duckAiAdapter } from "../src/sites/duckai";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -279,6 +280,26 @@ check("Copilot: null when the article before is another reply, or there's none",
   assert.equal(copilotAdapter.readPrompt!(second), null);
   prompt.remove();
   assert.equal(copilotAdapter.readPrompt!(message), null);
+});
+
+check("Duck.ai: each reply gets its own prompt, without the 'You said' label, icon or buttons", () => {
+  const page = fixture("duckai-message.html");
+  const messages = Array.from(page.querySelectorAll(duckAiAdapter.messageSelector));
+  assert.deepEqual(
+    messages.map((message) => duckAiAdapter.readPrompt!(message)),
+    ["What is new in Widget 5?", "Any other reading?\n\nList two."],
+  );
+});
+
+check("Duck.ai: a second reply to the same prompt gets that prompt; null with no prompt before", () => {
+  const page = fixture("duckai-message.html");
+  const [first] = Array.from(page.querySelectorAll(duckAiAdapter.messageSelector));
+  const variant = first.cloneNode(true) as Element;
+  variant.id = variant.id.replace(/-0-1$/, "-0-2");
+  first.after(variant);
+  assert.equal(duckAiAdapter.readPrompt!(variant), "What is new in Widget 5?");
+  page.querySelectorAll('[data-testid="user-message"]').forEach((prompt) => prompt.remove());
+  assert.equal(duckAiAdapter.readPrompt!(first), null);
 });
 
 // ---------------------------------------------------------------------------
