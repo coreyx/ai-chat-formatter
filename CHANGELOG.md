@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **DuckDuckGo Search Assist support** (`duckduckgo.com`): a **Copy as Markdown** button on Search Assist's answer, and the option to have its own Copy button copy Markdown too. Search Assist's Copy leaves out every source; this keeps them.
 - The copy holds the whole short answer, collapsed or expanded, and the extended answer once **More** has finished writing it. While More is still writing, Copy as Markdown says so and copies nothing.
 - Search Assist's source chips become citations titled with their page titles, read through a small script in DuckDuckGo's page. The other pages Search Assist consulted can go under **More** as untitled links, with **Include "More" sources**, which is off by default for Search Assist.
+- **Minimum heading level** setting, H1 to H6, for every site. When a copy has a heading above it, every heading shifts down by the same amount, the Sources section's included, keeping the hierarchy; headings past H6 stay at H6. The default, H1, changes nothing.
 
 ### Changed
 

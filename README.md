@@ -125,6 +125,7 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
 
 - **Enable AI Chat Formatter**: turns everything on or off.
 - **Citation style**: one of the four styles above (Linked citations by default).
+- **Minimum heading level**: H1 to H6, for every site; **H1 (no change)** by default. When a copy has a heading above this level, every heading shifts down by the same amount, Sources included, so the reply can sit under your note's own headings with its hierarchy kept. With H2, a reply's `# Title` becomes `## Title`, its `##` headings become `###`, and `## Sources` becomes `### Sources`. Headings that would go past H6 stay at H6, and `#` lines in code blocks are left alone.
 - Per site:
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
