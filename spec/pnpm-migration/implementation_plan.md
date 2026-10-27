@@ -60,7 +60,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/test_pnpm-migration.ts`
-- [ ] **TASK-6:** A regression script, picked up by `pnpm test`, that guards the switch. See Automated Tests below.
+- [x] **TASK-6:** A regression script, picked up by `pnpm test`, that guards the switch. See Automated Tests below.
 
 ## Verification Plan
 
