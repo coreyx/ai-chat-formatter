@@ -36,7 +36,7 @@ None at this time. Scope (one global setting), Sources headings (shifted with th
 ### Core
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Add `export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6` and `export const HEADING_LEVELS: readonly HeadingLevel[] = [1, 2, 3, 4, 5, 6]`, documented next to `CitationStyle`.
+- [x] **TASK-1:** Add `export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6` and `export const HEADING_LEVELS: readonly HeadingLevel[] = [1, 2, 3, 4, 5, 6]`, documented next to `CitationStyle`.
 
 #### [NEW] `src/core/headings.ts`
 - [ ] **TASK-2:** Add `enforceMinHeadingLevel(markdown: string, minLevel: HeadingLevel): string`.

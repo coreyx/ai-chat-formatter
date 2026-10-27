@@ -27,6 +27,15 @@ export type CitationStyle = "linked-citations" | "footnotes" | "inline-links-and
 export const CITATION_STYLES: readonly CitationStyle[] = ["linked-citations", "footnotes", "inline-links-and-sources", "sources-only"];
 
 /**
+ * A Markdown heading level, from 1 (`#`) to 6 (`######`). Used for the
+ * minimum heading level: the shallowest level a heading may have in the copy.
+ */
+export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+/** Every heading level, in order; also the choices the options page lists. */
+export const HEADING_LEVELS: readonly HeadingLevel[] = [1, 2, 3, 4, 5, 6];
+
+/**
  * A Markdown-to-Markdown fix applied after conversion. Rules exist so that
  * site quirks found later can be corrected one at a time, each switchable on
  * the options page without touching the converter.
