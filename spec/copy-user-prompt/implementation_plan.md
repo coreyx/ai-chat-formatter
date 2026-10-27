@@ -67,7 +67,7 @@ Adds a **Copy the prompt with the response** setting, on by default, so a copy s
 ### Core
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-2:** Add the prompt types.
+- [x] **TASK-2:** Add the prompt types.
   - `export type PromptFormat = "heading" | "blockquote" | "bold" | "plain"` and `export const PROMPT_FORMATS: readonly PromptFormat[]` in that order, documented.
   - Add `readPrompt?(message: Element): string | null` to `SiteAdapter`. Its documentation says it returns the prompt as plain text, with `\n` between lines and `\n\n` between paragraphs, or null when there's none.
 

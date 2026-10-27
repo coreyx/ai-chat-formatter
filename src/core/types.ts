@@ -36,6 +36,19 @@ export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 export const HEADING_LEVELS: readonly HeadingLevel[] = [1, 2, 3, 4, 5, 6];
 
 /**
+ * How the user's prompt is written at the top of a copy:
+ * - `heading`: a heading at the chosen level; a prompt of several lines puts
+ *   its first line in the heading and quotes the rest below it.
+ * - `blockquote`: every line quoted.
+ * - `bold`: each paragraph in bold.
+ * - `plain`: the prompt as typed.
+ */
+export type PromptFormat = "heading" | "blockquote" | "bold" | "plain";
+
+/** The prompt formats in the order the options page lists them. */
+export const PROMPT_FORMATS: readonly PromptFormat[] = ["heading", "blockquote", "bold", "plain"];
+
+/**
  * A Markdown-to-Markdown fix applied after conversion. Rules exist so that
  * site quirks found later can be corrected one at a time, each switchable on
  * the options page without touching the converter.
@@ -140,6 +153,13 @@ export interface SiteAdapter {
    * is off.
    */
   hasUntitledCitations?(message: Element): boolean;
+  /**
+   * The prompt that `message` answers, as plain text with `\n` between lines
+   * and `\n\n` between paragraphs, or null when the page doesn't show one.
+   * Synchronous, like {@link readReferences}, so the native Copy override can
+   * include it.
+   */
+  readPrompt?(message: Element): string | null;
   /**
    * How this site's "More sources" option starts out and how the options page
    * describes it, since each site's uncited sources come from a different
