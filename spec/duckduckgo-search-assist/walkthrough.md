@@ -89,16 +89,15 @@ The tests attach a fake React fiber to each short answer, since jsdom runs no Re
 All four were re-run after every item.
 
 ## Manual Verification
-**Partly done** (reported by the maintainer on 2026-10-27):
-- **Passed:**
-  - step 1, and step 2 (collapsed);
-  - step 3 (expanded, without More: the whole text is copied);
-  - step 4, both parts. While Stop shows, nothing is copied and the "still writing" message appears. It shows at the bottom of the window, where it's easy to miss, so it may move. After More finishes, the copy is right.
-  - step 5 (More sources), and step 6 (the override).
-- **Covered elsewhere:** step 8, by the user-prompt feature's manual checks, which copied replies on Copilot and Duck.ai.
-- **Still open:** step 7 (a search with no Search Assist).
+**Passed** (reported by the maintainer on 2026-10-27):
+- steps 1 and 2 (collapsed);
+- step 3 (expanded, without More: the whole text is copied);
+- step 4, both parts. While Stop shows, nothing is copied and the "still writing" message appears. After More finishes, the copy is right. The message was easy to miss at the bottom of the window, so it now appears next to the button ([message-next-to-button](../message-next-to-button/walkthrough.md)).
+- steps 5 (More sources) and 6 (the override);
+- step 7 (a search with no Search Assist: no button, no console errors);
+- step 8, covered by the user-prompt feature's manual checks, which copied replies on Copilot and Duck.ai.
 
-These are for the maintainer, in Brave:
+These were the steps, in Brave:
 1. Run `npm run build`, reload the extension from `brave://extensions`, and search DuckDuckGo for something that brings up Search Assist.
 2. **Collapsed:** check that M↓ appears just left of Search Assist's Copy button. Click it without expanding, and paste into Obsidian. You should get the whole short answer, with each chip as a linked citation titled like its hover tooltip and the markers at the end of the last sentence.
 3. **Expanded:** expand the box, copy again, and check that the result matches step 2.
@@ -111,6 +110,5 @@ These are for the maintainer, in Brave:
 8. Check that Duck.ai and Copilot still copy as before.
 
 ## Follow-ups
-- The manual checks still open above, before any release.
 - No chips or links were seen in an extended answer during the inspection. The adapter handles chips there the same way, but that's only tested against the fixture.
 - Still open from the Duck.ai adapter: checking that its button appears only once a reply has finished, and its table and math conversion, once Duck.ai's model is available.
