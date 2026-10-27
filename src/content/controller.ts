@@ -174,15 +174,32 @@ export class ContentController {
     }
   }
 
+  /**
+   * The prompt `message` answers, when the prompt setting is on and the
+   * adapter can find one. A reader that throws counts as having found
+   * nothing, so the copy still goes ahead with the response alone.
+   */
+  private readPrompt(message: Element): string | null {
+    if (!this.settings.includePrompt) return null;
+    try {
+      return this.adapter.readPrompt?.(message) ?? null;
+    } catch (error) {
+      console.warn(`${LOG_PREFIX} Couldn't read the prompt from the page:`, error);
+      return null;
+    }
+  }
+
   /** Converts `message` with the current settings and `references`; throws as {@link convertMessage} does. */
   private convert(message: Element, references: SourceReference[] | null): string {
     const site = this.settings.sites[this.adapter.id];
+    const prompt = this.readPrompt(message);
     return convertMessage(this.adapter, message, {
       style: this.settings.citationStyle,
       includeMoreSources: site?.includeMoreSources ?? false,
       isRuleEnabled: (ruleId) => site?.rules[ruleId] ?? true,
       references,
       minHeadingLevel: this.settings.minHeadingLevel,
+      ...(prompt ? { prompt: { text: prompt, format: this.settings.promptFormat, headingLevel: this.settings.promptHeadingLevel } } : {}),
     });
   }
 

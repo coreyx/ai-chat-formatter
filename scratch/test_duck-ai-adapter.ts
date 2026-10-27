@@ -290,6 +290,8 @@ check("placement: directly after Copy's wrapper in the toolbar row; none without
 function startController(overrideNativeCopy: boolean) {
   const document = duckAiPage();
   const settings = buildDefaultSettings(SITE_ADAPTERS);
+  // These checks compare the copy with the reply alone; test_copy-user-prompt.ts covers the prompt.
+  settings.includePrompt = false;
   settings.sites.duckai.overrideNativeCopy = overrideNativeCopy;
   const written: string[] = [];
   const controller = new ContentController(duckAiAdapter, settings, { document, writeClipboard: async (text) => void written.push(text), requestFrame: (callback) => callback() });

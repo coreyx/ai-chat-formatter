@@ -115,7 +115,7 @@ None at this time. The one open question, about the live markup of a multi-line 
 ### Content script
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-9:** In `convert`, when `settings.includePrompt` is on, read the prompt with `adapter.readPrompt`.
+- [x] **TASK-9:** In `convert`, when `settings.includePrompt` is on, read the prompt with `adapter.readPrompt`.
   - A thrown error is caught and logged with the other warnings, and the copy goes ahead without the prompt.
   - It then passes `prompt: { text, format: settings.promptFormat, headingLevel: settings.promptHeadingLevel }` when there's a prompt.
   - Reading the prompt is synchronous, so the Copy-button override includes it too.

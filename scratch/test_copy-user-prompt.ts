@@ -9,10 +9,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
+import { ContentController } from "../src/content/controller";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
 import { formatPrompt, promptText } from "../src/core/prompt";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
-import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
+import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 import { copilotAdapter } from "../src/sites/copilot";
 import { duckAiAdapter } from "../src/sites/duckai";
@@ -333,6 +334,78 @@ check("settings: stored values are kept; settings saved before this change, or i
   assert.deepEqual([older.includePrompt, older.promptFormat, older.promptHeadingLevel, older.minHeadingLevel], [true, "heading", 2, 3]);
   const invalid = mergeSettings({ includePrompt: "yes", promptFormat: "italic", promptHeadingLevel: 7 }, defaults);
   assert.deepEqual([invalid.includePrompt, invalid.promptFormat, invalid.promptHeadingLevel], [true, "heading", 2]);
+});
+
+// ---------------------------------------------------------------------------
+// Controller, on the Copilot fixture
+// ---------------------------------------------------------------------------
+
+/**
+ * A controller on the Copilot fixture, recording clipboard writes, with
+ * `configure` applied to the default settings. More sources are off, so the
+ * Sources panel is never opened. `adapter` defaults to Copilot's.
+ */
+function startController(configure: (settings: Settings) => void = () => {}, adapter: SiteAdapter = copilotAdapter) {
+  const document = fixture("copilot-message.html");
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.sites.copilot.includeMoreSources = false;
+  configure(settings);
+  const written: string[] = [];
+  const controller = new ContentController(adapter, settings, { document, writeClipboard: async (text) => void written.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  return { document, settings, written };
+}
+
+/** Lets pending timers and promise callbacks run. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** The Copilot fixture's prompt, as the default Heading format writes it. */
+const COPILOT_PROMPT = md("## Search the web: what is new in Widget 5?", "", "> Keep it short.");
+
+await checkAsync("controller: Copy as Markdown starts with the prompt heading, and the response starts below it", async () => {
+  const page = startController();
+  page.document.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+  await flush();
+  assert.equal(page.written.length, 1);
+  assert.ok(page.written[0].startsWith(`${COPILOT_PROMPT}\n\n**Widget 5** was released`), page.written[0].slice(0, 120));
+  // The reply's ### heading and ## Sources shift one level, so its top heading is H3.
+  assert.ok(page.written[0].includes("\n#### Key New Features in Widget 5\n"));
+  assert.ok(page.written[0].includes("\n### Sources\n"));
+});
+
+await checkAsync("controller: with the override on, Copilot's own Copy includes the prompt too", async () => {
+  const page = startController((settings) => (settings.sites.copilot.overrideNativeCopy = true));
+  page.document.querySelector<HTMLButtonElement>(copilotAdapter.nativeCopyButtonSelector)!.click();
+  await flush();
+  assert.equal(page.written.length, 1);
+  assert.ok(page.written[0].startsWith(`${COPILOT_PROMPT}\n\n`));
+});
+
+await checkAsync("controller: the chosen format is used; with the setting off, the copy is the response alone", async () => {
+  const quoted = startController((settings) => (settings.promptFormat = "blockquote"));
+  quoted.document.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+  const off = startController((settings) => (settings.includePrompt = false));
+  off.document.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+  await flush();
+  assert.ok(quoted.written[0].startsWith(md("> Search the web: what is new in Widget 5?", ">", "> Keep it short.", "", "**Widget 5**")));
+  assert.ok(off.written[0].startsWith("**Widget 5** was released"));
+  // Without a prompt heading, the reply keeps its levels (minimum H1).
+  assert.ok(off.written[0].includes("\n### Key New Features in Widget 5\n"));
+});
+
+await checkAsync("controller: a prompt reader that throws still copies the response", async () => {
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    const throwing: SiteAdapter = { ...copilotAdapter, readPrompt: () => { throw new Error("markup changed"); } };
+    const page = startController(() => {}, throwing);
+    page.document.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+    await flush();
+    assert.equal(page.written.length, 1);
+    assert.ok(page.written[0].startsWith("**Widget 5** was released"));
+  } finally {
+    console.warn = warn;
+  }
 });
 
 // ---------------------------------------------------------------------------

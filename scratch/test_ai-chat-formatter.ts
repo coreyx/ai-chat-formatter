@@ -405,6 +405,8 @@ function controllerOnFixture(configure: (settings: Settings) => void = () => {})
   // Stands in for Copilot's own handler, which React attaches at its root element.
   document.querySelector("main")!.addEventListener("click", () => siteClicks.push("native copy ran"));
   const settings = buildDefaultSettings(SITE_ADAPTERS);
+  // These checks compare the copy with the reply alone; test_copy-user-prompt.ts covers the prompt.
+  settings.includePrompt = false;
   configure(settings);
   const controller = new ContentController(copilotAdapter, settings, {
     document,
