@@ -102,7 +102,7 @@ None at this time. The one open question, about the live markup of a multi-line 
 ### Site adapters
 
 #### [MODIFY] `src/sites/copilot.ts`
-- [ ] **TASK-6:** Add `readPrompt`.
+- [x] **TASK-6:** Add `readPrompt`.
   - It finds the closest `div[role="article"]` before the reply's article that has no `[data-testid="markdown-reply"]`, and returns `promptText` of its text container. The selector is confirmed or adjusted by TASK-1.
   - It returns null when the article before is another reply or there isn't one.
 

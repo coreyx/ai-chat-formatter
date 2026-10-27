@@ -1,5 +1,6 @@
 import type TurndownService from "turndown";
 import { parseCitationTitle, parseReferencesAttribute, sourceDomain } from "../core/citations";
+import { promptText } from "../core/prompt";
 import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
 import { ConversionError, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
@@ -362,6 +363,24 @@ async function readCopilotReferencesFromPanel(message: Element): Promise<SourceR
   }
 }
 
+/**
+ * The prompt that the reply in `message` answers: the conversation article
+ * just before it, when that article is a prompt rather than another reply.
+ * Its text sits in `[data-testid="chatOutput"]`, pre-wrapped, after a "You
+ * said:" heading meant only for screen readers. If Copilot moves the text out
+ * of that element, the article's own text is read instead, without headings,
+ * which only that label uses. Returns null when the article before is a reply
+ * or there isn't one, as when Copilot has dropped old messages from a long
+ * conversation.
+ */
+export function readCopilotPrompt(message: Element): string | null {
+  const articles = Array.from(message.ownerDocument.querySelectorAll('div[role="article"]'));
+  const previous = articles[articles.indexOf(message) - 1];
+  if (!previous || previous.querySelector(REPLY_SELECTOR)) return null;
+  const text = previous.querySelector('[data-testid="chatOutput"]');
+  return text ? promptText(text) : promptText(previous, "h1, h2, h3, h4, h5, h6");
+}
+
 export const copilotAdapter: SiteAdapter = {
   id: "copilot",
   name: "Copilot",
@@ -391,6 +410,7 @@ export const copilotAdapter: SiteAdapter = {
         return false;
       }
     }),
+  readPrompt: readCopilotPrompt,
   pageScript: "copilot",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };

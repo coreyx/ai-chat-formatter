@@ -7,12 +7,14 @@
  * process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
 import { formatPrompt, promptText } from "../src/core/prompt";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
+import { copilotAdapter } from "../src/sites/copilot";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -242,6 +244,41 @@ check("convert: blockquote, bold and plain prompts leave the response's headings
 
 check("convert: with no prompt, the copy is the response alone, as before", () => {
   assert.ok(convertReply().startsWith("# Widgets\n"));
+});
+
+// ---------------------------------------------------------------------------
+// Site adapters
+// ---------------------------------------------------------------------------
+
+/** A fresh copy of a fixture page, optionally at `url`. */
+function fixture(name: string, url?: string): Document {
+  return new JSDOM(readFileSync(`scratch/fixtures/${name}`, "utf8"), url ? { url } : {}).window.document;
+}
+
+check("Copilot: the prompt before the reply, from its chatOutput text, without the 'You said:' label", () => {
+  const page = fixture("copilot-message.html");
+  const [message] = Array.from(page.querySelectorAll(copilotAdapter.messageSelector));
+  assert.equal(copilotAdapter.readPrompt!(message), "Search the web: what is new in Widget 5?\n\nKeep it short.");
+});
+
+check("Copilot: without chatOutput, the prompt article's own text, still without the label or the button", () => {
+  const page = fixture("copilot-message.html");
+  const output = page.querySelector('[data-testid="chatOutput"]')!;
+  output.removeAttribute("data-testid");
+  const [message] = Array.from(page.querySelectorAll(copilotAdapter.messageSelector));
+  assert.equal(copilotAdapter.readPrompt!(message), "Search the web: what is new in Widget 5?\n\nKeep it short.");
+});
+
+check("Copilot: null when the article before is another reply, or there's none", () => {
+  const page = fixture("copilot-message.html");
+  const [message] = Array.from(page.querySelectorAll(copilotAdapter.messageSelector));
+  const prompt = message.previousElementSibling!;
+  // A second reply straight after the first: the article before it is a reply.
+  const second = message.cloneNode(true) as Element;
+  message.after(second);
+  assert.equal(copilotAdapter.readPrompt!(second), null);
+  prompt.remove();
+  assert.equal(copilotAdapter.readPrompt!(message), null);
 });
 
 // ---------------------------------------------------------------------------
