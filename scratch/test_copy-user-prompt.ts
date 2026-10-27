@@ -15,6 +15,7 @@ import { formatPrompt, promptText } from "../src/core/prompt";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
 import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
+import { renderOptions } from "../src/options/options";
 import { copilotAdapter } from "../src/sites/copilot";
 import { duckAiAdapter } from "../src/sites/duckai";
 import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
@@ -334,6 +335,86 @@ check("settings: stored values are kept; settings saved before this change, or i
   assert.deepEqual([older.includePrompt, older.promptFormat, older.promptHeadingLevel, older.minHeadingLevel], [true, "heading", 2, 3]);
   const invalid = mergeSettings({ includePrompt: "yes", promptFormat: "italic", promptHeadingLevel: 7 }, defaults);
   assert.deepEqual([invalid.includePrompt, invalid.promptFormat, invalid.promptHeadingLevel], [true, "heading", 2]);
+});
+
+// ---------------------------------------------------------------------------
+// Options page
+// ---------------------------------------------------------------------------
+
+/** The options form, rendered and filled with `settings`, recording every change it reports. */
+function optionsPage(settings: Settings) {
+  const { window } = new JSDOM("<!doctype html><body></body>");
+  const changes: Settings[] = [];
+  const form = renderOptions(window.document, SITE_ADAPTERS, (next) => changes.push(next));
+  window.document.body.append(form.root);
+  form.fill(settings);
+  const document = window.document;
+  const control = <T extends Element>(selector: string) => document.querySelector<T>(selector)!;
+  return {
+    window,
+    document,
+    form,
+    changes,
+    includePrompt: control<HTMLInputElement>('input[name="includePrompt"]'),
+    format: control<HTMLSelectElement>('select[name="promptFormat"]'),
+    level: control<HTMLSelectElement>('select[name="promptHeadingLevel"]'),
+    minimum: control<HTMLSelectElement>('select[name="minHeadingLevel"]'),
+  };
+}
+
+/** Changes `select` to `value` as a user would, firing its change event. */
+function choose(page: ReturnType<typeof optionsPage>, select: HTMLSelectElement, value: string): void {
+  select.value = value;
+  select.dispatchEvent(new page.window.Event("change"));
+}
+
+check("options page: a User prompt section after Minimum heading level, showing the stored values", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  Object.assign(settings, { includePrompt: true, promptFormat: "heading", promptHeadingLevel: 3 });
+  const page = optionsPage(settings);
+  const titles = Array.from(page.document.querySelectorAll("h2")).map((heading) => heading.textContent);
+  assert.equal(titles.indexOf("User prompt"), titles.indexOf("Minimum heading level") + 1);
+  assert.equal(page.includePrompt.checked, true);
+  assert.equal(page.format.value, "heading");
+  assert.equal(page.level.value, "3");
+  assert.deepEqual(
+    Array.from(page.format.options).map((option) => [option.value, option.textContent]),
+    [["heading", "Heading (## Prompt)"], ["blockquote", "Blockquote (> Prompt)"], ["bold", "Bold (**Prompt**)"], ["plain", "Plain text"]],
+  );
+  assert.deepEqual(Array.from(page.level.options).map((option) => option.textContent), ["H1", "H2", "H3", "H4", "H5", "H6"]);
+  for (const select of [page.format, page.level]) {
+    assert.ok(page.document.getElementById(select.getAttribute("aria-labelledby")!)?.textContent, `${select.name} has a label`);
+    assert.ok(page.document.getElementById(select.getAttribute("aria-describedby")!)?.textContent, `${select.name} has a hint`);
+  }
+});
+
+check("options page: which drop-downs are disabled, for each state of the prompt settings", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  const page = optionsPage(settings);
+  const disabled = () => [page.format.disabled, page.level.disabled, page.minimum.disabled];
+  // Prompt on as a heading: the prompt level decides, so the minimum heading level is greyed out.
+  assert.deepEqual(disabled(), [false, false, true]);
+  page.form.fill({ ...settings, promptFormat: "blockquote" });
+  assert.deepEqual(disabled(), [false, true, false]);
+  page.form.fill({ ...settings, includePrompt: false });
+  assert.deepEqual(disabled(), [true, true, false]);
+  // The master switch greys out the whole section.
+  page.form.fill({ ...settings, enabled: false });
+  assert.equal(page.includePrompt.matches(":disabled"), true);
+  assert.equal(page.format.matches(":disabled"), true);
+});
+
+check("options page: each control reports its value, leaving the rest as it was", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  const page = optionsPage(settings);
+  page.includePrompt.click();
+  choose(page, page.format, "bold");
+  choose(page, page.level, "4");
+  assert.equal(page.changes.length, 3);
+  assert.equal(page.changes[0].includePrompt, false);
+  assert.equal(page.changes[1].promptFormat, "bold");
+  assert.equal(page.changes[2].promptHeadingLevel, 4);
+  assert.deepEqual({ ...page.changes[2], includePrompt: true, promptFormat: "heading", promptHeadingLevel: 2 }, settings);
 });
 
 // ---------------------------------------------------------------------------

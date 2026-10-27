@@ -123,7 +123,7 @@ None at this time. The one open question, about the live markup of a multi-line 
 ### Options page
 
 #### [MODIFY] `src/options/options.ts` and `src/options/options.html`
-- [ ] **TASK-10:** Add a **User prompt** section after Minimum heading level, in a `fieldset.global`, so the master switch greys it out. It holds:
+- [x] **TASK-10:** Add a **User prompt** section after Minimum heading level, in a `fieldset.global`, so the master switch greys it out. It holds:
   - A checkbox, **Copy the prompt with the response**, with the hint "Starts each copy with the prompt the reply answers. On Search Assist, that's the search query."
   - A **Prompt format** `<select name="promptFormat">` with Heading, Blockquote, Bold and Plain text, each option labelled with what it writes, such as `Heading (## Prompt)`.
   - A **Prompt heading level** `<select name="promptHeadingLevel">`, H1 to H6, with the hint "The response's headings and Sources nest one level below it."

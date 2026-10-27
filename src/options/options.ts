@@ -1,10 +1,11 @@
 /**
  * The options page: a master switch, the citation style, the minimum heading
- * level, and one section per site with its button, override and rule toggles. Every change is saved as
+ * level, the user prompt settings, and one section per site with its button,
+ * override and rule toggles. Every change is saved as
  * soon as it's made, and open chat tabs pick it up without a reload.
  */
 import { canReadReferences, loadSettings, onSettingsChanged, saveSettings, type Settings } from "../core/settings";
-import { CITATION_STYLES, HEADING_LEVELS, type CitationStyle, type HeadingLevel, type SiteAdapter } from "../core/types";
+import { CITATION_STYLES, HEADING_LEVELS, PROMPT_FORMATS, type CitationStyle, type HeadingLevel, type PromptFormat, type SiteAdapter } from "../core/types";
 import { SITE_ADAPTERS } from "../sites/index";
 
 /** How each citation style is presented: a label, an optional hint and a one-line example of its output. */
@@ -21,6 +22,14 @@ const CITATION_STYLE_TEXT: Record<CitationStyle, { label: string; hint?: string;
   },
   "inline-links-and-sources": { label: "Inline links + Sources list", example: "…released in May.[1](url)  →  ## Sources" },
   "sources-only": { label: "Sources list only", example: "…released in May.  →  ## Sources" },
+};
+
+/** How each prompt format is listed: its name and a sketch of what it writes. */
+const PROMPT_FORMAT_LABELS: Record<PromptFormat, string> = {
+  heading: "Heading (## Prompt)",
+  blockquote: "Blockquote (> Prompt)",
+  bold: "Bold (**Prompt**)",
+  plain: "Plain text",
 };
 
 /** The hostnames an adapter's match patterns cover, for display. */
@@ -53,6 +62,36 @@ function option(document: Document, type: "checkbox" | "radio", name: string, la
   if (hint) text.append(el(document, "span", "hint", hint));
   wrapper.append(input, text);
   return wrapper;
+}
+
+/** A drop-down named `name` offering `choices` as `[value, label]` pairs, reporting the chosen value to `onChange`. */
+function dropDown(document: Document, name: string, choices: [string, string][], onChange: (value: string) => void): HTMLSelectElement {
+  const select = el(document, "select");
+  select.name = name;
+  for (const [value, label] of choices) {
+    const choice = el(document, "option", undefined, label);
+    choice.value = value;
+    select.append(choice);
+  }
+  select.addEventListener("change", () => onChange(select.value));
+  return select;
+}
+
+/**
+ * A drop-down with a visible label above it and a hint below, wired up for
+ * screen readers through `aria-labelledby` and `aria-describedby`; `id`
+ * prefixes the label's and hint's ids.
+ */
+function labelledField(document: Document, id: string, label: string, select: HTMLSelectElement, hint: string): HTMLDivElement {
+  const field = el(document, "div", "select-field");
+  const title = el(document, "span", "select-label", label);
+  title.id = `${id}-label`;
+  const description = el(document, "p", "hint select-hint", hint);
+  description.id = `${id}-hint`;
+  select.setAttribute("aria-labelledby", title.id);
+  select.setAttribute("aria-describedby", description.id);
+  field.append(title, select, description);
+  return field;
 }
 
 /** The rendered form: the root element plus a function that shows a settings object's values in it. */
@@ -105,21 +144,45 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
   const headingSet = el(document, "fieldset", "global");
   const headingTitle = el(document, "h2", undefined, "Minimum heading level");
   headingTitle.id = "min-heading-level-title";
-  const levelSelect = el(document, "select");
-  levelSelect.name = "minHeadingLevel";
+  const levelSelect = dropDown(
+    document,
+    "minHeadingLevel",
+    HEADING_LEVELS.map((level) => [String(level), level === 1 ? "H1 (no change)" : `H${level}`]),
+    (value) => update((s) => (s.minHeadingLevel = Number(value) as HeadingLevel)),
+  );
   levelSelect.setAttribute("aria-labelledby", headingTitle.id);
   levelSelect.setAttribute("aria-describedby", "min-heading-level-hint");
-  for (const level of HEADING_LEVELS) {
-    const choice = el(document, "option", undefined, level === 1 ? "H1 (no change)" : `H${level}`);
-    choice.value = String(level);
-    levelSelect.append(choice);
-  }
-  levelSelect.addEventListener("change", () => update((s) => (s.minHeadingLevel = Number(levelSelect.value) as HeadingLevel)));
-  const levelHint = el(document, "p", "hint select-hint", "Shifts every heading down by the same amount, Sources included, so none is above this level. Headings past H6 stay at H6.");
+  const levelHint = el(
+    document,
+    "p",
+    "hint select-hint",
+    "Shifts every heading down by the same amount, Sources included, so none is above this level. Headings past H6 stay at H6. Not used while the prompt is copied as a heading: the response then starts one level below the prompt.",
+  );
   levelHint.id = "min-heading-level-hint";
   headingSet.append(headingTitle, levelSelect, levelHint);
   headings.append(headingSet);
   root.append(headings);
+
+  const prompt = el(document, "section");
+  const promptSet = el(document, "fieldset", "global");
+  promptSet.append(
+    el(document, "h2", undefined, "User prompt"),
+    option(document, "checkbox", "includePrompt", "Copy the prompt with the response", "Starts each copy with the prompt the reply answers. On Search Assist, that's the search query.", (input) =>
+      update((s) => (s.includePrompt = input.checked)),
+    ),
+  );
+  const formatSelect = dropDown(document, "promptFormat", PROMPT_FORMATS.map((format) => [format, PROMPT_FORMAT_LABELS[format]]), (value) =>
+    update((s) => (s.promptFormat = value as PromptFormat)),
+  );
+  const promptLevelSelect = dropDown(document, "promptHeadingLevel", HEADING_LEVELS.map((level) => [String(level), `H${level}`]), (value) =>
+    update((s) => (s.promptHeadingLevel = Number(value) as HeadingLevel)),
+  );
+  promptSet.append(
+    labelledField(document, "prompt-format", "Prompt format", formatSelect, "A prompt of several lines as a Heading puts its first line in the heading and quotes the rest."),
+    labelledField(document, "prompt-heading-level", "Prompt heading level", promptLevelSelect, "The response's headings and Sources nest one level below it."),
+  );
+  prompt.append(promptSet);
+  root.append(prompt);
 
   for (const adapter of adapters) {
     const section = el(document, "section");
@@ -166,8 +229,17 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
     const input = (name: string) => root.querySelector<HTMLInputElement>(`input[name="${attr(name)}"]`);
     input("enabled")!.checked = settings.enabled;
     root.querySelectorAll<HTMLInputElement>('input[name="citationStyle"]').forEach((radio) => (radio.checked = radio.value === settings.citationStyle));
-    root.querySelector<HTMLSelectElement>('select[name="minHeadingLevel"]')!.value = String(settings.minHeadingLevel);
     root.querySelectorAll<HTMLFieldSetElement>("fieldset.global").forEach((set) => (set.disabled = !settings.enabled));
+    const select = (name: string) => root.querySelector<HTMLSelectElement>(`select[name="${attr(name)}"]`)!;
+    const promptIsHeading = settings.includePrompt && settings.promptFormat === "heading";
+    select("minHeadingLevel").value = String(settings.minHeadingLevel);
+    // A prompt heading sets the response's minimum itself, so the general minimum has no effect then.
+    select("minHeadingLevel").disabled = promptIsHeading;
+    input("includePrompt")!.checked = settings.includePrompt;
+    select("promptFormat").value = settings.promptFormat;
+    select("promptFormat").disabled = !settings.includePrompt;
+    select("promptHeadingLevel").value = String(settings.promptHeadingLevel);
+    select("promptHeadingLevel").disabled = !promptIsHeading;
     for (const adapter of adapters) {
       const site = settings.sites[adapter.id];
       input(`${adapter.id}.enabled`)!.checked = site.enabled;

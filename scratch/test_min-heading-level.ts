@@ -260,6 +260,8 @@ check("options page: choosing H3 reports minHeadingLevel 3 as a number, leaving 
 
 check("options page: the drop-down is disabled while the master switch is off", () => {
   const settings = buildDefaultSettings(SITE_ADAPTERS);
+  // A prompt heading greys it out too (see test_copy-user-prompt.ts), so the prompt is off here.
+  settings.includePrompt = false;
   const page = optionsPage(settings);
   assert.equal(page.select.matches(":disabled"), false);
   page.form.fill({ ...settings, enabled: false });
