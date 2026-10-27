@@ -204,6 +204,7 @@ ai-chat-formatter/
     ├── fixtures/        # Page markup and data samples the tests use
     ├── test_ai-chat-formatter.ts
     ├── test_block-reference-citations.ts
+    ├── test_copy-user-prompt.ts
     ├── test_copilot-source-details.ts
     ├── test_duck-ai-adapter.ts
     ├── test_duckduckgo-search-assist.ts

@@ -135,7 +135,7 @@ None at this time. The one open question, about the live markup of a multi-line 
 ### Tests
 
 #### [NEW] `scratch/test_copy-user-prompt.ts` and [MODIFY] existing settings checks
-- [ ] **TASK-11:** A regression script, picked up by `pnpm test`. See Automated Tests below.
+- [x] **TASK-11:** A regression script, picked up by `pnpm test`. See Automated Tests below.
   - The two checks in `scratch/test_ai-chat-formatter.ts` that compare whole settings objects gain the three new defaults.
   - The README's development tree gains the new script.
 
