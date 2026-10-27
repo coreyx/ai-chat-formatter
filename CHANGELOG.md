@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The extension's messages ("Copied as Markdown", "still writing", errors) now appear next to the button you clicked instead of at the bottom of the window, where they were easy to miss.
 - Copies now start with the prompt by default. Turn off **Copy the prompt with the response** to copy the reply alone, as before.
 - The **Include "More" sources** description on the options page is now specific to each site. Duck.ai's now refers to its Read More cards.
 - Building from source uses [pnpm](https://pnpm.io/) instead of npm: `pnpm install`, then `pnpm run build`. The pnpm version is pinned in `package.json`, and `corepack enable` sets it up. Dependency versions are unchanged.
