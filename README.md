@@ -155,9 +155,12 @@ AI Chat Formatter isn't in the Chrome Web Store. Install it from a GitHub releas
 ```bash
 git clone https://github.com/coreyx/ai-chat-formatter.git
 cd ai-chat-formatter
-npm install
-npm run build
+corepack enable
+pnpm install
+pnpm run build
 ```
+
+The project uses [pnpm](https://pnpm.io/), at the version pinned in `package.json`. `corepack enable` is needed only once per machine: Corepack ships with Node and fetches that pnpm version when you first run `pnpm` here. If pnpm is already installed globally, you can skip it.
 
 Then follow the installation steps from step 3, choosing the `dist/` folder.
 
@@ -179,10 +182,10 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 
 | Command | What it does |
 |---|---|
-| `npm run build` | Type-checks and builds the extension into `dist/` |
-| `npm run watch` | Rebuilds `dist/` on every change, with source maps |
-| `npm test` | Builds, then runs every regression script in `scratch/` (`test_*.ts`) |
-| `npm run package` | Builds and zips `dist/` into `release/ai-chat-formatter-<version>.zip` |
+| `pnpm run build` | Type-checks and builds the extension into `dist/` |
+| `pnpm run watch` | Rebuilds `dist/` on every change, with source maps |
+| `pnpm test` | Builds, then runs every regression script in `scratch/` (`test_*.ts`) |
+| `pnpm run package` | Builds and zips `dist/` into `release/ai-chat-formatter-<version>.zip` |
 
 ```text
 ai-chat-formatter/
@@ -203,7 +206,8 @@ ai-chat-formatter/
     ├── test_block-reference-citations.ts
     ├── test_copilot-source-details.ts
     ├── test_duck-ai-adapter.ts
-    └── test_duckduckgo-search-assist.ts
+    ├── test_duckduckgo-search-assist.ts
+    └── test_min-heading-level.ts
 ```
 
 ### Adding a site
@@ -220,7 +224,7 @@ ai-chat-formatter/
    - optionally, `moreSources`: whether the More sources option starts on for this site, and how the options page describes it,
    - optionally, a `pageScript`: the name of a script in `src/page/` that the manifest runs in the page's own JavaScript world, for data only the page can see.
 3. Add it to `SITE_ADAPTERS` in `src/sites/index.ts`. The build adds its match patterns and page script to the manifest, and the options page gives it a section automatically.
-4. Save a trimmed copy of the site's markup under `scratch/fixtures/` and add a `scratch/test_<name>.ts` script with checks for it; `npm test` runs it.
+4. Save a trimmed copy of the site's markup under `scratch/fixtures/` and add a `scratch/test_<name>.ts` script with checks for it; `pnpm test` runs it.
 
 ## License
 
