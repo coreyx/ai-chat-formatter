@@ -2,7 +2,7 @@
  * Regression checks for spec/min-heading-level: shifting headings down to the
  * minimum heading level, what counts as a heading, the shift through
  * convertMessage with the Sources section, the stored setting, the options
- * page and the controller. Run with `npm test`, which runs every
+ * page and the controller. Run with `pnpm test`, which runs every
  * scratch/test_*.ts script. Each check prints PASS or FAIL, and the process
  * exits non-zero if any failed.
  */

@@ -2,7 +2,7 @@
  * Regression checks for spec/block-reference-citations: the Linked citations
  * style (a numbered Citations list with Obsidian block IDs, linked from the
  * text) and the footnotes style's layout without a Citations heading. Run with
- * `npm test`, which runs every scratch/test_*.ts script. Each check prints PASS
+ * `pnpm test`, which runs every scratch/test_*.ts script. Each check prints PASS
  * or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";

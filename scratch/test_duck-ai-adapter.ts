@@ -3,7 +3,7 @@
  * conversion (link and popup citation chips, Read More cards, code blocks,
  * bold text), the page script, button placement, registration and native Copy
  * override, against a synthetic fixture modeled on duck.ai's markup. Run with
- * `npm test`, which runs every scratch/test_*.ts script. Each check prints
+ * `pnpm test`, which runs every scratch/test_*.ts script. Each check prints
  * PASS or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";

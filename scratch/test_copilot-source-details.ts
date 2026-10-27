@@ -2,7 +2,7 @@
  * Regression checks for spec/copilot-source-details: source titles and domains
  * on every citation, the "More sources" list, and how Copilot's source list is
  * read (the page-world script and the Sources panel fallback). Run with
- * `npm test`, which also runs the 0.1.0 checks. Each check prints PASS or
+ * `pnpm test`, which also runs the 0.1.0 checks. Each check prints PASS or
  * FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
@@ -552,7 +552,7 @@ await checkAsync("page data: with no page script, Copy as Markdown gets linked M
 });
 
 // ---------------------------------------------------------------------------
-// Built manifest (npm test builds dist/ first)
+// Built manifest (pnpm test builds dist/ first)
 // ---------------------------------------------------------------------------
 
 check("manifest: Copilot's page script runs in the page world on Copilot's pages", () => {

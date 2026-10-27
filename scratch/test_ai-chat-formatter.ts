@@ -1,6 +1,6 @@
 /**
  * Regression checks for the AI Chat Formatter extension (spec/ai-chat-formatter).
- * Run with `npm test`: esbuild bundles this file for Node and runs it. Each
+ * Run with `pnpm test`: esbuild bundles this file for Node and runs it. Each
  * check prints PASS or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
@@ -546,7 +546,7 @@ check("options: the form shows the settings and reports each change as a full se
 });
 
 // ---------------------------------------------------------------------------
-// Built manifest (npm test builds dist/ first)
+// Built manifest (pnpm test builds dist/ first)
 // ---------------------------------------------------------------------------
 
 check("manifest: dist/manifest.json carries the version, every adapter's matches and the bundles", () => {

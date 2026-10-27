@@ -4,7 +4,7 @@
  * after-More answers (source chips, Streamdown markup), the "still writing"
  * refusal, the More sources list, the page script, the native Copy override,
  * registration and settings, against a synthetic fixture modeled on
- * duckduckgo.com's markup. Run with `npm test`, which runs every
+ * duckduckgo.com's markup. Run with `pnpm test`, which runs every
  * scratch/test_*.ts script. Each check prints PASS or FAIL, and the process
  * exits non-zero if any failed.
  */

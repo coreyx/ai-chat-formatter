@@ -55,7 +55,7 @@ None at this time.
 - [x] **TASK-4:** Change Building from source to `corepack enable` (once), `pnpm install`, `pnpm run build`, noting that Node's Corepack provides the pinned pnpm. In the Development table, change the four commands to `pnpm run build`, `pnpm run watch`, `pnpm test` and `pnpm run package`. In Adding a site, `npm test` becomes `pnpm test`.
 
 #### [MODIFY] `scripts/package.mjs` and `scratch/test_*.ts`
-- [ ] **TASK-5:** Change `run \`npm run build\` first` in `scripts/package.mjs` to `pnpm run build`. In the six test scripts' comments, `npm test` becomes `pnpm test`, including the "(npm test builds dist/ first)" section headings.
+- [x] **TASK-5:** Change `run \`npm run build\` first` in `scripts/package.mjs` to `pnpm run build`. In the six test scripts' comments, `npm test` becomes `pnpm test`, including the "(npm test builds dist/ first)" section headings.
 
 ### Tests
 

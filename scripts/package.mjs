@@ -26,7 +26,7 @@ function collect(dir, entries = {}) {
 
 const entries = collect(distDir);
 if (!entries["manifest.json"]) {
-  console.error("dist/manifest.json is missing; run `npm run build` first.");
+  console.error("dist/manifest.json is missing; run `pnpm run build` first.");
   process.exit(1);
 }
 
