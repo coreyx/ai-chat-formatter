@@ -60,7 +60,7 @@ None at this time. Placement next to the button, rather than at the top center o
 ### Tests
 
 #### [NEW] `scratch/test_message-next-to-button.ts`
-- [ ] **TASK-3:** A regression script, picked up by `pnpm test`. See Automated Tests below.
+- [x] **TASK-3:** A regression script, picked up by `pnpm test`. See Automated Tests below.
 
 ## Verification Plan
 

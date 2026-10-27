@@ -213,6 +213,7 @@ ai-chat-formatter/
     ├── test_copilot-source-details.ts
     ├── test_duck-ai-adapter.ts
     ├── test_duckduckgo-search-assist.ts
+    ├── test_message-next-to-button.ts
     ├── test_min-heading-level.ts
     └── test_pnpm-migration.ts
 ```
