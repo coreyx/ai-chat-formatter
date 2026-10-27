@@ -38,7 +38,7 @@ None at this time.
 ### Package manager
 
 #### [MODIFY] `package.json`
-- [ ] **TASK-1:** Add `"packageManager": "pnpm@12.6.0"`, and change the `package` script to `pnpm run build && node scripts/package.mjs`.
+- [x] **TASK-1:** Add `"packageManager": "pnpm@12.6.0"`, and change the `package` script to `pnpm run build && node scripts/package.mjs`.
 
 #### [NEW] `pnpm-lock.yaml`, [NEW] `pnpm-workspace.yaml`, [DELETE] `package-lock.json`
 - [ ] **TASK-2:** Move the lockfile and reinstall.
