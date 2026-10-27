@@ -16,6 +16,7 @@ import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 import { copilotAdapter } from "../src/sites/copilot";
 import { duckAiAdapter } from "../src/sites/duckai";
+import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -300,6 +301,17 @@ check("Duck.ai: a second reply to the same prompt gets that prompt; null with no
   assert.equal(duckAiAdapter.readPrompt!(variant), "What is new in Widget 5?");
   page.querySelectorAll('[data-testid="user-message"]').forEach((prompt) => prompt.remove());
   assert.equal(duckAiAdapter.readPrompt!(first), null);
+});
+
+check("Search Assist: the search query from the page address, with + decoded as a space", () => {
+  const page = fixture("duckduckgo-search-assist.html", "https://duckduckgo.com/?q=widget+sizes%3F&ia=web");
+  const message = page.getElementById("collapsed")!;
+  assert.equal(duckDuckGoAdapter.readPrompt!(message), "widget sizes?");
+});
+
+check("Search Assist: null with no query, or an empty one", () => {
+  assert.equal(duckDuckGoAdapter.readPrompt!(fixture("duckduckgo-search-assist.html", "https://duckduckgo.com/?ia=web").getElementById("collapsed")!), null);
+  assert.equal(duckDuckGoAdapter.readPrompt!(fixture("duckduckgo-search-assist.html", "https://duckduckgo.com/?q=+&ia=web").getElementById("collapsed")!), null);
 });
 
 // ---------------------------------------------------------------------------

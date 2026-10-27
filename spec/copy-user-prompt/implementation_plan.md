@@ -110,7 +110,7 @@ None at this time. The one open question, about the live markup of a multi-line 
 - [x] **TASK-7:** Add `readPrompt`: the last `[data-testid="user-message"]` before the reply in document order, through `promptText`, or null.
 
 #### [MODIFY] `src/sites/duckduckgo.ts`
-- [ ] **TASK-8:** Add `readPrompt`: the `q` parameter of the message's page address (`URLSearchParams` decodes `+` as a space), trimmed, or null when it's missing or empty.
+- [x] **TASK-8:** Add `readPrompt`: the `q` parameter of the message's page address (`URLSearchParams` decodes `+` as a space), trimmed, or null when it's missing or empty.
 
 ### Content script
 

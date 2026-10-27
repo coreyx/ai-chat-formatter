@@ -121,6 +121,21 @@ export function readSearchAssistReferences(message: Element): SourceReference[] 
   return references && references.length > 0 ? references : null;
 }
 
+/**
+ * Search Assist answers a search rather than a chat prompt, so the search
+ * query stands in for the prompt: the `q` in the page's address, which is
+ * what DuckDuckGo searched. Text typed into the search box but not yet
+ * searched isn't read. Returns null when the address has no query.
+ */
+export function readSearchAssistPrompt(message: Element): string | null {
+  const href = message.ownerDocument.defaultView?.location.href ?? message.ownerDocument.URL;
+  try {
+    return new URL(href).searchParams.get("q")?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 export const duckDuckGoAdapter: SiteAdapter = {
   id: "duckduckgo",
   name: "DuckDuckGo Search Assist",
@@ -141,6 +156,7 @@ export const duckDuckGoAdapter: SiteAdapter = {
   preprocess: preprocessSearchAssist,
   turndownRules: (context) => ({ searchAssistChip: searchAssistChipRule(context) }),
   readReferences: readSearchAssistReferences,
+  readPrompt: readSearchAssistPrompt,
   // The chips' page titles are only in React state, which src/page/duckduckgo.ts reads.
   pageScript: "duckduckgo",
   moreSources: { defaultEnabled: false, description: "Adds the other pages Search Assist consulted but doesn't show, as links without titles." },
