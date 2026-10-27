@@ -38,7 +38,7 @@ None at this time. Placement next to the button, rather than at the top center o
 ### Content script
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-1:** Show messages next to their button.
+- [x] **TASK-1:** Show messages next to their button.
   - `showToast(text, anchor?)` takes the element to place the message by. After adding the message to the page, it calls a new `placeToast(toast, anchor, view)`.
   - **`placeToast`:**
     - It measures the anchor with `getBoundingClientRect()`. A zero-size rectangle, or a missing or detached anchor, means it can't be measured, and the message keeps the bottom-center placement.

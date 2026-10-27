@@ -115,7 +115,8 @@ export class ContentController {
 
   /**
    * Gathers `message`'s sources, converts it and writes it to the clipboard,
-   * showing the outcome on `button` or in a toast. Gathering may take a moment
+   * showing the outcome on `button`, or in a toast next to it when something
+   * goes wrong. Gathering may take a moment
    * when it falls back to the slower path, so the button is disabled and
    * marked busy meanwhile, and a click on a busy button is ignored.
    */
@@ -129,13 +130,13 @@ export class ContentController {
       try {
         markdown = this.convert(message, references);
       } catch (error) {
-        this.showToast(describeError(error, `Couldn't convert this ${this.adapter.name} reply`));
+        this.showToast(describeError(error, `Couldn't convert this ${this.adapter.name} reply`), button);
         return;
       }
       try {
         await this.env.writeClipboard(markdown);
       } catch (error) {
-        this.showToast(describeError(error, "Couldn't write to the clipboard"));
+        this.showToast(describeError(error, "Couldn't write to the clipboard"), button);
         return;
       }
       if (button) this.flashCopied(button);
@@ -228,8 +229,8 @@ export class ContentController {
     event.preventDefault();
     event.stopImmediatePropagation();
     this.env.writeClipboard(markdown).then(
-      () => this.showToast("Copied as Markdown"),
-      (error) => this.showToast(describeError(error, "Couldn't write to the clipboard")),
+      () => this.showToast("Copied as Markdown", nativeButton),
+      (error) => this.showToast(describeError(error, "Couldn't write to the clipboard"), nativeButton),
     );
   };
 
@@ -245,20 +246,59 @@ export class ContentController {
     }, COPIED_MS);
   }
 
-  /** Shows `text` in a short-lived toast at the bottom of the page, replacing any toast already showing. */
-  private showToast(text: string): void {
+  /**
+   * Shows `text` in a short-lived toast, replacing any toast already showing.
+   * It goes next to `anchor`, the button that was clicked, where the user is
+   * looking (see {@link placeToast}); without one it sits at the bottom
+   * center of the window.
+   */
+  private showToast(text: string, anchor?: Element | null): void {
     this.toast?.remove();
     const toast = this.env.document.createElement("div");
     toast.className = "acf-toast";
     toast.setAttribute("role", "status");
     toast.textContent = text;
     this.env.document.body.appendChild(toast);
+    const view = this.env.document.defaultView;
+    if (anchor && view) placeToast(toast, anchor, view);
     this.toast = toast;
     setTimeout(() => {
       if (this.toast === toast) this.toast = null;
       toast.remove();
     }, TOAST_MS);
   }
+}
+
+/** The space between a toast and the button it belongs to, in pixels. */
+const TOAST_GAP = 8;
+/** The least space kept between a toast and the window's edges, in pixels. */
+const TOAST_MARGIN = 16;
+
+/**
+ * Moves `toast`, already in the page, next to `anchor`: just below it, lined
+ * up with its left edge, or just above it when there's no room below, and
+ * always kept inside the window. The position is fixed when the toast
+ * appears; following the button as the page scrolls would mean listening to
+ * each site's own scroll container, and the toast only shows for a few
+ * seconds. When `anchor` can't be measured (detached, or hidden, as when the
+ * site re-renders it after the click), the toast is left at the bottom
+ * center. Exported for the tests, which give elements fixed sizes since jsdom
+ * does no layout.
+ */
+export function placeToast(toast: HTMLElement, anchor: Element, view: Window): void {
+  if (!anchor.isConnected) return;
+  const button = anchor.getBoundingClientRect();
+  if (button.width === 0 && button.height === 0) return;
+  // offsetWidth and offsetHeight ignore the entry animation's transform.
+  const width = toast.offsetWidth;
+  const height = toast.offsetHeight;
+  const below = button.bottom + TOAST_GAP;
+  const fitsBelow = below + height <= view.innerHeight - TOAST_MARGIN;
+  const top = fitsBelow ? below : Math.max(TOAST_MARGIN, button.top - TOAST_GAP - height);
+  const left = Math.max(TOAST_MARGIN, Math.min(button.left, view.innerWidth - TOAST_MARGIN - width));
+  toast.style.top = `${Math.round(top)}px`;
+  toast.style.left = `${Math.round(left)}px`;
+  toast.classList.add("acf-toast-anchored");
 }
 
 /** A user-facing message for `error`: a ConversionError's own message, or `prefix` with the error's text. */
