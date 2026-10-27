@@ -54,7 +54,7 @@ None at this time. Scope (one global setting), Sources headings (shifted with th
 ### Content script
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-5:** In `convert`, pass `minHeadingLevel: this.settings.minHeadingLevel` to `convertMessage`. This covers both the extension's button and the Copy-button override, which share `convert`.
+- [x] **TASK-5:** In `convert`, pass `minHeadingLevel: this.settings.minHeadingLevel` to `convertMessage`. This covers both the extension's button and the Copy-button override, which share `convert`.
 
 ### Options page
 

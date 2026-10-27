@@ -182,6 +182,7 @@ export class ContentController {
       includeMoreSources: site?.includeMoreSources ?? false,
       isRuleEnabled: (ruleId) => site?.rules[ruleId] ?? true,
       references,
+      minHeadingLevel: this.settings.minHeadingLevel,
     });
   }
 

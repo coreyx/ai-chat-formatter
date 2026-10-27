@@ -7,12 +7,15 @@
  * exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
+import { ContentController } from "../src/content/controller";
 import { convertMessage } from "../src/core/convert";
 import { enforceMinHeadingLevel } from "../src/core/headings";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../src/core/rules";
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { CitationStyle, HeadingLevel, SiteAdapter, SourceReference } from "../src/core/types";
+import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -21,6 +24,16 @@ const results: { name: string; error?: unknown }[] = [];
 function check(name: string, fn: () => void): void {
   try {
     fn();
+    results.push({ name });
+  } catch (error) {
+    results.push({ name, error });
+  }
+}
+
+/** Runs an async check, recording its result like {@link check}. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
     results.push({ name });
   } catch (error) {
     results.push({ name, error });
@@ -202,6 +215,51 @@ check("settings: a stored level is kept; anything else falls back to H1", () => 
   }
   // Settings saved before this setting existed have no minHeadingLevel at all.
   assert.equal(mergeSettings({ enabled: true, citationStyle: "footnotes", sites: {} }, defaults).minHeadingLevel, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Controller, on the Search Assist fixture
+// ---------------------------------------------------------------------------
+
+/**
+ * A controller on the Search Assist fixture with the minimum heading level
+ * set to H3, recording clipboard writes. Its after-More answer has H2 and H3
+ * headings, and Sources adds another H2, so everything shifts by one.
+ */
+function startController(overrideNativeCopy: boolean) {
+  const document = new JSDOM(readFileSync("scratch/fixtures/duckduckgo-search-assist.html", "utf8")).window.document;
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.minHeadingLevel = 3;
+  settings.sites.duckduckgo.overrideNativeCopy = overrideNativeCopy;
+  const written: string[] = [];
+  const controller = new ContentController(duckDuckGoAdapter, settings, { document, writeClipboard: async (text) => void written.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  return { afterMore: document.getElementById("after-more")!, written };
+}
+
+/** Lets pending timers and promise callbacks run. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** The headings of a copy, in order. */
+const headingsOf = (markdown: string) => markdown.split("\n").filter((line) => /^#{1,6} /.test(line));
+
+/** What the after-More answer's headings become with H3 as the minimum. */
+const SHIFTED_HEADINGS = ["### How widgets work", "#### Sizes", "### Sources", "#### Citations"];
+
+await checkAsync("controller: Copy as Markdown copies with the headings shifted to the minimum", async () => {
+  const page = startController(false);
+  page.afterMore.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+  await flush();
+  assert.equal(page.written.length, 1);
+  assert.deepEqual(headingsOf(page.written[0]), SHIFTED_HEADINGS);
+});
+
+await checkAsync("controller: with the override on, the site's own Copy shifts the headings too", async () => {
+  const page = startController(true);
+  page.afterMore.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!.click();
+  await flush();
+  assert.equal(page.written.length, 1);
+  assert.deepEqual(headingsOf(page.written[0]), SHIFTED_HEADINGS);
 });
 
 // ---------------------------------------------------------------------------
