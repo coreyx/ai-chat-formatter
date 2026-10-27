@@ -1,5 +1,48 @@
 # Release Notes
 
+## 0.5.0 (2026-10-27)
+
+AI Chat Formatter now works on **DuckDuckGo Search Assist**. Copies can also start with your prompt, and their headings can sit below your note's own.
+
+### DuckDuckGo Search Assist
+
+Search Assist, the AI answer at the top of DuckDuckGo's search results, gets a **Copy as Markdown** button just left of its own Copy button. Search Assist's Copy leaves out every source; this copy keeps them.
+
+- **The whole answer:** you get the full short answer whether the box is collapsed or expanded. Once you press **More** and the extended answer has finished, it follows the short one, with its headings, tables, lists and code. While it's still writing, Copy as Markdown tells you so and copies nothing.
+- **Sources:** each source chip becomes a citation titled with its page title, in whichever citation style you've chosen. If the titles can't be read, the chips' domains stand in.
+- **More, off by default:** Search Assist also consults pages it doesn't show. Turn on **Include "More" sources** for Search Assist to list them under **More** as links.
+- **Search Assist's own Copy button:** as on the other sites, you can have it copy Markdown too.
+
+The extension loads on every DuckDuckGo search page, since Search Assist can appear on any of them, and does nothing where there's no Search Assist answer.
+
+### Your prompt comes along
+
+Copies now start with the prompt the reply answers, on Copilot and Duck.ai. On Search Assist, your search query stands in for it. Choose how it looks with **Prompt format**:
+
+| Format | Copied as |
+|---|---|
+| **Heading** (default) | `## What is new in Widget 5?` |
+| **Blockquote** | `> What is new in Widget 5?` |
+| **Bold** | `**What is new in Widget 5?**` |
+| **Plain text** | `What is new in Widget 5?` |
+
+As a heading, at the **Prompt heading level** (H2 by default), the prompt is the copy's top heading, and the reply and its Sources start one level below it. A prompt of several lines puts its first line in the heading and quotes the rest. If a prompt can't be found, the copy is the reply alone.
+
+This is on by default, so copies look different after the update. Turn off **Copy the prompt with the response** to copy the reply alone, as before.
+
+### Minimum heading level
+
+To paste a reply under your note's own title, set a **Minimum heading level**, from H1 (no change) to H6. When a copy has a heading above it, every heading shifts down by the same amount, Sources included, keeping the reply's structure. Headings past H6 stay at H6, and `#` lines in code blocks are left alone. While the prompt is copied as a heading, the prompt heading sets the level instead, so this setting is greyed out.
+
+### Messages where you're looking
+
+Messages such as "Copied as Markdown", "still writing" and errors now appear next to the button you clicked, instead of at the bottom of the window where they were easy to miss.
+
+### Also
+
+- The **Include "More" sources** description on the options page is now specific to each site.
+- Building from source now uses [pnpm](https://pnpm.io/): `corepack enable`, `pnpm install`, then `pnpm run build`.
+
 ## 0.4.0 (2026-10-24)
 
 AI Chat Formatter now works on **Duck.ai**, DuckDuckGo's private AI chat, as well as Copilot.

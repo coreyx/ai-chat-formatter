@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-27
+
 ### Added
 
 - **DuckDuckGo Search Assist support** (`duckduckgo.com`): a **Copy as Markdown** button on Search Assist's answer, and the option to have its own Copy button copy Markdown too. Search Assist's Copy leaves out every source; this keeps them.
@@ -72,7 +74,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Options page with a master switch, citation style, and per-site button, override and rule settings; changes apply to open tabs without a reload.
 - Pluggable site adapters: a site's match patterns go into the manifest automatically at build time.
 
-[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.1.0...0.2.0
