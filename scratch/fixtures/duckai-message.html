@@ -1,6 +1,6 @@
 <!--
   A Duck.ai conversation reduced to the structure observed on duck.ai on
-  2026-10-24: a user prompt and two assistant replies. Each reply has a
+  2026-10-24: two user prompts, each with an assistant reply. Each reply has a
   collapsed (inert) Reasoning panel listing the sites searched, a body under
   [data-dark-theme] rendered by Streamdown, a Read More section of source
   cards, and a toolbar whose items each sit in their own wrapper div, Copy
@@ -10,10 +10,16 @@
   them. Class names imitate Duck.ai's generated hashes; every attribute the
   adapter relies on is kept as observed. All names, titles and URLs are made
   up.
+
+  Each reply follows its own user prompt, in the structure of a multi-line
+  prompt inspected on 2026-10-27: a screen-reader-only "You said" heading,
+  the text in a pre-wrapped <p> whose line breaks are plain newlines, an icon,
+  and a toolbar of icon-only buttons (Copy, Edit). The second prompt has two
+  lines with a blank line between.
 -->
 <div id="app">
   <main class="rwHXT40MKuShkXKetVvg">
-    <div data-testid="user-message" tabindex="-1"><div><p>What is new in Widget 5?</p></div></div>
+    <div data-testid="user-message" tabindex="0"><h3 class="Xq3sRbUoOdPZZ0zVm8sC">You said</h3><div class="LJrvXGm3c0R7dAXvTvx1"><div class="YtTzXFWmPhQWGzbHEcCf" style="white-space: pre-wrap"><p>What is new in Widget 5?</p><div class="dpHd4zfmzR2cT0YpkHA7"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></div></div></div><div class="kBdkvSIlwzGo4kaqGNBN"><div><button type="button" aria-label="Copy to clipboard" tabindex="0"><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></i></button><button type="button"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button></div><div><button type="button" aria-label="Edit" tabindex="0"><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></i></button></div></div></div>
 
     <h3 id="heading-00000000-0000-4000-8000-000000000000-assistant-message-0-1" tabindex="-1" data-response-heading="active">Assistant</h3>
     <div id="00000000-0000-4000-8000-000000000000-assistant-message-0-1" class="ulhFWA5BGGH5z8M1KsWn" data-activeresponse="true">
@@ -66,7 +72,9 @@
       </div>
     </div>
 
-    <div data-testid="user-message" tabindex="-1"><div><p>Any other reading?</p></div></div>
+    <div data-testid="user-message" tabindex="0"><h3 class="Xq3sRbUoOdPZZ0zVm8sC">You said</h3><div class="LJrvXGm3c0R7dAXvTvx1"><div class="YtTzXFWmPhQWGzbHEcCf" style="white-space: pre-wrap"><p>Any other reading?
+
+List two.</p><div class="dpHd4zfmzR2cT0YpkHA7"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></div></div></div><div class="kBdkvSIlwzGo4kaqGNBN"><div><button type="button" aria-label="Copy to clipboard" tabindex="0"><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></i></button><button type="button"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button></div><div><button type="button" aria-label="Edit" tabindex="0"><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></i></button></div></div></div>
 
     <h3 id="heading-00000000-0000-4000-8000-000000000000-assistant-message-1-1" tabindex="-1" data-response-heading="active">Assistant</h3>
     <div id="00000000-0000-4000-8000-000000000000-assistant-message-1-1" class="ulhFWA5BGGH5z8M1KsWn" data-activeresponse="true">

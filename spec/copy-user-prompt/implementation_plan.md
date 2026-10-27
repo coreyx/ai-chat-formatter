@@ -60,7 +60,7 @@ Adds a **Copy the prompt with the response** setting, on by default, so a copy s
 ### Fixtures
 
 #### [MODIFY] `scratch/fixtures/copilot-message.html` and `scratch/fixtures/duckai-message.html`
-- [ ] **TASK-1:** Inspect a live multi-line prompt on Copilot and Duck.ai, as described under Open Questions, recording structure only.
+- [x] **TASK-1:** Inspect a live multi-line prompt on Copilot and Duck.ai, as described under Open Questions, recording structure only.
   - Add a second conversation turn to each fixture, with a prompt of two lines and a blank line, marked up as the live page does it: paragraphs, `<br>`, or newlines in pre-wrapped text. Its text is synthetic.
   - Note in each fixture's header comment what the inspection found, including any screen-reader labels or attachment chips inside the prompt that must be left out.
 

@@ -5,10 +5,22 @@
   ASCII tree and a Python block, and the toolbar holding the native Copy
   button. Styling classes are trimmed; every attribute the adapter relies on is
   kept as observed.
+
+  The prompt follows a multi-line prompt inspected on 2026-10-27: a
+  screen-reader-only "You said:" heading, an icon-only More actions button,
+  then the text in a pre-wrapped [data-testid="chatOutput"]. A blank line
+  typed in the prompt is rendered as a newline, a <br> and another newline.
+  The text is made up.
 -->
 <main>
-  <div role="article" aria-setsize="2" aria-posinset="1">
-    <div><p>Search the web: what is new in Widget 5?</p></div>
+  <div role="article" tabindex="0" aria-setsize="2" aria-posinset="1">
+    <h5 class="sr-only">You said:</h5>
+    <button type="button" aria-label="More actions" tabindex="-1"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button>
+    <div></div>
+    <div><div data-testid="chatOutput" style="white-space: pre-wrap">Search the web: what is new in Widget 5?
+<br>
+Keep it short.
+</div></div>
   </div>
   <div role="article" aria-setsize="2" aria-posinset="2">
     <div id="response-id_r_265_" data-testid="lastChatMessage">
