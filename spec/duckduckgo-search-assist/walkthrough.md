@@ -89,7 +89,12 @@ The tests attach a fake React fiber to each short answer, since jsdom runs no Re
 All four were re-run after every item.
 
 ## Manual Verification
-Not yet done; these are for the maintainer, in Brave:
+**Partly done** (reported by the maintainer on 2026-10-27):
+- **Passed:** steps 1 and 2 (collapsed), 4's second part (the copy after More), 5 (More sources) and 6 (the override).
+- **Covered elsewhere:** step 8, by the user-prompt feature's manual checks, which copied replies on Copilot and Duck.ai.
+- **Still open:** step 3 (expanded, without More), 4's first part (the "still writing" message) and 7 (a search with no Search Assist).
+
+These are for the maintainer, in Brave:
 1. Run `npm run build`, reload the extension from `brave://extensions`, and search DuckDuckGo for something that brings up Search Assist.
 2. **Collapsed:** check that M↓ appears just left of Search Assist's Copy button. Click it without expanding, and paste into Obsidian. You should get the whole short answer, with each chip as a linked citation titled like its hover tooltip and the markers at the end of the last sentence.
 3. **Expanded:** expand the box, copy again, and check that the result matches step 2.
@@ -102,6 +107,6 @@ Not yet done; these are for the maintainer, in Brave:
 8. Check that Duck.ai and Copilot still copy as before.
 
 ## Follow-ups
-- The manual checks above, before any release.
+- The manual checks still open above, before any release.
 - No chips or links were seen in an extended answer during the inspection. The adapter handles chips there the same way, but that's only tested against the fixture.
 - Still open from the Duck.ai adapter: checking that its button appears only once a reply has finished, and its table and math conversion, once Duck.ai's model is available.
