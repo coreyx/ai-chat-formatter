@@ -4,13 +4,28 @@ import { CitationCollector, normalizeCitationUrl, renderCitations } from "./cita
 import { enforceMinHeadingLevel } from "./headings";
 import { formatPrompt } from "./prompt";
 import { runRules } from "./rules";
-import { ConversionError, type CitationStyle, type ConversionContext, type HeadingLevel, type PromptFormat, type SiteAdapter, type SourceReference } from "./types";
+import {
+  AFTER_SOURCES_ATTRIBUTE,
+  ConversionError,
+  type CitationStyle,
+  type ConversationTurn,
+  type ConversionContext,
+  type HeadingLevel,
+  type PromptFormat,
+  type SiteAdapter,
+  type SiteOption,
+  type SourceReference,
+} from "./types";
 
 /** How {@link convertMessage} writes a message. */
 export interface ConversionOptions {
   /** How citations are written. */
   style: CitationStyle;
-  /** Whether sources the reply lists but doesn't cite get a "More sources" section. */
+  /**
+   * Whether sources the reply lists but doesn't cite get a "More sources"
+   * section. Not used when one of the adapter's options governs More (see
+   * {@link SiteOption.governsMoreSources}).
+   */
   includeMoreSources: boolean;
   /** Whether the adapter's post-processing rule `ruleId` is on. */
   isRuleEnabled: (ruleId: string) => boolean;
@@ -135,6 +150,23 @@ function resolveOption(adapter: SiteAdapter, id: string, lookup: (id: string) =>
   return option.requires === undefined || resolveOption(adapter, option.requires, lookup, seen);
 }
 
+/**
+ * Takes the elements `preprocess` marked to follow the Sources section out of
+ * `root`, in document order, each wrapped in a `<div>` of its own so that
+ * Turndown writes the marked element itself and not just its contents. A
+ * marked element inside another is taken with it. Citations aren't rendered in
+ * these sections, so they're meant for plain links.
+ */
+function takeAfterSourcesSections(root: HTMLElement): HTMLElement[] {
+  const selector = `[${AFTER_SOURCES_ATTRIBUTE}]`;
+  const marked = Array.from(root.querySelectorAll(selector)).filter((element) => !element.parentElement?.closest(selector));
+  return marked.map((element) => {
+    const wrapper = root.ownerDocument.createElement("div");
+    wrapper.append(element);
+    return wrapper;
+  });
+}
+
 /** A Turndown instance with the output conventions shared by every site. */
 function createTurndown(): TurndownService {
   const service = new TurndownService({
@@ -190,6 +222,7 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
     isOptionEnabled: (id) => resolveOption(adapter, id, lookupOption),
   };
   adapter.preprocess?.(clone, context);
+  const afterSources = takeAfterSourcesSections(clone);
 
   const service = createTurndown();
   // Site rules go last so they take precedence over the shared ones; Turndown checks the most recently added rule first.
@@ -199,9 +232,13 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
 
   // While an option writes the sources some other way, there's no Sources section for More to join.
   const sourcesReplaced = (adapter.options ?? []).some((option) => option.replacesSourcesSection && context.isOptionEnabled(option.id));
-  const moreSources = includeMoreSources && !sourcesReplaced ? (references ?? []).filter((reference) => !reference.cited) : [];
+  const governing = adapter.options?.find((option) => option.governsMoreSources);
+  const wantMore = governing ? context.isOptionEnabled(governing.id) : includeMoreSources;
+  const moreSources = wantMore && !sourcesReplaced ? (references ?? []).filter((reference) => !reference.cited) : [];
   const idToken = style === "linked-citations" ? (options.idToken ?? randomIdToken()) : "";
-  const markdown = renderCitations(service.turndown(clone), collector.citations, style, moreSources, idToken);
+  const withSources = renderCitations(service.turndown(clone), collector.citations, style, moreSources, idToken);
+  const trailing = afterSources.map((section) => service.turndown(section).trim()).filter(Boolean);
+  const markdown = trailing.length ? `${withSources.trimEnd()}\n\n${trailing.join("\n\n")}` : withSources;
   const { prompt } = options;
   // Headings shift after citations are rendered, so the Sources headings are measured and moved with the reply's.
   const shifted = enforceMinHeadingLevel(markdown, responseMinHeadingLevel(options.minHeadingLevel ?? 1, prompt));
@@ -209,4 +246,44 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   const copy = prompt ? `${formatPrompt(prompt.text, prompt.format, prompt.headingLevel)}\n\n${shifted}` : shifted;
   // Rules run after citations are rendered so that citation titles are cleaned up too.
   return runRules(copy, adapter.rules, isRuleEnabled);
+}
+
+/** How {@link convertConversation} writes a conversation. */
+export interface ConversationOptions extends Omit<ConversionOptions, "references" | "prompt"> {
+  /** How each turn's prompt is written above its reply (see {@link formatPrompt}). */
+  promptFormat: { format: PromptFormat; headingLevel: HeadingLevel };
+  /** Reads a reply's full source list, as {@link ConversionOptions.references}; absent means no reply has one. */
+  referencesFor?: (reply: Element) => SourceReference[] | null;
+}
+
+/**
+ * Converts a conversation turn by turn: each reply with its own prompt above
+ * it, its own citations and its own Sources section, joined with a blank line.
+ * Every turn's prompt is written, since keeping the prompts is what a
+ * conversation copy is for. A turn whose reply has no reply body (see
+ * {@link SiteAdapter.contentSelector}) keeps its prompt alone, and a turn left
+ * with no text at all is left out. With a fixed `idToken`, turn N
+ * uses `<idToken><N>`, so linked-citation block IDs stay unique across turns.
+ *
+ * @throws ConversionError as {@link convertMessage} does for a reply.
+ */
+export function convertConversation(adapter: SiteAdapter, turns: readonly ConversationTurn[], options: ConversationOptions): string {
+  const { promptFormat, referencesFor, ...shared } = options;
+  const parts: string[] = [];
+  turns.forEach((turn, index) => {
+    const prompt = turn.prompt?.trim() ? { text: turn.prompt, ...promptFormat } : undefined;
+    const hasContent = turn.reply.matches(adapter.contentSelector) || turn.reply.querySelector(adapter.contentSelector) !== null;
+    if (!hasContent) {
+      if (prompt) parts.push(formatPrompt(prompt.text, prompt.format, prompt.headingLevel));
+      return;
+    }
+    const markdown = convertMessage(adapter, turn.reply, {
+      ...shared,
+      references: referencesFor?.(turn.reply) ?? null,
+      ...(prompt ? { prompt } : {}),
+      ...(shared.idToken !== undefined ? { idToken: `${shared.idToken}${index + 1}` } : {}),
+    }).trim();
+    if (markdown) parts.push(markdown);
+  });
+  return parts.join("\n\n");
 }

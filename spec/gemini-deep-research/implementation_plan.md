@@ -110,7 +110,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
   - **`AFTER_SOURCES_ATTRIBUTE = "data-acf-after-sources"`:** exported. An element the adapter's `preprocess` marks with it is written after the Sources section.
 
 #### [MODIFY] `src/core/convert.ts`
-- [ ] **TASK-2:** In `convertMessage`:
+- [x] **TASK-2:** In `convertMessage`:
   - **Sections after Sources:** after `preprocess`, every `[data-acf-after-sources]` element is taken out of the clone, in document order. Each is converted with the same Turndown service and appended after `renderCitations`' output, before the heading shift, so those headings shift with the rest.
   - **More:** follows the first option with `governsMoreSources` when there is one, and `includeMoreSources` otherwise.
   - **New `convertConversation(adapter, turns, options)`:** converts each turn with `convertMessage(adapter, turn.reply, …)`.
