@@ -14,6 +14,12 @@ export interface ConversionOptions {
   includeMoreSources: boolean;
   /** Whether the adapter's post-processing rule `ruleId` is on. */
   isRuleEnabled: (ruleId: string) => boolean;
+  /**
+   * Whether the adapter's option `optionId` (see {@link SiteAdapter.options})
+   * is set on. Absent means every option takes its default. An option whose
+   * required option is off reads as off to the adapter either way.
+   */
+  isOptionEnabled?: (optionId: string) => boolean;
   /** The message's full source list, if the caller could read it; titles and the More list come from here. */
   references: SourceReference[] | null;
   /**
@@ -172,6 +178,7 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   for (const selector of adapter.stripSelectors) {
     clone.querySelectorAll(selector).forEach((element) => element.remove());
   }
+  const lookupOption = options.isOptionEnabled ?? ((id: string) => adapter.options?.find((option) => option.id === id)?.defaultEnabled ?? false);
   const collector = new CitationCollector();
   const referencesByUrl = new Map<string, SourceReference>();
   for (const reference of references ?? []) {
@@ -180,7 +187,7 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   const context: ConversionContext = {
     registerCitation: (citation) => collector.register(citation),
     findReference: (url) => referencesByUrl.get(normalizeCitationUrl(url)),
-    isOptionEnabled: (id) => resolveOption(adapter, id, (optionId) => adapter.options?.find((option) => option.id === optionId)?.defaultEnabled ?? false),
+    isOptionEnabled: (id) => resolveOption(adapter, id, lookupOption),
   };
   adapter.preprocess?.(clone, context);
 
@@ -190,7 +197,9 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
     service.addRule(name, rule);
   }
 
-  const moreSources = includeMoreSources ? (references ?? []).filter((reference) => !reference.cited) : [];
+  // While an option writes the sources some other way, there's no Sources section for More to join.
+  const sourcesReplaced = (adapter.options ?? []).some((option) => option.replacesSourcesSection && context.isOptionEnabled(option.id));
+  const moreSources = includeMoreSources && !sourcesReplaced ? (references ?? []).filter((reference) => !reference.cited) : [];
   const idToken = style === "linked-citations" ? (options.idToken ?? randomIdToken()) : "";
   const markdown = renderCitations(service.turndown(clone), collector.citations, style, moreSources, idToken);
   const { prompt } = options;

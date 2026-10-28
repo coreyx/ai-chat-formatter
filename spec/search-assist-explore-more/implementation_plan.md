@@ -112,7 +112,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
   - `mergeSettings` keeps stored booleans for options the adapter declares, and drops unknown ones, so settings saved by 0.5.0 load with the defaults.
 
 #### [MODIFY] `src/core/convert.ts`
-- [ ] **TASK-4:** Pass the options through conversion.
+- [x] **TASK-4:** Pass the options through conversion.
   - `ConversionOptions.isOptionEnabled?: (id) => boolean`; when absent, each option's `defaultEnabled` applies.
   - It goes into the `ConversionContext`, wrapped so an option whose `requires` option is off reads as off, and the context is passed to `preprocess`.
   - When an option with `replacesSourcesSection` is on, the More list is left empty whatever `includeMoreSources` says.
