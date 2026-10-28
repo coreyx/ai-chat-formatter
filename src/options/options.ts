@@ -1,7 +1,7 @@
 /**
  * The options page: a master switch, the citation style, the minimum heading
  * level, the user prompt settings, and one section per site with its button,
- * override and rule toggles. Every change is saved as
+ * override, site option and rule toggles. Every change is saved as
  * soon as it's made, and open chat tabs pick it up without a reload.
  */
 import { canReadReferences, loadSettings, onSettingsChanged, saveSettings, type Settings } from "../core/settings";
@@ -35,6 +35,11 @@ const PROMPT_FORMAT_LABELS: Record<PromptFormat, string> = {
 /** The hostnames an adapter's match patterns cover, for display. */
 function hostsOf(adapter: SiteAdapter): string {
   return adapter.matches.map((pattern) => pattern.replace(/^[^:]+:\/\//, "").replace(/\/.*$/, "")).join(", ");
+}
+
+/** What the "Include "More" sources" option says it does for `adapter`. */
+function moreSourcesDescription(adapter: SiteAdapter): string {
+  return adapter.moreSources?.description ?? `Adds the sources ${adapter.name} lists under More in its Sources panel but doesn't cite in the reply.`;
 }
 
 /** Escapes `value` for use inside a double-quoted CSS attribute selector. */
@@ -200,6 +205,13 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
         update((s) => (s.sites[adapter.id].overrideNativeCopy = input.checked)),
       ),
     );
+    for (const siteOption of adapter.options ?? []) {
+      details.append(
+        option(document, "checkbox", `${adapter.id}.options.${siteOption.id}`, siteOption.name, siteOption.description, (input) =>
+          update((s) => (s.sites[adapter.id].options[siteOption.id] = input.checked)),
+        ),
+      );
+    }
     if (canReadReferences(adapter)) {
       details.append(
         option(
@@ -207,7 +219,7 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
           "checkbox",
           `${adapter.id}.includeMoreSources`,
           'Include "More" sources',
-          adapter.moreSources?.description ?? `Adds the sources ${adapter.name} lists under More in its Sources panel but doesn't cite in the reply.`,
+          moreSourcesDescription(adapter),
           (input) => update((s) => (s.sites[adapter.id].includeMoreSources = input.checked)),
         ),
       );
@@ -245,8 +257,20 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
       input(`${adapter.id}.enabled`)!.checked = site.enabled;
       input(`${adapter.id}.showCopyButton`)!.checked = site.showCopyButton;
       input(`${adapter.id}.overrideNativeCopy`)!.checked = site.overrideNativeCopy;
+      for (const siteOption of adapter.options ?? []) {
+        const box = input(`${adapter.id}.options.${siteOption.id}`)!;
+        box.checked = site.options[siteOption.id];
+        // An option that needs another one is greyed out while that one is off; its own value is kept for when it's back on.
+        box.disabled = siteOption.requires !== undefined && !site.options[siteOption.requires];
+      }
       const includeMore = input(`${adapter.id}.includeMoreSources`);
-      if (includeMore) includeMore.checked = site.includeMoreSources;
+      if (includeMore) {
+        includeMore.checked = site.includeMoreSources;
+        const replacing = adapter.options?.find((siteOption) => siteOption.replacesSourcesSection && site.options[siteOption.id]);
+        includeMore.disabled = replacing !== undefined;
+        const hint = includeMore.closest(".option")!.querySelector(".hint")!;
+        hint.textContent = replacing ? `Not used while "${replacing.name}" is on.` : moreSourcesDescription(adapter);
+      }
       for (const rule of adapter.rules) input(`${adapter.id}.rules.${rule.id}`)!.checked = site.rules[rule.id];
       root.querySelector<HTMLFieldSetElement>(`section[data-site="${attr(adapter.id)}"] fieldset.site`)!.disabled = !site.enabled;
     }

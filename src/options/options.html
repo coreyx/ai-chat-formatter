@@ -48,6 +48,8 @@
     .option { display: flex; gap: 12px; align-items: flex-start; padding: 6px 0; cursor: pointer; }
     .option input { margin: 4px 0 0; accent-color: var(--accent); flex: none; }
     .option-text { display: flex; flex-direction: column; }
+    /* An option greyed out on its own; inside a disabled fieldset the fieldset already dims it. */
+    fieldset:not(:disabled) .option:has(input:disabled) { opacity: 0.5; cursor: default; }
     .hint { color: var(--muted); font-size: 13px; }
     code {
       font: 12.5px/1.4 ui-monospace, "Cascadia Code", Consolas, monospace;

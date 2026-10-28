@@ -141,7 +141,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
 - [x] **TASK-6:** Pass `isOptionEnabled: (id) => site?.options[id] ?? <the option's default>` to `convertMessage`.
 
 #### [MODIFY] `src/options/options.ts`
-- [ ] **TASK-7:** Show each adapter option as a checkbox in its site's section, after the Copy-button override and before **Include "More" sources**, named `<site>.options.<id>`.
+- [x] **TASK-7:** Show each adapter option as a checkbox in its site's section, after the Copy-button override and before **Include "More" sources**, named `<site>.options.<id>`.
   - **Include "More" sources** is disabled while an option with `replacesSourcesSection` is on, and the description says why: "Not used while inline source chips are on."
   - An option with `requires` is disabled while that option is off, and updates as soon as it's toggled. Its stored value is kept.
   - `fill` shows the stored values.

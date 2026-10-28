@@ -387,7 +387,10 @@ check("options page: each site's More sources option has its own description", (
   const document = new JSDOM("<!doctype html><body></body>").window.document;
   const form = renderOptions(document, SITE_ADAPTERS, () => {});
   document.body.append(form.root);
-  form.fill(buildDefaultSettings(SITE_ADAPTERS));
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  // While Search Assist's inline chips are on, its More option says why it's unused instead; that has its own check.
+  settings.sites.duckduckgo.options["inline-chips"] = false;
+  form.fill(settings);
   const hint = (site: string) => document.querySelector(`input[name="${site}.includeMoreSources"]`)!.closest("label")!.querySelector(".hint")!.textContent;
   assert.equal(hint("copilot"), "Adds the sources Copilot lists under More in its Sources panel but doesn't cite in the reply.");
   assert.equal(hint("duckai"), "Adds the Read More cards that the reply doesn't cite.");

@@ -11,8 +11,9 @@ import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
-import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
+import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter, SourceReference } from "../src/core/types";
+import { renderOptions } from "../src/options/options";
 import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
@@ -305,6 +306,81 @@ check("settings: stored values are kept, unknown or invalid ones dropped, and 0.
   assert.deepEqual(merged.sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": false });
   const older = mergeSettings({ sites: { duckduckgo: { enabled: true, rules: {} } } }, defaults);
   assert.deepEqual(older.sites.duckduckgo.options, defaults.sites.duckduckgo.options);
+});
+
+// ---------------------------------------------------------------------------
+// Options page
+// ---------------------------------------------------------------------------
+
+/** The options form showing `settings`, recording each change it reports. */
+function optionsPage(settings: Settings) {
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const changes: Settings[] = [];
+  const form = renderOptions(document, SITE_ADAPTERS, (next) => changes.push(next));
+  document.body.append(form.root);
+  form.fill(settings);
+  const input = (name: string) => document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+  return { document, form, input, changes };
+}
+
+check("options page: Search Assist's three options, after the override and before More sources, showing the stored values", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.sites.duckduckgo.options["explore-more-search-links"] = true;
+  const page = optionsPage(settings);
+  const names = Array.from(page.document.querySelectorAll<HTMLInputElement>('section[data-site="duckduckgo"] fieldset.site input')).map((input) => input.name);
+  assert.deepEqual(names.slice(0, 6), [
+    "duckduckgo.showCopyButton",
+    "duckduckgo.overrideNativeCopy",
+    "duckduckgo.options.explore-more",
+    "duckduckgo.options.explore-more-search-links",
+    "duckduckgo.options.inline-chips",
+    "duckduckgo.includeMoreSources",
+  ]);
+  assert.deepEqual(
+    ["explore-more", "explore-more-search-links", "inline-chips"].map((id) => page.input(`duckduckgo.options.${id}`).checked),
+    [true, true, true],
+  );
+  assert.match(page.input("duckduckgo.options.inline-chips").closest(".option")!.textContent!, /Keep Search Assist's inline source chips.*instead of numbered citations/);
+});
+
+check("options page: a change is reported in the settings", () => {
+  const page = optionsPage(buildDefaultSettings(SITE_ADAPTERS));
+  page.input("duckduckgo.options.inline-chips").click();
+  assert.equal(page.changes.length, 1);
+  assert.deepEqual(page.changes[0].sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": false });
+});
+
+check("options page: More sources is greyed out while inline chips are on, and says why", () => {
+  const page = optionsPage(buildDefaultSettings(SITE_ADAPTERS));
+  const more = page.input("duckduckgo.includeMoreSources");
+  const hint = () => more.closest(".option")!.querySelector(".hint")!.textContent;
+  assert.equal(more.disabled, true);
+  assert.equal(hint(), `Not used while "Keep Search Assist's inline source chips" is on.`);
+  page.input("duckduckgo.options.inline-chips").click();
+  assert.equal(more.disabled, false);
+  assert.equal(hint(), duckDuckGoAdapter.moreSources!.description);
+});
+
+check("options page: More Search Results links are greyed out while Explore More is off, keeping their value", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.sites.duckduckgo.options["explore-more-search-links"] = true;
+  const page = optionsPage(settings);
+  const links = page.input("duckduckgo.options.explore-more-search-links");
+  assert.equal(links.disabled, false);
+  page.input("duckduckgo.options.explore-more").click();
+  assert.equal(links.disabled, true);
+  assert.equal(links.checked, true);
+  assert.equal(page.changes.at(-1)!.sites.duckduckgo.options["explore-more-search-links"], true);
+  page.input("duckduckgo.options.explore-more").click();
+  assert.equal(links.disabled, false);
+});
+
+check("options page: Copilot and Duck.ai have no site options, and their More sources stays available", () => {
+  const page = optionsPage(buildDefaultSettings(SITE_ADAPTERS));
+  for (const site of ["copilot", "duckai"]) {
+    assert.equal(page.document.querySelectorAll(`input[name^="${site}.options."]`).length, 0);
+    assert.equal(page.input(`${site}.includeMoreSources`).disabled, false);
+  }
 });
 
 // ---------------------------------------------------------------------------
