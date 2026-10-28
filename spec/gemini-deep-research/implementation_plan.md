@@ -21,7 +21,7 @@ Three Gemini options shape the report copy:
 
 > [!IMPORTANT]
 > **What the report copy contains**, in this order:
-> 1. **The prompt:** the research request, in your prompt format, as on the other sites. Gemini's "Start research" message is never used as the prompt.
+> 1. **The prompt:** only with the Gemini option **Copy the research request with the report** on, which is off by default (TASK-12, added in revision). Then it's the research request, in your prompt format, as on the other sites. Gemini's "Start research" message is never used as the prompt.
 > 2. **The report.**
 > 3. **`## Sources`:** with **Include "Sources used in the report"** on (the default).
 >    - **Citations:** the report's markers become citations in your citation style, numbered in order of first appearance as on the other sites. They are not numbered as Gemini numbers them.
@@ -207,6 +207,23 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
     - both source lists, and thinking with thought and browsing items.
   - **The existing checks:** update any that list every adapter, every site's settings, or the manifest's matches, in the item that changes them.
 
+### Revision (2026-10-28, after manual testing)
+
+Manual step 3 found the report's tables mangled in Obsidian. The live report's table cells wrap their text in `<p>` and contain citation markers; the fixture's cells were plain text. The user also asked for the report copy to leave out the prompt by default.
+
+#### [MODIFY] `src/core/citations.ts`, `src/sites/gemini.ts`, the fixture and the test script
+- [ ] **TASK-11:** Keep tables intact:
+  - **Paragraphs in cells (Gemini):** in `preprocessReport` and `preprocessReply`, each `td`/`th` has its `<p>` and `<div>` children unwrapped onto one line. Consecutive paragraphs and any `<br>` are separated by a literal `<br>`, which Obsidian shows as a line break inside a cell.
+  - **Linked citations in table rows (every site):**
+    - In `renderCitations`, a linked-citation marker on a line that is a table row (starting with `|`) is written `[[#^id\|⁽n⁾]]`. Otherwise its `|` ends the cell. Obsidian reads the escaped form as the same link.
+    - The other styles have no `|` in their markers.
+  - **The fixture:** gains a table whose cells hold paragraphs, two paragraphs in one cell, and citation markers.
+- [ ] **TASK-12:** Leave the prompt out of the report copy by default:
+  - **`SiteAdapter.readPrompt(message, isOptionEnabled?)`:** gains the option lookup, as `findButtonAnchor` did. The controller passes the resolved lookup.
+  - **The new Gemini option:** `report-prompt`, named "Copy the research request with the report", off by default. Its description says it also needs **Copy the prompt with the response**.
+  - **`readGeminiPrompt`:** returns null unless the option is on.
+  - **Unaffected:** the conversation copy, which always writes its prompts.
+
 ## Verification Plan
 
 ### Automated Tests
@@ -240,6 +257,16 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
    - `findAdapterForUrl` matches `/app/…` and `/u/1/app/…`.
    - The defaults are on, off, off, on.
    - The options page shows the four options, no override checkbox and no **Include "More" sources** for Gemini, and the Gemini button hint.
+9. **Tables (TASK-11):**
+   - A Gemini table whose cells hold paragraphs and citation markers comes out one row per line, with `<br>` between a cell's paragraphs.
+   - In every citation style, the markers inside the table are written so the row keeps its cells: linked markers are escaped as `\|`, while markers outside tables are unchanged.
+   - Every row has the same number of cells.
+10. **Report prompt (TASK-12):**
+    - By default the report copy starts with the report.
+    - With **Copy the research request with the report** on, it starts with the request.
+    - With that option on but **Copy the prompt with the response** off, there's no prompt.
+    - The conversation copy still has its prompts.
+    - The options page lists the fifth option.
 
 The existing scripts are re-run after every item.
 
@@ -247,7 +274,7 @@ The existing scripts are re-run after every item.
 1. **Setup:** run `pnpm run build` and reload the extension in `brave://extensions`. Chrome may ask to allow the new site.
 2. **The buttons:** open a finished Deep Research conversation and open the report. The panel's toolbar should show **Conversation** and **Report** buttons, in that order, before **Share & Export**.
 3. **The report copy:** click **Report** and paste into Obsidian. Check:
-   - the research request is the prompt;
+   - it starts with the report, without the prompt (see step 10);
    - the report's headings, tables and code;
    - citation markers that open the right source;
    - `## Sources`, with Citations and More.
@@ -256,6 +283,10 @@ The existing scripts are re-run after every item.
 6. **Turning the button off:** turn off **Show a Copy conversation button**. The button should disappear without a reload.
 7. **Account paths:** on a second Google account's Gemini (`/u/1/` in the address), the buttons should appear too.
 8. **Writing:** while a report is still being written, click **Report**. The "still writing" message should show next to the button.
+9. **Tables (revision):** copy a report with tables and paste it into Obsidian. Each table should render as a table, with the cells' citation markers working and multi-paragraph cells on separate lines within the cell.
+10. **Report prompt (revision):**
+    - By default the report copy should start with the report itself.
+    - Turn on **Copy the research request with the report** and copy again: it should start with your request.
 
 ## Visual design application
 There's no design system or art bible in this repo. The labelled button (TASK-5) follows Gemini's own toolbar text buttons: a pill with the Markdown icon and a short label, in `currentColor`. The other sites keep their icon-only button.
