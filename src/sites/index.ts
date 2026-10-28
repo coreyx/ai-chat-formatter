@@ -2,13 +2,14 @@ import type { SiteAdapter } from "../core/types";
 import { copilotAdapter } from "./copilot";
 import { duckAiAdapter } from "./duckai";
 import { duckDuckGoAdapter } from "./duckduckgo";
+import { geminiAdapter } from "./gemini";
 
 /**
  * Every supported site. Adding a site means writing its adapter module and
  * listing it here; the build reads each adapter's `matches` into the manifest,
  * and the options page builds its sections from this list.
  */
-export const SITE_ADAPTERS: readonly SiteAdapter[] = [copilotAdapter, duckAiAdapter, duckDuckGoAdapter];
+export const SITE_ADAPTERS: readonly SiteAdapter[] = [copilotAdapter, duckAiAdapter, duckDuckGoAdapter, geminiAdapter];
 
 /** Escapes `text` for literal use inside a regular expression. */
 function escapeRegExp(text: string): string {

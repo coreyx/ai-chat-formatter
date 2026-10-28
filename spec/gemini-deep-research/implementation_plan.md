@@ -194,7 +194,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
   - **Long conversations:** whatever the long-conversation check in Open Questions settles: either a `ConversionError` when unloaded turns are detected, or the documented limit.
 
 #### [MODIFY] `src/sites/index.ts`
-- [ ] **TASK-9:** Add `geminiAdapter` to `SITE_ADAPTERS`, after Search Assist. The build then adds `https://gemini.google.com/*` to the manifest.
+- [x] **TASK-9:** Add `geminiAdapter` to `SITE_ADAPTERS`, after Search Assist. The build then adds `https://gemini.google.com/*` to the manifest.
 
 ### Tests
 

@@ -27,7 +27,7 @@ import {
 } from "../src/sites/gemini-markup";
 import { geminiAdapter, readGeminiPrompt, readGeminiReferences, readGeminiTurns } from "../src/sites/gemini";
 import { AFTER_SOURCES_ATTRIBUTE, ConversionError, type SiteAdapter, type SourceReference } from "../src/core/types";
-import { SITE_ADAPTERS } from "../src/sites/index";
+import { findAdapterForUrl, SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -641,6 +641,36 @@ check("buttons: the conversation's button goes before Report whichever is added 
   const closed = geminiPage();
   closed.querySelector(REPORT_PANEL_SELECTOR)!.remove();
   assert.equal(geminiAdapter.findButtonAnchor(closed.querySelector(HISTORY)!, () => true), null);
+});
+
+// ---------------------------------------------------------------------------
+// Registration and settings
+// ---------------------------------------------------------------------------
+
+check("registration: Gemini is a site, matched on its app and a second account's /u/1/ paths, and in the built manifest", () => {
+  assert.ok(SITE_ADAPTERS.includes(geminiAdapter));
+  assert.equal(findAdapterForUrl("https://gemini.google.com/app/0123456789abcdef"), geminiAdapter);
+  assert.equal(findAdapterForUrl(GEMINI_URL), geminiAdapter);
+  assert.equal(findAdapterForUrl("https://google.com/search?q=gemini"), undefined);
+  const manifest = JSON.parse(readFileSync("dist/manifest.json", "utf8")) as { content_scripts: { matches: string[] }[] };
+  assert.ok(manifest.content_scripts.some((script) => script.matches.includes("https://gemini.google.com/*")));
+});
+
+check("settings: Gemini's options start on, off, off, on, with no generic More", () => {
+  const site = buildDefaultSettings(SITE_ADAPTERS).sites.gemini;
+  assert.deepEqual(site.options, { "used-sources": true, "unused-sources": false, thinking: false, "conversation-button": true });
+  assert.equal(site.includeMoreSources, true, "stored as for any site that reads references, but never shown or used");
+});
+
+check("options page: Gemini's section has the button with its hint, then its four options, and no override or generic More", () => {
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const form = renderOptions(document, SITE_ADAPTERS, () => {});
+  document.body.append(form.root);
+  form.fill(buildDefaultSettings(SITE_ADAPTERS));
+  const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('section[data-site="gemini"] fieldset.site input'), (input) => input.name).filter((name) => !name.includes(".rules."));
+  assert.deepEqual(inputs, ["gemini.showCopyButton", "gemini.options.used-sources", "gemini.options.unused-sources", "gemini.options.thinking", "gemini.options.conversation-button"]);
+  const hint = document.querySelector('input[name="gemini.showCopyButton"]')!.closest(".option")!.querySelector(".hint")!.textContent;
+  assert.equal(hint, "Adds buttons to a Deep Research report's toolbar, next to Share & Export.");
 });
 
 // ---------------------------------------------------------------------------
