@@ -122,7 +122,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
 ### Content script
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-3:** Support buttons outside their message, hidden buttons, labels and conversations:
+- [x] **TASK-3:** Support buttons outside their message, hidden buttons, labels and conversations:
   - **Tracking:** a `WeakMap<Element, HTMLButtonElement>` records each message's button. `sync()` skips a message whose tracked button is still connected, or that holds an injected button (as now). This covers a page where an earlier controller instance left one.
   - **Removal:** when `findButtonAnchor` returns null for a message with a tracked, connected button, the button is removed. That's how turning the conversation option off takes its button away.
   - **Labels:** `createButton` uses `buttonLabel`: `title` for the tooltip and `aria-label`, and `text` as a `<span class="acf-button-text">` after the icon, adding the `acf-labelled` class. `flashCopied` restores that button's own label and icon instead of the shared constants.

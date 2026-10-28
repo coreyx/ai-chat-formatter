@@ -9,7 +9,9 @@
  */
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
+import { ContentController } from "../src/content/controller";
 import { convertConversation, convertMessage, type ConversionOptions } from "../src/core/convert";
+import { buildDefaultSettings, type Settings } from "../src/core/settings";
 import { AFTER_SOURCES_ATTRIBUTE, type SiteAdapter, type SourceReference } from "../src/core/types";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
@@ -19,6 +21,16 @@ const results: { name: string; error?: unknown }[] = [];
 function check(name: string, fn: () => void): void {
   try {
     fn();
+    results.push({ name });
+  } catch (error) {
+    results.push({ name, error });
+  }
+}
+
+/** Runs an async check, recording its result like {@link check}. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
     results.push({ name });
   } catch (error) {
     results.push({ name, error });
@@ -176,6 +188,96 @@ check("converter: a conversation is each prompt above its reply, in order, with 
       "## Unanswered",
     ].join("\n"),
   );
+});
+
+// ---------------------------------------------------------------------------
+// The controller: buttons outside their message, hidden and labelled buttons, conversations
+// ---------------------------------------------------------------------------
+
+/**
+ * A page with a `.history` conversation (two `.turn`s) and a `.toolbar`
+ * outside it, where the toy site puts the conversation's button while its
+ * `show` option is on. The button is labelled "Chat".
+ */
+function startToyConversation(edit: (settings: Settings) => void = () => {}) {
+  const document = new JSDOM(
+    '<!doctype html><body><div class="toolbar"><button class="share">Share</button></div><div class="history">' +
+      '<div class="turn"><p class="q">First question</p><div class="reply"><p>First answer.</p></div></div>' +
+      '<div class="turn"><p class="q">Second question</p><div class="reply"><p>Second answer.</p></div></div></div></body>',
+  ).window.document;
+  const adapter: SiteAdapter = {
+    ...toyAdapter(),
+    messageSelector: ".history",
+    options: [{ id: "show", name: "Show", description: "", defaultEnabled: true }],
+    findButtonAnchor(_message, isOptionEnabled) {
+      const toolbar = document.querySelector(".toolbar");
+      if (!toolbar || !isOptionEnabled?.("show")) return null;
+      return { parent: toolbar, before: toolbar.querySelector(".share") };
+    },
+    buttonLabel: () => ({ title: "Copy conversation as Markdown", text: "Chat" }),
+    readTurns: (message) => Array.from(message.querySelectorAll(".turn"), (turn) => ({ prompt: turn.querySelector(".q")!.textContent, reply: turn })),
+  };
+  const settings = buildDefaultSettings([adapter]);
+  settings.includePrompt = false;
+  edit(settings);
+  const copied: string[] = [];
+  const controller = new ContentController(adapter, settings, {
+    document,
+    writeClipboard: async (text) => void copied.push(text),
+    requestFrame: (callback) => callback(),
+  });
+  controller.start();
+  const buttons = () => Array.from(document.querySelectorAll<HTMLButtonElement>(".acf-copy-button"));
+  return { document, controller, settings, copied, buttons };
+}
+
+check("controller: a button anchored outside its message is added once over many passes, and again if the site removes it", () => {
+  const page = startToyConversation();
+  page.controller.sync();
+  page.controller.sync();
+  assert.equal(page.buttons().length, 1);
+  assert.equal(page.buttons()[0].nextElementSibling, page.document.querySelector(".share"));
+  page.buttons()[0].remove();
+  page.controller.sync();
+  assert.equal(page.buttons().length, 1, "put back after the site re-rendered its toolbar");
+});
+
+check("controller: a button whose anchor turns null (its option switched off) is removed, and comes back with the option", () => {
+  const page = startToyConversation();
+  const off = structuredClone(page.settings);
+  off.sites.toy.options.show = false;
+  page.controller.applySettings(off);
+  assert.equal(page.buttons().length, 0);
+  page.controller.applySettings(page.settings);
+  assert.equal(page.buttons().length, 1);
+});
+
+check("controller: a labelled button shows its text after the icon, with its title as tooltip and accessible name", () => {
+  const [button] = startToyConversation().buttons();
+  assert.ok(button.classList.contains("acf-labelled"));
+  assert.equal(button.title, "Copy conversation as Markdown");
+  assert.equal(button.getAttribute("aria-label"), "Copy conversation as Markdown");
+  assert.equal(button.querySelector("svg + .acf-button-text")?.textContent, "Chat");
+});
+
+await checkAsync("controller: a conversation is copied turn by turn with every prompt, even with the prompt setting off, and the label comes back after the flash", async () => {
+  const page = startToyConversation();
+  const [button] = page.buttons();
+  button.click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(page.copied, ["## First question\n\nFirst answer.\n\n## Second question\n\nSecond answer."]);
+  assert.equal(button.getAttribute("aria-label"), "Copied as Markdown");
+  assert.equal(button.querySelector(".acf-button-text")?.textContent, "Chat", "the label stays while the check shows");
+  await new Promise((resolve) => setTimeout(resolve, 1600));
+  assert.equal(button.getAttribute("aria-label"), "Copy conversation as Markdown");
+  assert.equal(button.querySelector("svg + .acf-button-text")?.textContent, "Chat");
+});
+
+await checkAsync("controller: a site without its own Copy button ignores the override setting", async () => {
+  const page = startToyConversation((settings) => (settings.sites.toy.overrideNativeCopy = true));
+  page.document.querySelector<HTMLButtonElement>(".share")!.click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(page.copied, []);
 });
 
 // ---------------------------------------------------------------------------

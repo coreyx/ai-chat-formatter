@@ -1,6 +1,6 @@
-import { convertMessage } from "../core/convert";
+import { convertConversation, convertMessage, resolveOption } from "../core/convert";
 import type { Settings, SiteSettings } from "../core/settings";
-import { ConversionError, type SiteAdapter, type SiteAutomation, type SourceReference } from "../core/types";
+import { ConversionError, type ButtonLabel, type SiteAdapter, type SiteAutomation, type SourceReference } from "../core/types";
 
 /** Prefix for console messages, so the extension's output is easy to filter in a busy page console. */
 const LOG_PREFIX = "[AI Chat Formatter]";
@@ -41,6 +41,10 @@ export class ContentController {
   private observer: MutationObserver | null = null;
   private syncScheduled = false;
   private toast: HTMLElement | null = null;
+  /** Each message's button, which may sit outside the message (as Gemini's conversation button does). */
+  private readonly buttons = new WeakMap<Element, HTMLButtonElement>();
+  /** Each button's label, restored after the copied flash. */
+  private readonly labels = new WeakMap<HTMLButtonElement, ButtonLabel>();
 
   constructor(
     private readonly adapter: SiteAdapter,
@@ -99,10 +103,23 @@ export class ContentController {
   }
 
   /**
-   * Makes the page match the settings: one button on every message that has
+   * Whether the adapter's option `id` is on for this site, following its
+   * required options as a copy does. Off while the site or the extension is.
+   */
+  private isOptionEnabled(id: string): boolean {
+    const site = this.activeSiteSettings;
+    if (!site) return false;
+    return resolveOption(this.adapter, id, (optionId) => site.options[optionId] ?? this.adapter.options?.find((option) => option.id === optionId)?.defaultEnabled ?? false);
+  }
+
+  /**
+   * Makes the page match the settings: one button for every message that has
    * a toolbar when buttons are on, none anywhere when they're off. A reply
    * that's still streaming has no toolbar yet, and gets its button on a later
-   * pass once the toolbar appears.
+   * pass once the toolbar appears. A button can sit outside its message, so
+   * each message's button is tracked rather than looked for inside it; when
+   * the adapter no longer gives a message an anchor (an option that shows the
+   * button was turned off), its button is removed.
    */
   sync(): void {
     const document = this.env.document;
@@ -117,22 +134,47 @@ export class ContentController {
       document.querySelectorAll(`[${INJECTED_ATTRIBUTE}]`).forEach((button) => button.remove());
       return;
     }
+    const isOptionEnabled = (id: string) => this.isOptionEnabled(id);
     for (const message of Array.from(document.querySelectorAll(this.adapter.messageSelector))) {
-      if (message.querySelector(`[${INJECTED_ATTRIBUTE}]`)) continue;
-      const anchor = this.adapter.findButtonAnchor(message);
-      if (anchor) anchor.parent.insertBefore(this.createButton(message), anchor.before);
+      const anchor = this.adapter.findButtonAnchor(message, isOptionEnabled);
+      const tracked = this.buttons.get(message);
+      if (tracked?.isConnected) {
+        if (!anchor) tracked.remove();
+        continue;
+      }
+      // A button left inside the message by an earlier run of the extension still counts.
+      if (!anchor || message.querySelector(`[${INJECTED_ATTRIBUTE}]`)) continue;
+      const button = this.createButton(message);
+      this.buttons.set(message, button);
+      anchor.parent.insertBefore(button, anchor.before);
     }
   }
 
-  /** Builds the "Copy as Markdown" button for `message`. */
+  /**
+   * Fills `button` with `icon` and, when `label` has visible text, the text
+   * after it, and names it with the label's title.
+   */
+  private renderButton(button: HTMLButtonElement, icon: string, label: ButtonLabel, accessibleName = label.title): void {
+    button.innerHTML = icon;
+    if (label.text) {
+      const text = this.env.document.createElement("span");
+      text.className = "acf-button-text";
+      text.textContent = label.text;
+      button.append(text);
+    }
+    button.setAttribute("aria-label", accessibleName);
+  }
+
+  /** Builds the "Copy as Markdown" button for `message`, named as the adapter says (see {@link SiteAdapter.buttonLabel}). */
   private createButton(message: Element): HTMLButtonElement {
+    const label = this.adapter.buttonLabel?.(message) ?? { title: BUTTON_LABEL };
     const button = this.env.document.createElement("button");
     button.type = "button";
-    button.className = "acf-copy-button";
+    button.className = label.text ? "acf-copy-button acf-labelled" : "acf-copy-button";
     button.setAttribute(INJECTED_ATTRIBUTE, "");
-    button.setAttribute("aria-label", BUTTON_LABEL);
-    button.title = BUTTON_LABEL;
-    button.innerHTML = MARKDOWN_ICON;
+    button.title = label.title;
+    this.renderButton(button, MARKDOWN_ICON, label);
+    this.labels.set(button, label);
     button.addEventListener("click", (event) => {
       // Keep the click from reaching the site's toolbar handlers.
       event.stopPropagation();
@@ -218,17 +260,33 @@ export class ContentController {
     }
   }
 
-  /** Converts `message` with the current settings and `references`; throws as {@link convertMessage} does. */
+  /**
+   * Converts `message` with the current settings and `references`; throws as
+   * {@link convertMessage} does. A message the adapter splits into turns is a
+   * whole conversation, copied turn by turn with every prompt, whatever the
+   * prompt setting says, and each reply's own sources.
+   */
   private convert(message: Element, references: SourceReference[] | null): string {
     const site = this.settings.sites[this.adapter.id];
-    const prompt = this.readPrompt(message);
-    return convertMessage(this.adapter, message, {
+    const shared = {
       style: this.settings.citationStyle,
       includeMoreSources: site?.includeMoreSources ?? false,
-      isRuleEnabled: (ruleId) => site?.rules[ruleId] ?? true,
-      isOptionEnabled: (optionId) => site?.options[optionId] ?? this.adapter.options?.find((option) => option.id === optionId)?.defaultEnabled ?? false,
-      references,
+      isRuleEnabled: (ruleId: string) => site?.rules[ruleId] ?? true,
+      isOptionEnabled: (optionId: string) => site?.options[optionId] ?? this.adapter.options?.find((option) => option.id === optionId)?.defaultEnabled ?? false,
       minHeadingLevel: this.settings.minHeadingLevel,
+    };
+    const turns = this.adapter.readTurns?.(message);
+    if (turns) {
+      return convertConversation(this.adapter, turns, {
+        ...shared,
+        promptFormat: { format: this.settings.promptFormat, headingLevel: this.settings.promptHeadingLevel },
+        referencesFor: (reply) => this.readReferencesNow(reply),
+      });
+    }
+    const prompt = this.readPrompt(message);
+    return convertMessage(this.adapter, message, {
+      ...shared,
+      references,
       ...(prompt ? { prompt: { text: prompt, format: this.settings.promptFormat, headingLevel: this.settings.promptHeadingLevel } } : {}),
     });
   }
@@ -264,15 +322,14 @@ export class ContentController {
     );
   };
 
-  /** Shows the copied state on `button` briefly, then restores it. */
+  /** Shows the copied state on `button` briefly, then restores its own icon and label. */
   private flashCopied(button: HTMLButtonElement): void {
+    const label = this.labels.get(button) ?? { title: BUTTON_LABEL };
     button.classList.add("acf-copied");
-    button.innerHTML = CHECK_ICON;
-    button.setAttribute("aria-label", "Copied as Markdown");
+    this.renderButton(button, CHECK_ICON, label, "Copied as Markdown");
     setTimeout(() => {
       button.classList.remove("acf-copied");
-      button.innerHTML = MARKDOWN_ICON;
-      button.setAttribute("aria-label", BUTTON_LABEL);
+      this.renderButton(button, MARKDOWN_ICON, label);
     }, COPIED_MS);
   }
 

@@ -143,7 +143,7 @@ function responseMinHeadingLevel(minHeadingLevel: HeadingLevel, prompt: Conversi
  * required option is off, however it's set itself. Requirements are followed
  * in a chain, stopping at a loop so a mistaken declaration can't hang a copy.
  */
-function resolveOption(adapter: SiteAdapter, id: string, lookup: (id: string) => boolean, seen = new Set<string>()): boolean {
+export function resolveOption(adapter: SiteAdapter, id: string, lookup: (id: string) => boolean, seen = new Set<string>()): boolean {
   const option = adapter.options?.find((candidate) => candidate.id === id);
   if (!option || seen.has(id) || !lookup(id)) return false;
   seen.add(id);
