@@ -20,8 +20,8 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 
 - **Copy as Markdown** button on every reply, next to the site's own buttons.
 - Optionally, **the site's own Copy button copies Markdown too**. If a reply can't be converted, the site's normal copy runs instead, so the button always copies something.
-- **Citations kept**, in the style you choose (see below), each with its page title and domain: `[Title](url) — domain`. A page cited several times gets one number.
-- **"More" sources too**: sources the site lists without citing them in the reply (Copilot's **More** in its Sources panel, Duck.ai's uncited **Read More** cards) come along after the citations, laid out like Copilot's panel. For Search Assist, the other pages it consulted can come along too, off by default.
+- **Citations kept**, in the style you choose (see below), each with its page title and domain: `[Title](url) — domain`. A page cited several times gets one number. On Search Assist, sources stay where they are in the text by default, as Search Assist's own icon-and-name links (see [Search Assist](#search-assist)).
+- **"More" sources too**: sources the site lists without citing them in the reply (Copilot's **More** in its Sources panel, Duck.ai's uncited **Read More** cards) come along after the citations, laid out like Copilot's panel. For Search Assist, the other pages it consulted can come along too when its inline chips are off; this is off by default.
 - **Your prompt comes along**, above the reply: as a heading (H2 by default, with the reply nested below it), a blockquote, bold text or plain text. On Search Assist, the search query stands in for the prompt. You can turn this off.
 - **Code blocks** come through as fenced blocks with their language and exact indentation.
 - **Headings, lists, tables, links, inline code and math** (`$…$` and `$$…$$`) convert to their Markdown equivalents.
@@ -44,7 +44,16 @@ Search Assist answers only some searches. Where it does, its answer gets the **C
 
 - **Collapsed or expanded**, the copy holds the whole short answer: a collapsed answer is only clipped on screen, so nothing needs opening first.
 - **After More**, the extended answer that **More** writes follows the short answer in the copy, with its headings, tables and lists. While it's still being written (the button shows **Stop**), Copy as Markdown says so and copies nothing; copy again once it's finished.
-- The toolbar, the More button, the "Ask Duck.ai" box and the follow-up questions are left out.
+- **Source chips stay inline** by default, written as Search Assist shows them: the site's favicon at 16px and its name, linked to the page. There's no Sources section.
+
+  ```markdown
+  Most gadgets need two of them. [![|16](https://external-content.duckduckgo.com/ip3/widget.example.ico) widget.example](https://widget.example/guide)
+  ```
+
+  `|16` is Obsidian's image-size syntax; other Markdown apps may ignore it or show "16" as the image's alt text. The favicon is loaded from DuckDuckGo's image server each time the note is shown. A chip without a favicon is written as its linked name. Turn off **Keep Search Assist's inline source chips** for numbered citations with page titles and a Sources section instead (see [Where the titles and links come from](#where-the-titles-and-links-come-from)).
+- **Explore More**: the follow-up questions you've expanded come after the extended answer, under `### Explore More`, each question as an H4 followed by its answer. Their chips are always inline. Questions you haven't expanded are left out, and so is the section when nothing is expanded. Turn it off with **Include expanded Explore More answers**.
+- **More Search Results**: each Explore More answer's link to a DuckDuckGo search for that question is left out by default. With **Include More Search Results links** on, it ends the answer, on a line of its own.
+- The toolbar, the More button and the "Ask Duck.ai" box are left out.
 
 ## Citation styles
 
@@ -110,7 +119,7 @@ A subsection with nothing in it is left out. Turn off the More list with **Inclu
 
 Some chips open a popup instead of linking, showing a domain and a count of further sources (`widget.example` with `1`). Their links aren't in the page's markup, so a small script running in Duck.ai's own page context (the extension's second content script on Duck.ai) reads them from Duck.ai's page data when you copy. Each source becomes its own citation, titled from its Read More card or from Duck.ai's own title for it. If that data can't be read, the chip gets the Read More card for the domain it shows, or is left out if there's none.
 
-**Search Assist.** Each source chip (a favicon and a domain) becomes a citation. The chip shows its page's title only in a tooltip while you hover it, so a small script running in DuckDuckGo's own page context (the extension's second content script on DuckDuckGo) reads the titles from Search Assist's page data when you copy. If that data can't be read, the chip's domain stands in. Search Assist's data also lists every page it consulted, most of them not shown on the page and without titles. With **Include "More" sources** turned on for Search Assist, the ones no chip cites go under **More** as links named by their domain: `[forum.example](https://forum.example/…)`. That setting starts off for Search Assist.
+**Search Assist.** With **Keep Search Assist's inline source chips** turned off, each source chip in the short and extended answers (a favicon and a domain) becomes a citation. The chip shows its page's title only in a tooltip while you hover it, so a small script running in DuckDuckGo's own page context (the extension's second content script on DuckDuckGo) reads the titles from Search Assist's page data when you copy. If that data can't be read, the chip's domain stands in. Search Assist's data also lists every page it consulted, most of them not shown on the page and without titles. With **Include "More" sources** turned on for Search Assist, the ones no chip cites go under **More** as links named by their domain: `[forum.example](https://forum.example/…)`. That setting starts off for Search Assist.
 
 **Copilot.** Copilot's citation chips don't always name their pages: a chip like `photovault+1` stands for two sources but names only the first. The full list, with every page title and URL, is in Copilot's own data. The extension looks for it in three places, in order:
 
@@ -134,8 +143,12 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
   - **Use for _site_'s own Copy button**: off by default.
-  - **Include "More" sources**: on by default, except for Search Assist.
+  - **Include "More" sources**: on by default, except for Search Assist. Greyed out for Search Assist while its inline chips are on, since there's no Sources section.
   - **Formatting rules**: one switch per clean-up rule.
+- Search Assist only (see [Search Assist](#search-assist)):
+  - **Include expanded Explore More answers**: on by default.
+  - **Include More Search Results links**: off by default, and greyed out while Explore More is off.
+  - **Keep Search Assist's inline source chips**: on by default.
 
 ## Installation
 
@@ -231,6 +244,7 @@ ai-chat-formatter/
    - its post-processing rules,
    - optionally, ways to read each reply's full source list: `readReferences` (synchronous, used by both buttons), `readReferencesSlowly` (asynchronous fallback, used by Copy as Markdown only), and `hasUntitledCitations` (whether the fallback is worth running when More sources is off),
    - optionally, `moreSources`: whether the More sources option starts on for this site, and how the options page describes it,
+   - optionally, `options`: switches only this site has, stored per site and shown in its section of the options page. Each has a default, and can need another option to be on (`requires`) or take the place of the Sources section (`replacesSourcesSection`). The adapter reads them with `context.isOptionEnabled(id)`, in its Turndown rules or its `preprocess` step,
    - optionally, a `pageScript`: the name of a script in `src/page/` that the manifest runs in the page's own JavaScript world, for data only the page can see.
 3. Add it to `SITE_ADAPTERS` in `src/sites/index.ts`. The build adds its match patterns and page script to the manifest, and the options page gives it a section automatically.
 4. Save a trimmed copy of the site's markup under `scratch/fixtures/` and add a `scratch/test_<name>.ts` script with checks for it; `pnpm test` runs it.

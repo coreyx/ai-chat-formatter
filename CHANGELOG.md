@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Explore More on Search Assist**, on by default: the Explore More questions you've expanded are copied after the extended answer, under `### Explore More`, each as an H4 with its answer and inline source chips. Unexpanded questions are left out. Turn it off with **Include expanded Explore More answers**.
+- **More Search Results links**, off by default: with **Include More Search Results links** on, each expanded Explore More answer ends with its link to a DuckDuckGo search for that question. Greyed out while Explore More is off.
+- **Inline source chips on Search Assist**, on by default: each chip stays where it is in the text, written as Search Assist shows it, `[![|16](favicon) name](url)` (`|16` is Obsidian's image-size syntax), with no Sources section. Turn off **Keep Search Assist's inline source chips** for the numbered citations and Sources section, as in 0.5.0.
+- Site adapters can declare options of their own (`SiteAdapter.options`), stored per site and shown in the site's section of the options page.
+
+### Changed
+
+- Search Assist copies now keep its inline chips by default instead of numbered citations with a Sources section.
+- **Include "More" sources** for Search Assist is greyed out while its inline chips are on, since there's no Sources section.
+
 ## [0.5.0] - 2026-10-27
 
 ### Added
