@@ -82,6 +82,10 @@ Underneath, any site adapter can now declare options of its own.
   - The fix resolves the favicon against the page's address, as relative links already were (`absoluteUrl` replaces `absoluteHref`), so it's written as `https://…`.
   - The fixture's favicons are now scheme-less. `test_duckduckgo-search-assist.ts` loads it at a `duckduckgo.com` address, as `test_search-assist-explore-more.ts` already did.
   - Re-checked on a live search page, recording only the attribute's shape.
+- **The extended answer's last chips were missing.** On a live search after More, those chips aren't inside `duckassist-expanded-answer-content`. They're in a `<div>` right after it, before Explore More. The copy keeps only the answer's own element, so they were dropped.
+  - The fixture had placed them inside the answer, a guess, since the first inspection saw no chips in an extended answer.
+  - The fix: `adoptFollowingChips` moves chips from the elements directly after the extended answer into it, stopping at the first element without chips or with Explore More's questions. The existing `attachTrailingChips` step then joins them to the last paragraph.
+  - The fixture now has that chip in a sibling `<div>`. Without the fix, 4 existing checks fail.
 
 ## Verification & Test Results
 
@@ -160,6 +164,7 @@ Not yet run. These steps are for the maintainer, in Brave:
 7. With the Copy-button override on, check that Search Assist's own Copy gives the same result.
 
 ## Follow-ups
+- **The extended answer's last chips** join its last paragraph only when that block is a paragraph. After a list or table, they come out as a paragraph of their own, as the short answer's would.
 - **Explore More markup:** where the More Search Results link sits in an answer, and whether an answer can hold more than one paragraph or a list, wasn't recorded during the inspection. The fixture places the link after the chips. The code finds it anywhere in the answer, and moves it to the end.
 - **Live page:** no Explore More answer was seen still loading, so there's no "still writing" check for it. An expanded question whose panel is still empty is skipped.
 - **Favicons load from DuckDuckGo's servers** whenever the note is shown, as noted in the README.

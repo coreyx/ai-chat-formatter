@@ -52,14 +52,36 @@ const INLINE_CHIPS_OPTION = "inline-chips";
 function attachTrailingChips(root: HTMLElement): void {
   const runs = new Set<Element>();
   for (const chip of Array.from(root.querySelectorAll("a")).filter(isSearchAssistChip)) {
-    // The run is the outermost <span> around the chip.
-    let run: Element = chip;
-    while (run.parentElement?.nodeName === "SPAN") run = run.parentElement;
+    const run = chipRun(chip);
     if (run !== chip) runs.add(run);
   }
   for (const run of runs) {
     const paragraph = run.previousElementSibling?.lastElementChild;
     if (paragraph?.nodeName === "P") paragraph.append(run);
+  }
+}
+
+/** The outermost `<span>` around `chip`: the run of chips it belongs to, or the chip itself when it has no wrapper. */
+function chipRun(chip: Element): Element {
+  let run = chip;
+  while (run.parentElement?.nodeName === "SPAN") run = run.parentElement;
+  return run;
+}
+
+/**
+ * Moves the chips that follow the extended answer into it. Search Assist
+ * shows the extended answer's last chips at the end of its text, but puts
+ * them in an element after the answer's own, as seen on duckduckgo.com on
+ * 2026-10-27; left there, they'd be dropped with the rest of the wrapper.
+ * Each sibling that holds chips is taken in turn, stopping at the first that
+ * doesn't, or that holds Explore More's questions. Placed last in the answer,
+ * the runs then join its last paragraph like the short answer's chips.
+ */
+function adoptFollowingChips(answer: Element): void {
+  for (let sibling = answer.nextElementSibling; sibling; sibling = sibling.nextElementSibling) {
+    const chips = Array.from(sibling.querySelectorAll("a")).filter(isSearchAssistChip);
+    if (chips.length === 0 || sibling.querySelector(QUESTION_BUTTON_SELECTOR)) return;
+    answer.append(...new Set(chips.map(chipRun)));
   }
 }
 
@@ -184,7 +206,9 @@ function preprocessSearchAssist(root: HTMLElement, context: ConversionContext): 
   if (root.querySelector(WRITING_PILL_SELECTOR)) {
     throw new ConversionError("Search Assist is still writing its answer. Copy again once it's finished.");
   }
-  const answers = [root.querySelector(ANSWER_SELECTOR), root.querySelector(EXPANDED_ANSWER_SELECTOR)].filter((answer) => answer !== null);
+  const expanded = root.querySelector(EXPANDED_ANSWER_SELECTOR);
+  if (expanded) adoptFollowingChips(expanded);
+  const answers = [root.querySelector(ANSWER_SELECTOR), expanded].filter((answer) => answer !== null);
   const exploreMore = context.isOptionEnabled(EXPLORE_MORE_OPTION) ? extractExploreMore(root, context.isOptionEnabled(SEARCH_LINKS_OPTION)) : null;
   root.replaceChildren(...answers, ...(exploreMore ? [exploreMore] : []));
   rewriteStreamdownCodeBlocks(root);
