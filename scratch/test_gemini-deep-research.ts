@@ -12,6 +12,7 @@ import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { convertConversation, convertMessage, type ConversionOptions } from "../src/core/convert";
 import { buildDefaultSettings, type Settings } from "../src/core/settings";
+import { renderOptions } from "../src/options/options";
 import { AFTER_SOURCES_ATTRIBUTE, type SiteAdapter, type SourceReference } from "../src/core/types";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
@@ -278,6 +279,26 @@ await checkAsync("controller: a site without its own Copy button ignores the ove
   page.document.querySelector<HTMLButtonElement>(".share")!.click();
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.deepEqual(page.copied, []);
+});
+
+// ---------------------------------------------------------------------------
+// The options page
+// ---------------------------------------------------------------------------
+
+check("options page: no override for a site without its own Copy, no generic More under a governing option, and the site's button hint", () => {
+  const governed: SiteAdapter = { ...toyAdapter(true), readReferences: () => null, copyButtonDescription: "Adds buttons to the toolbar." };
+  const plain: SiteAdapter = { ...toyAdapter(), id: "plain", name: "Plain", nativeCopyButtonSelector: ".copy", readReferences: () => null };
+  const adapters = [governed, plain];
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const form = renderOptions(document, adapters, () => {});
+  document.body.append(form.root);
+  form.fill(buildDefaultSettings(adapters));
+  const names = (id: string) => Array.from(document.querySelectorAll<HTMLInputElement>(`section[data-site="${id}"] fieldset.site input`), (input) => input.name);
+  assert.deepEqual(names("toy"), ["toy.showCopyButton", "toy.options.more"]);
+  assert.deepEqual(names("plain"), ["plain.showCopyButton", "plain.overrideNativeCopy", "plain.includeMoreSources"]);
+  const hint = (name: string) => document.querySelector(`input[name="${name}"]`)!.closest(".option")!.querySelector(".hint")!.textContent;
+  assert.equal(hint("toy.showCopyButton"), "Adds buttons to the toolbar.");
+  assert.equal(hint("plain.showCopyButton"), "Adds a button next to each reply's own Copy button.");
 });
 
 // ---------------------------------------------------------------------------

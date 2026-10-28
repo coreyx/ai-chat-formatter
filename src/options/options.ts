@@ -198,13 +198,23 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
 
     const details = el(document, "fieldset", "site");
     details.append(
-      option(document, "checkbox", `${adapter.id}.showCopyButton`, 'Show a "Copy as Markdown" button', "Adds a button next to each reply's own Copy button.", (input) =>
-        update((s) => (s.sites[adapter.id].showCopyButton = input.checked)),
-      ),
-      option(document, "checkbox", `${adapter.id}.overrideNativeCopy`, `Use for ${adapter.name}'s own Copy button`, `Its Copy button copies Markdown too. If a reply can't be converted, ${adapter.name}'s normal copy runs instead.`, (input) =>
-        update((s) => (s.sites[adapter.id].overrideNativeCopy = input.checked)),
+      option(
+        document,
+        "checkbox",
+        `${adapter.id}.showCopyButton`,
+        'Show a "Copy as Markdown" button',
+        adapter.copyButtonDescription ?? "Adds a button next to each reply's own Copy button.",
+        (input) => update((s) => (s.sites[adapter.id].showCopyButton = input.checked)),
       ),
     );
+    // A site with no Copy button of its own has nothing for the override to stand in for.
+    if (adapter.nativeCopyButtonSelector) {
+      details.append(
+        option(document, "checkbox", `${adapter.id}.overrideNativeCopy`, `Use for ${adapter.name}'s own Copy button`, `Its Copy button copies Markdown too. If a reply can't be converted, ${adapter.name}'s normal copy runs instead.`, (input) =>
+          update((s) => (s.sites[adapter.id].overrideNativeCopy = input.checked)),
+        ),
+      );
+    }
     for (const siteOption of adapter.options ?? []) {
       details.append(
         option(document, "checkbox", `${adapter.id}.options.${siteOption.id}`, siteOption.name, siteOption.description, (input) =>
@@ -218,7 +228,8 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
       );
       details.append(labelledField(document, `${adapter.id}-${choice.id}`, choice.name, select, choice.description));
     }
-    if (canReadReferences(adapter)) {
+    // A site option that governs More stands in for the generic checkbox.
+    if (canReadReferences(adapter) && !adapter.options?.some((siteOption) => siteOption.governsMoreSources)) {
       details.append(
         option(
           document,
@@ -262,7 +273,8 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
       const site = settings.sites[adapter.id];
       input(`${adapter.id}.enabled`)!.checked = site.enabled;
       input(`${adapter.id}.showCopyButton`)!.checked = site.showCopyButton;
-      input(`${adapter.id}.overrideNativeCopy`)!.checked = site.overrideNativeCopy;
+      const override = input(`${adapter.id}.overrideNativeCopy`);
+      if (override) override.checked = site.overrideNativeCopy;
       for (const siteOption of adapter.options ?? []) {
         const box = input(`${adapter.id}.options.${siteOption.id}`)!;
         box.checked = site.options[siteOption.id];

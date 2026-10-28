@@ -132,7 +132,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
 ### Options page
 
 #### [MODIFY] `src/options/options.ts`
-- [ ] **TASK-4:** In a site's section:
+- [x] **TASK-4:** In a site's section:
   - The override checkbox is left out when the adapter has no `nativeCopyButtonSelector`, and its value is never read.
   - **Include "More" sources** is left out when an option has `governsMoreSources`.
   - "Show a Copy as Markdown button" uses `copyButtonDescription` when given.
