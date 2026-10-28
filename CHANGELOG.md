@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Click pacing** for those clicks: **Unhurried** (the default; random pauses of 1.5–4 s, waiting for each answer), **Brisk** (0.5–1.5 s, waiting for each answer) or **Random** (0.5–2 s, without waiting). Nothing is clicked while the tab is in the background.
 - Site adapters can declare drop-down settings (`SiteAdapter.choices`) and act on the page for the user (`SiteAdapter.automate`).
 - **Gemini Deep Research support** (`gemini.google.com`): a finished report's toolbar gets **Conversation** and **Report** buttons, before **Share & Export**.
-  - **Report** copies the report with your research request as its prompt.
+  - **Report** copies the report. With **Copy the research request with the report** on (off by default), your research request comes first.
   - **Conversation** copies the whole left pane: every prompt and reply, with the research plan as a numbered list of steps.
 - **Include "Sources used in the report"** for Gemini, on by default: the report's markers become citations in your citation style, and the sources it used without citing go under **More**.
 - **Include "Sources browsed but not used"** and **Include "Show thinking"** for Gemini, both off by default. Each adds a section after the Sources section.
@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - let an option govern the More list (`governsMoreSources`);
   - write sections after the Sources section (`AFTER_SOURCES_ATTRIBUTE`);
   - leave out the native Copy override when the site has no Copy button of its own.
+
+### Fixed
+
+- **Tables with linked citations** no longer lose their cells. A linked-citation marker inside a table row is now written `[[#^…\|⁽¹⁾]]`, since its `|` ended the cell. This applies to every site.
 
 ### Changed
 

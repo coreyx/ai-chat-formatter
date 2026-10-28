@@ -77,10 +77,11 @@ Nothing is clicked while the tab is in the background; it starts once you switch
 
 A finished Deep Research report opens in a panel beside the chat. Its toolbar gets two buttons, before **Share & Export**:
 
-- **Report** copies the open report. The prompt is your research request, not the "Start research" that followed the plan.
+- **Report** copies the open report, starting with the report itself.
+  - **Prompt:** with **Copy the research request with the report** on, your research request comes first, not the "Start research" that followed the plan.
   - **Citations:** the report's citation markers become citations in your citation style, titled from **Sources used in the report**.
   - **More:** the sources Gemini used without citing them go under **More**.
-  - **Tables and code blocks** come through as on the other sites.
+  - **Tables and code blocks** come through as on the other sites. A table cell holding several paragraphs keeps them on separate lines with `<br>`.
 - **Conversation** copies the whole left pane: each prompt with Gemini's reply below it, in order.
   - **The research plan** becomes a numbered list of its steps, each with its description.
   - **The card that opens the report** becomes a line naming it: `Deep Research report: *Title*`.
@@ -112,7 +113,7 @@ Widget 5 was released in May.[[#^c-k3f9-1|⁽¹⁾]]
 - [Widget 5 is now available | Widget Blog](https://widget.example/blog/widget-5) — widget.example
 ```
 
-In Obsidian, the marker shows as a small `⁽¹⁾` link: clicking it jumps to the citation, and hovering previews it. The `^c-k3f9-1` at the end of the entry is a block ID, which Obsidian hides. The `k3f9` part is random for each copy, so two replies pasted into one note don't clash. This style exists because Obsidian's Reading view always gathers footnotes at the very bottom of a note; linked citations stay in this order in every view. It's Obsidian-specific: other Markdown apps show the `[[…]]` and `^…` syntax as text, so use one of the other styles there. Obsidian plugins that show block links as live transclusions replace each `⁽¹⁾` with a copy of its entry in Reading view.
+In Obsidian, the marker shows as a small `⁽¹⁾` link: clicking it jumps to the citation, and hovering previews it. The `^c-k3f9-1` at the end of the entry is a block ID, which Obsidian hides. The `k3f9` part is random for each copy, so two replies pasted into one note don't clash. This style exists because Obsidian's Reading view always gathers footnotes at the very bottom of a note; linked citations stay in this order in every view. It's Obsidian-specific: other Markdown apps show the `[[…]]` and `^…` syntax as text, so use one of the other styles there. Obsidian plugins that show block links as live transclusions replace each `⁽¹⁾` with a copy of its entry in Reading view. Inside a table, the marker's `|` is written `\|` so it doesn't end the cell; Obsidian reads it as the same link.
 
 **Obsidian footnotes**
 
@@ -173,7 +174,7 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
 - **Enable AI Chat Formatter**: turns everything on or off.
 - **Citation style**: one of the four styles above (Linked citations by default).
 - **Minimum heading level**: H1 to H6, for every site; **H1 (no change)** by default. When a copy has a heading above this level, every heading shifts down by the same amount, Sources included, so the reply can sit under your note's own headings with its hierarchy kept. With H2, a reply's `# Title` becomes `## Title`, its `##` headings become `###`, and `## Sources` becomes `### Sources`. Headings that would go past H6 stay at H6, and `#` lines in code blocks are left alone. Not used while the prompt is copied as a heading, since the reply then starts one level below the prompt.
-- **Copy the prompt with the response**: on by default, for every site. Each copy starts with the prompt the reply answers; on Search Assist, the search query from the page address. If the prompt can't be found, for example an old message Copilot no longer shows, the copy is the reply alone.
+- **Copy the prompt with the response**: on by default, for every site. Each copy starts with the prompt the reply answers; on Search Assist, the search query from the page address. A Gemini report copy has its prompt only with **Copy the research request with the report** on too. If the prompt can't be found, for example an old message Copilot no longer shows, the copy is the reply alone.
   - **Prompt format**: **Heading** (the default), **Blockquote**, **Bold** or **Plain text**. As a heading, a prompt of several lines puts its first line in the heading and quotes the rest below it. The prompt is copied as typed, except that a line starting with `# ` is escaped so it doesn't become a heading.
   - **Prompt heading level**: H1 to H6, H2 by default, for the Heading format. The reply and its Sources start one level below it: with H2, a reply's `# Title` becomes `### Title`. Headings above that level shift down by the same amount, and headings already deeper stay where they are.
 - Per site:
@@ -192,6 +193,7 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Include "Sources used in the report"**: on by default. Off, the report is copied without citation markers or a Sources section.
   - **Include "Sources browsed but not used"**: off by default.
   - **Include "Show thinking"**: off by default.
+  - **Copy the research request with the report**: off by default. It also needs **Copy the prompt with the response** on. The Conversation copy always has its prompts.
   - **Show a Copy conversation button**: on by default.
 
 ## Installation

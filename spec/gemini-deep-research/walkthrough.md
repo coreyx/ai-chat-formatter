@@ -1,10 +1,10 @@
 # Walkthrough: Gemini Deep Research
 
 Gemini (`gemini.google.com`) is now a supported site. A finished Deep Research report's toolbar gets two buttons, before **Share & Export**:
-- **Report:** copies the report with the research request as its prompt.
+- **Report:** copies the report, with the research request as its prompt only when you turn that on.
 - **Conversation:** copies the whole left pane.
 
-Three Gemini options shape the report copy: the used sources (on), the sources browsed but not used (off), and Gemini's thinking (off). A fourth option, on by default, shows the Conversation button. The shared code gained a few small, optional abilities to support this. The other sites' copies and settings are unchanged.
+Four Gemini options shape the report copy: the used sources (on), the sources browsed but not used (off), Gemini's thinking (off), and the research request as prompt (off). A fifth option, on by default, shows the Conversation button. A revision after the first manual test fixed tables whose cells hold paragraphs or linked citations, and made the report's prompt opt-in. The shared code gained a few small, optional abilities to support this. The other sites' copies and settings are unchanged.
 
 ## What Was Implemented
 
@@ -54,9 +54,18 @@ Three Gemini options shape the report copy: the used sources (on), the sources b
   - **Buttons:** both go in the panel's toolbar. Report goes before Share & Export; Conversation goes before Report, and only while its option is on and a panel is open.
 - **`src/sites/index.ts`:** Gemini is registered after Search Assist. The build adds `https://gemini.google.com/*` to the manifest.
 
-### 4. Docs
+### 4. Revision: tables and the report prompt (TASK-11, TASK-12)
+Manual step 3 found the report's tables mangled in Obsidian. The live report's cells wrap their text in `<p>` and contain citation markers, while the first fixture's cells were plain text. You also asked for the report to leave out the prompt by default.
+- **`src/sites/gemini.ts`:**
+  - **`flattenTableCells`:** puts each cell on one line, unwrapping its paragraphs with a literal `<br>` between them. It runs in the report and in left-pane replies.
+  - **The prompt:** a new option, `report-prompt` ("Copy the research request with the report"), off by default. `readGeminiPrompt` returns null unless it's on.
+- **`src/core/citations.ts`:** a linked-citation marker on a table row is written `[[#^id\|⁽n⁾]]`. Its `|` used to end the cell. This applies to every site.
+- **`src/core/types.ts` and `src/content/controller.ts`:** `readPrompt` gets the site's resolved option lookup, as `findButtonAnchor` does.
+- **The fixture** gained a table whose cells hold paragraphs (two in one cell) and citation markers. It sits after the wrapper, with a carousel, as on the live page.
+
+### 5. Docs
 - **README:** Gemini in the intro and the sites table, a Gemini Deep Research section, the settings, install and update steps, a limitation, the development tree, and the new adapter fields under Adding a site.
-- **CHANGELOG:** Unreleased Added entries.
+- **CHANGELOG:** Unreleased Added entries, plus a Fixed entry for tables with linked citations. In the revision, the README also gained the report-prompt option and the table notes.
 
 ### Changes made during implementation
 - **Making the native Copy selector optional** meant 17 existing test lines that read it gained a `!`, in TASK-1.
@@ -71,7 +80,7 @@ Three Gemini options shape the report copy: the used sources (on), the sources b
 ## Verification & Test Results
 
 ### Automated Tests
-`pnpm test` runs `scratch/test_gemini-deep-research.ts`: **33/33 passed**, against a synthetic fixture (`scratch/fixtures/gemini-deep-research.html`, all `*.example` data) modeled on the inspected structure.
+`pnpm test` runs `scratch/test_gemini-deep-research.ts`: **36/36 passed**, against a synthetic fixture (`scratch/fixtures/gemini-deep-research.html`, all `*.example` data) modeled on the inspected structure.
 1. **Converter:**
    - Sections marked after Sources come after `## Sources`, and after footnote definitions, and shift with the minimum heading level.
    - A governing option decides More whatever the generic setting says, and without one the generic setting still applies.
@@ -92,13 +101,13 @@ Three Gemini options shape the report copy: the used sources (on), the sources b
    - The report turn is found by title, with the fallback.
    - The research request is found past an unrelated turn and a plan revision, and is null without a plan.
 5. **Report copy:**
-   - The exact default Markdown: the prompt as H2 with its quoted lines and list; the report's headings shifted below it; a table; a code block; linked citations numbered by first appearance; More with an escaped title.
+   - The exact Markdown with the request turned on: the prompt as H2 with its quoted lines and list; the report's headings shifted below it; two tables; a code block; linked citations numbered by first appearance; More with an escaped title.
    - Cited flags come from the markers, and a marker without a source is dropped.
    - "Sources used" off leaves no markers and no Sources section, even with the generic More setting on.
    - Browsed-but-not-used, then Thinking, come after Sources.
    - Footnotes, inline links and sources-only all work.
    - Without the end marker or the source lists, the copy refuses with the "still writing" message.
-   - The prompt is the request, not "Start research".
+   - The prompt is the request, not "Start research", and only with its option on.
    - The button goes before Share & Export.
 6. **Conversation copy:**
    - The exact Markdown, with the plan as a tight numbered list and the card as a line.
@@ -111,8 +120,16 @@ Three Gemini options shape the report copy: the used sources (on), the sources b
 8. **Registration and settings:**
    - `/app/…` and `/u/1/app/…` match, and an unrelated Google URL doesn't.
    - The built manifest has `https://gemini.google.com/*` and no page-world script there.
-   - The defaults are on, off, off, on.
-   - The options page shows the button with its hint, then the four options.
+   - The defaults are on, off, off, off (the report's prompt), on.
+   - The options page shows the button with its hint, then the five options.
+9. **Tables (revision):**
+   - In every citation style, the cells holding paragraphs and citations stay on one row with two cells each, and a cell's two paragraphs are joined by `<br>`.
+   - On any site, a linked marker in a table row is escaped, while one outside a table isn't.
+10. **Report prompt (revision), through the controller:**
+    - By default the copy starts with the report.
+    - With the option on, it starts with the request.
+    - With the option on but prompts off, there's no prompt.
+    - The conversation still has its prompts.
 
 **Two first runs failed, and both were test mistakes:**
 - **TASK-2:** two checks expected the citation marker after the sentence's period. It goes where the citation was, before the period.
@@ -137,11 +154,11 @@ Re-run after every item. Final results:
 - `test_search-assist-explore-more.ts`: **31/31**
 
 ## Manual Verification
-Not yet run. These steps are for the maintainer, in Brave:
+Steps 1 and 2 passed. Step 3 found the mangled tables that the revision fixed, so steps 3–10 are still to run. These steps are for the maintainer, in Brave:
 1. **Setup:** run `pnpm run build` and reload the extension in `brave://extensions`. The new site may need permission.
 2. **The buttons:** open a finished Deep Research conversation and open its report. The panel's toolbar should show **Conversation** and **Report**, in that order, before **Share & Export**.
 3. **The report copy:** click **Report** and paste into Obsidian. Check:
-   - your research request is the prompt;
+   - it starts with the report, without the prompt (see step 10);
    - the report's headings, tables and code;
    - citation markers that jump to the right source;
    - `Sources` with Citations and More.
@@ -150,6 +167,10 @@ Not yet run. These steps are for the maintainer, in Brave:
 6. **Turning the button off:** turn off **Show a Copy conversation button**. The button should disappear without a reload.
 7. **A long conversation:** scroll to the top of it, then copy the conversation. All turns should be there.
 8. **Writing:** while a report is still being written, click **Report**. The "still writing" message should show next to the button.
+9. **Tables:** copy a report with tables and paste it. Each table should render as a table, with working citation markers and multi-paragraph cells on separate lines within the cell.
+10. **Report prompt:**
+    - By default the report copy should start with the report itself.
+    - Turn on **Copy the research request with the report** and copy again: it should start with your request.
 
 ## Follow-ups
 - **Loading a long conversation for you:** the Conversation copy could scroll the history to the top and wait for the earliest turns before copying. That needs an asynchronous step before conversion, which adapters don't have yet.
