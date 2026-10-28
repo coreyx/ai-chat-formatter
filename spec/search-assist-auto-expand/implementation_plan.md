@@ -110,7 +110,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
   - **In `duckduckgo.ts`:** these are imported, and `extractExploreMore` uses `findExploreMoreQuestions`. Copy output is unchanged, and the existing tests show it.
 
 #### [NEW] `src/sites/duckduckgo-automation.ts`
-- [ ] **TASK-5:** `automateSearchAssist(message, automation)`, with the pacing table above as `PACING`, keyed by the choice values `unhurried`, `brisk` and `random`.
+- [x] **TASK-5:** `automateSearchAssist(message, automation)`, with the pacing table above as `PACING`, keyed by the choice values `unhurried`, `brisk` and `random`.
   - **State:** kept per module in a `WeakMap`: whether More was pressed, whether a run is underway, and a `WeakSet` of the question buttons already handled.
   - **Pressing More**, when `auto-more` is on, the module has neither an extended answer nor a Stop button, and More hasn't been pressed for it:
     1. Mark it pressed, then pause for the first-click range.
