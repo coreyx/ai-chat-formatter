@@ -18,6 +18,8 @@ export interface SiteSettings {
   rules: Record<string, boolean>;
   /** Which of the adapter's own options are on, keyed by option id; empty for an adapter that declares none. */
   options: Record<string, boolean>;
+  /** The value of each of the adapter's drop-down settings, keyed by choice id; empty for an adapter that declares none. */
+  choices: Record<string, string>;
 }
 
 /** Everything the user can configure, stored as one object in `chrome.storage.sync`. */
@@ -59,6 +61,7 @@ export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings
       includeMoreSources: canReadReferences(adapter) && (adapter.moreSources?.defaultEnabled ?? true),
       rules: Object.fromEntries(adapter.rules.map((rule) => [rule.id, rule.defaultEnabled])),
       options: Object.fromEntries((adapter.options ?? []).map((option) => [option.id, option.defaultEnabled])),
+      choices: Object.fromEntries((adapter.choices ?? []).map((choice) => [choice.id, choice.defaultValue])),
     };
   }
   return { enabled: true, citationStyle: "linked-citations", minHeadingLevel: 1, includePrompt: true, promptFormat: "heading", promptHeadingLevel: 2, sites };
@@ -76,12 +79,13 @@ function record(value: unknown): Record<string, unknown> {
 
 /**
  * Overlays whatever was stored onto `defaults`. Only sites, rules and site
- * options that the defaults know about are kept, and any value of the wrong
- * type falls back to its default, so settings saved by an older version
- * (missing a newer site, rule or option) or damaged by hand still load
- * without a migration step.
+ * options and choices that the defaults know about are kept, and any value of
+ * the wrong type falls back to its default, so settings saved by an older
+ * version (missing a newer site, rule, option or choice) or damaged by hand
+ * still load without a migration step. With `adapters`, a stored choice must
+ * also be one of the values its adapter offers.
  */
-export function mergeSettings(stored: unknown, defaults: Settings): Settings {
+export function mergeSettings(stored: unknown, defaults: Settings, adapters: readonly SiteAdapter[] = []): Settings {
   const saved = record(stored);
   const savedSites = record(saved.sites);
   const sites: Record<string, SiteSettings> = {};
@@ -89,6 +93,15 @@ export function mergeSettings(stored: unknown, defaults: Settings): Settings {
     const site = record(savedSites[id]);
     const savedRules = record(site.rules);
     const savedOptions = record(site.options);
+    const savedChoices = record(site.choices);
+    const declared = adapters.find((adapter) => adapter.id === id)?.choices ?? [];
+    /** The stored value of choice `choiceId` when it's a string the adapter offers (any string without `adapters`). */
+    const choiceValue = (choiceId: string, fallback: string): string => {
+      const value = savedChoices[choiceId];
+      if (typeof value !== "string") return fallback;
+      const values = declared.find((choice) => choice.id === choiceId)?.values;
+      return !values || values.some((offered) => offered.value === value) ? value : fallback;
+    };
     sites[id] = {
       enabled: bool(site.enabled, siteDefaults.enabled),
       showCopyButton: bool(site.showCopyButton, siteDefaults.showCopyButton),
@@ -96,6 +109,7 @@ export function mergeSettings(stored: unknown, defaults: Settings): Settings {
       includeMoreSources: bool(site.includeMoreSources, siteDefaults.includeMoreSources),
       rules: Object.fromEntries(Object.entries(siteDefaults.rules).map(([ruleId, on]) => [ruleId, bool(savedRules[ruleId], on)])),
       options: Object.fromEntries(Object.entries(siteDefaults.options).map(([optionId, on]) => [optionId, bool(savedOptions[optionId], on)])),
+      choices: Object.fromEntries(Object.entries(siteDefaults.choices).map(([choiceId, value]) => [choiceId, choiceValue(choiceId, value)])),
     };
   }
   const style = saved.citationStyle;
@@ -116,7 +130,7 @@ export function mergeSettings(stored: unknown, defaults: Settings): Settings {
 /** Reads the stored settings, filled out with the defaults for `adapters`. */
 export async function loadSettings(adapters: readonly SiteAdapter[]): Promise<Settings> {
   const data = await chrome.storage.sync.get(STORAGE_KEY);
-  return mergeSettings(data[STORAGE_KEY], buildDefaultSettings(adapters));
+  return mergeSettings(data[STORAGE_KEY], buildDefaultSettings(adapters), adapters);
 }
 
 /** Stores `settings`, which every open tab picks up through {@link onSettingsChanged}. */
@@ -132,7 +146,7 @@ export async function saveSettings(settings: Settings): Promise<void> {
 export function onSettingsChanged(adapters: readonly SiteAdapter[], callback: (settings: Settings) => void): () => void {
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area === "sync" && STORAGE_KEY in changes) {
-      callback(mergeSettings(changes[STORAGE_KEY].newValue, buildDefaultSettings(adapters)));
+      callback(mergeSettings(changes[STORAGE_KEY].newValue, buildDefaultSettings(adapters), adapters));
     }
   };
   chrome.storage.onChanged.addListener(listener);

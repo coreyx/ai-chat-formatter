@@ -83,7 +83,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
   - **`SiteAdapter.automate?(message: Element, automation: SiteAutomation): void`:** called on every page check for each message while the site is enabled. It must return at once and keep its own state, since it's called often.
 
 #### [MODIFY] `src/core/settings.ts`
-- [ ] **TASK-2:** Store choices per site.
+- [x] **TASK-2:** Store choices per site.
   - **`SiteSettings.choices: Record<string, string>`**, from each adapter's `choices` defaults.
   - **`mergeSettings`** keeps a stored value only when it's one of the choice's `values`, and drops unknown choices. Settings saved before this load with the defaults.
 
