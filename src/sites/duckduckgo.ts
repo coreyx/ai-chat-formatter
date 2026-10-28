@@ -3,36 +3,25 @@ import { encodeLinkDestination, escapeLinkText, parseReferencesAttribute } from 
 import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
 import { ConversionError, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
+import {
+  ANSWER_SELECTOR,
+  ANSWERS_SELECTOR,
+  CONTENT_SELECTOR,
+  EXPANDED_ANSWER_SELECTOR,
+  findExploreMoreQuestions,
+  QUESTION_BUTTON_SELECTOR,
+  WRITING_PILL_SELECTOR,
+} from "./duckduckgo-markup";
 import { rewriteStreamdownCodeBlocks, rewriteStreamdownStrong } from "./streamdown";
 
 /*
  * Search Assist, the AI answer at the top of DuckDuckGo's search results.
- * Every selector here comes from duckduckgo.com's rendered page as inspected
- * on 2026-10-24; none of it is a documented API. The class names are
- * generated hashes that change between releases, so the selectors use only
- * data attributes, ARIA attributes and tag structure. When DuckDuckGo changes
- * its markup, this is the file to update.
+ * The selectors this shares with the automation are in duckduckgo-markup.ts,
+ * which says where they come from; the ones only the copy needs are here.
  */
 
 /** Search Assist's own Copy button, in the module's toolbar. */
 const COPY_BUTTON_SELECTOR = 'button[aria-label="Copy to clipboard"]';
-
-/** The short answer: shown clipped when collapsed, but always in the page in full. */
-const ANSWER_SELECTOR = '[data-testid="duckassist-answer-content"]';
-
-/** The extended answer, in the page only once More has been pressed. */
-const EXPANDED_ANSWER_SELECTOR = '[data-testid="duckassist-expanded-answer-content"]';
-
-/** The More pill while the extended answer is still being written; it's removed once the answer is finished. */
-const WRITING_PILL_SELECTOR = '[data-testid="duckassist-stream-more-pill"][aria-label="Stop"]';
-
-/**
- * An Explore More question, inspected on 2026-10-27: a button naming its
- * answer's panel, which stays empty until the question is expanded. The
- * wrapper also holds other `aria-expanded` buttons, but they control no panel
- * in it.
- */
-const QUESTION_BUTTON_SELECTOR = "button[aria-expanded][aria-controls]";
 
 /** Marks chips that are always written inline, whatever the inline-chips option says (Explore More's). */
 const INLINE_CHIP_ATTRIBUTE = "data-acf-inline-chip";
@@ -83,11 +72,6 @@ function adoptFollowingChips(answer: Element): void {
     if (chips.length === 0 || sibling.querySelector(QUESTION_BUTTON_SELECTOR)) return;
     answer.append(...new Set(chips.map(chipRun)));
   }
-}
-
-/** The element in `root` whose id is `id`; the clone being converted is detached, so `getElementById` can't reach it. */
-function findById(root: Element, id: string): Element | null {
-  return Array.from(root.querySelectorAll("[id]")).find((element) => element.id === id) ?? null;
 }
 
 /**
@@ -152,15 +136,11 @@ function prepareExploreMoreLinks(answer: HTMLElement, includeSearchLinks: boolea
  * question and an `<h3>` of its own (one outside the panels and the answers).
  */
 function extractExploreMore(root: HTMLElement, includeSearchLinks: boolean): HTMLElement | null {
-  const insideAnswers = `${ANSWER_SELECTOR}, ${EXPANDED_ANSWER_SELECTOR}`;
-  const questions = Array.from(root.querySelectorAll(QUESTION_BUTTON_SELECTOR))
-    .filter((button) => !button.closest(insideAnswers))
-    .map((button) => ({ button, panel: findById(root, button.getAttribute("aria-controls") ?? "") }))
-    .filter((question): question is { button: Element; panel: Element } => question.panel !== null);
+  const questions = findExploreMoreQuestions(root);
   if (questions.length === 0) return null;
 
   const panels = questions.map((question) => question.panel);
-  const isSectionHeading = (heading: Element) => !heading.closest(insideAnswers) && !panels.some((panel) => panel.contains(heading));
+  const isSectionHeading = (heading: Element) => !heading.closest(ANSWERS_SELECTOR) && !panels.some((panel) => panel.contains(heading));
   let section = questions[0].button.parentElement;
   let heading: Element | undefined;
   // The wrapper itself holds the extended answer's headings too, so the search stops below it.
@@ -320,7 +300,7 @@ export const duckDuckGoAdapter: SiteAdapter = {
   matches: ["https://duckduckgo.com/*"],
   messageSelector: `[data-react-module-id="wikinlp"]:has(${ANSWER_SELECTOR})`,
   // The wrapper holding the short answer and, after More, the extended answer.
-  contentSelector: `div:has(> ${ANSWER_SELECTOR})`,
+  contentSelector: CONTENT_SELECTOR,
   nativeCopyButtonSelector: COPY_BUTTON_SELECTOR,
   // The toolbar is a row of bare buttons; the button goes first, right before Copy, as on Copilot and Duck.ai.
   findButtonAnchor(message) {

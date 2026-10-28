@@ -100,7 +100,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
 ### Search Assist
 
 #### [NEW] `src/sites/duckduckgo-markup.ts`
-- [ ] **TASK-4:** Move Search Assist's shared markup knowledge out of `duckduckgo.ts`, unchanged, so the copy and the automation share one copy.
+- [x] **TASK-4:** Move Search Assist's shared markup knowledge out of `duckduckgo.ts`, unchanged, so the copy and the automation share one copy.
   - **Selectors:** `ANSWER_SELECTOR`, `EXPANDED_ANSWER_SELECTOR`, `WRITING_PILL_SELECTOR`, `QUESTION_BUTTON_SELECTOR`, plus two new ones from the inspection:
     - `EXPAND_BUTTON_SELECTOR` (`button[aria-label="Expand content"]`);
     - `MORE_PILL_SELECTOR` (`[data-testid="duckassist-stream-more-pill"][aria-label="More"]`).
