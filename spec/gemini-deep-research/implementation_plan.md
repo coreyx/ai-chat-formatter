@@ -156,7 +156,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
   - **`findResearchRequest(reportTurn)`:** walks back from that turn over the turns holding a `deep-research-confirmation-widget`. It returns the earliest one's `user-query`, or null.
 
 #### [NEW] `src/sites/gemini.ts`
-- [ ] **TASK-7:** The report copy. `geminiAdapter`:
+- [x] **TASK-7:** The report copy. `geminiAdapter`:
   - **Identity:**
     - `id: "gemini"`, `name: "Gemini"`, `matches: ["https://gemini.google.com/*"]`. That covers the `/u/<n>/app/…` account paths.
     - `messageSelector: "deep-research-immersive-panel, infinite-scroller[data-test-id=chat-history-container]"`.

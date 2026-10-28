@@ -25,7 +25,8 @@ import {
   UNUSED_SOURCES_SELECTOR,
   USED_SOURCES_SELECTOR,
 } from "../src/sites/gemini-markup";
-import { AFTER_SOURCES_ATTRIBUTE, type SiteAdapter, type SourceReference } from "../src/core/types";
+import { geminiAdapter, readGeminiPrompt, readGeminiReferences } from "../src/sites/gemini";
+import { AFTER_SOURCES_ATTRIBUTE, ConversionError, type SiteAdapter, type SourceReference } from "../src/core/types";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -386,6 +387,156 @@ check("markup: the research request is the earliest plan turn before the report,
   assert.equal(findResearchRequest(reportTurn), request.querySelector("user-query"));
   for (const turn of [request, revision]) turn.querySelector(PLAN_SELECTOR)!.remove();
   assert.equal(findResearchRequest(reportTurn), null);
+});
+
+// ---------------------------------------------------------------------------
+// The report copy
+// ---------------------------------------------------------------------------
+
+/**
+ * The fixture's report converted as the controller would, with Gemini's
+ * options set as in `options` (defaults otherwise) and the prompt as a heading.
+ */
+function convertReport(options: Record<string, boolean> = {}, overrides: Partial<ConversionOptions> = {}, document = geminiPage()): string {
+  const panel = document.querySelector(REPORT_PANEL_SELECTOR)!;
+  const defaults = Object.fromEntries((geminiAdapter.options ?? []).map((option) => [option.id, option.defaultEnabled]));
+  const prompt = readGeminiPrompt(panel);
+  return convertMessage(geminiAdapter, panel, {
+    style: "linked-citations",
+    includeMoreSources: false,
+    isRuleEnabled: () => true,
+    isOptionEnabled: (id) => ({ ...defaults, ...options })[id] ?? false,
+    references: readGeminiReferences(panel),
+    idToken: "t",
+    ...(prompt ? { prompt: { text: prompt, format: "heading", headingLevel: 2 } } : {}),
+    ...overrides,
+  });
+}
+
+/** The prompt and report body of the fixture's copy, before its Sources section. */
+const REPORT_BODY = [
+  "## Please research how to keep widgets running smoothly.",
+  "",
+  "> Write a detailed report.",
+  ">",
+  "> 1. Which oils suit widget gears?",
+  "> 2. How often should they be serviced?",
+  "",
+  "### Keeping Widgets Running",
+  "",
+  "Widgets last longer with regular care.[[#^c-t-1|⁽¹⁾]] Squeaks are the first sign of trouble.[[#^c-t-2|⁽²⁾]][[#^c-t-1|⁽¹⁾]]",
+  "",
+  "#### Choosing an Oil",
+  "",
+  "| Oil | Use |",
+  "| --- | --- |",
+  "| Light | Small gears |",
+  "| Heavy | Large gears |",
+  "",
+  "The wear study measured both.[[#^c-t-3|⁽³⁾]] One forum claim had no source.",
+  "",
+  "##### A service schedule",
+  "",
+  "```",
+  "weekly:  wipe",
+  "monthly: oil",
+  "yearly:  replace gears",
+  "```",
+  "",
+  "- Keep widgets **dry**.",
+  "- Store them indoors.",
+].join("\n");
+
+const REPORT_SOURCES = [
+  "#### Sources",
+  "",
+  "##### Citations",
+  "",
+  "1. [Widget care guide](https://docs.widget.example/care) — docs.widget.example ^c-t-1",
+  "2. [Squeaky widgets thread](https://forum.widget.example/t/42) — forum.widget.example ^c-t-2",
+  "3. [Widget wear study](https://lab.example/report) — lab.example ^c-t-3",
+  "",
+  "##### More",
+  "",
+  "- [Oiling \\[gears\\] properly](https://blog.gears.example/oil) — blog.gears.example",
+].join("\n");
+
+check("report: by default, the request as prompt, the report with its table and code, citations from the used list by first appearance, and the uncited used sources under More", () => {
+  assert.equal(convertReport(), `${REPORT_BODY}\n\n${REPORT_SOURCES}`);
+});
+
+check("report: the used list's sources are cited where a marker points to them; a marker without a source is dropped", () => {
+  const document = geminiPage();
+  assert.deepEqual(
+    readGeminiReferences(document.querySelector(REPORT_PANEL_SELECTOR)!)!.map((reference) => [reference.domain, reference.cited]),
+    [["docs.widget.example", true], ["blog.gears.example", false], ["forum.widget.example", true], ["lab.example", true]],
+  );
+  assert.equal(readGeminiReferences(document.querySelector('infinite-scroller[data-test-id="chat-history-container"]')!), null);
+});
+
+check('report: with "Sources used in the report" off, no markers and no Sources section, whatever the generic More setting says', () => {
+  const markdown = convertReport({ "used-sources": false }, { includeMoreSources: true });
+  assert.equal(markdown, REPORT_BODY.replace(/\[\[#\^c-t-\d\|[^\]]*\]\]/g, ""));
+});
+
+check("report: browsed-but-not-used and thinking come after the Sources section, in that order, each as a section of its own", () => {
+  const thinking = [
+    "#### Thinking",
+    "",
+    "**Planning the search**",
+    "",
+    "I'll start with care guides, then look at oils.",
+    "",
+    "- [Widget care guide](https://docs.widget.example/care) — docs.widget.example",
+    "- [Widget shop](https://shop.example/widgets) — shop.example",
+    "",
+    "**Comparing findings**",
+    "",
+    "The study and the guide agree on monthly oiling.",
+  ].join("\n");
+  const unused = [
+    "#### Sources browsed but not used",
+    "",
+    "- [Widget shop](https://shop.example/widgets) — shop.example",
+    "- [Widget news](https://news.example/widgets) — news.example",
+  ].join("\n");
+  assert.equal(convertReport({ "unused-sources": true, thinking: true }), `${REPORT_BODY}\n\n${REPORT_SOURCES}\n\n${unused}\n\n${thinking}`);
+  assert.equal(convertReport({ thinking: true }), `${REPORT_BODY}\n\n${REPORT_SOURCES}\n\n${thinking}`);
+  assert.equal(convertReport({ "used-sources": false, "unused-sources": true }), `${REPORT_BODY.replace(/\[\[#\^c-t-\d\|[^\]]*\]\]/g, "")}\n\n${unused}`);
+});
+
+check("report: every citation style writes the report's citations", () => {
+  const footnotes = convertReport({}, { style: "footnotes" });
+  assert.match(footnotes, /regular care\.\[\^1\] Squeaks are the first sign of trouble\.\[\^2\]\[\^1\]/);
+  assert.match(footnotes, /\[\^3\]: \[Widget wear study\]\(https:\/\/lab\.example\/report\) — lab\.example$/);
+  assert.match(convertReport({}, { style: "inline-links-and-sources" }), /regular care\.\[1\]\(https:\/\/docs\.widget\.example\/care\)/);
+  const sourcesOnly = convertReport({}, { style: "sources-only" });
+  assert.match(sourcesOnly, /regular care\. Squeaks/);
+  assert.match(sourcesOnly, /1\. \[Widget care guide\]\(https:\/\/docs\.widget\.example\/care\) — docs\.widget\.example\n/);
+});
+
+check("report: an unfinished report (no end marker, or no source lists yet) isn't copied", () => {
+  for (const missing of [".end-of-report-marker", "deep-research-source-lists"]) {
+    const document = geminiPage();
+    document.querySelector(missing)!.remove();
+    assert.throws(() => convertReport({}, {}, document), (error: Error) => error instanceof ConversionError && error.message === "Gemini is still writing this report. Copy again once it's finished.");
+  }
+});
+
+check("report: the prompt is the research request, not Start research; null outside the panel", () => {
+  const document = geminiPage();
+  assert.match(readGeminiPrompt(document.querySelector(REPORT_PANEL_SELECTOR)!)!, /^Please research how to keep widgets running smoothly\.\nWrite a detailed report\.\n\n1\. /);
+  assert.equal(readGeminiPrompt(document.querySelector('infinite-scroller[data-test-id="chat-history-container"]')!), null);
+});
+
+check("report: the button goes right before Share & Export, labelled Report", () => {
+  const document = geminiPage();
+  const panel = document.querySelector(REPORT_PANEL_SELECTOR)!;
+  const share = panel.querySelector('[data-test-id="export-menu-button"]')!;
+  assert.deepEqual(geminiAdapter.findButtonAnchor(panel), { parent: share.parentElement, before: share });
+  assert.deepEqual(geminiAdapter.buttonLabel!(panel), { title: "Copy report as Markdown", text: "Report" });
+  share.remove();
+  assert.equal(geminiAdapter.findButtonAnchor(panel), null);
 });
 
 // ---------------------------------------------------------------------------
