@@ -42,6 +42,26 @@
 }
 
 /*
+ * A button with a visible label, where a site has more than one button side
+ * by side (Gemini's Report and Conversation). Shaped like Gemini's own pill
+ * toolbar buttons, and in the toolbar's font so the label reads like theirs.
+ */
+.acf-copy-button.acf-labelled {
+  gap: 6px;
+  width: auto;
+  padding: 0 10px 0 6px;
+  border-radius: 16px;
+  font: inherit;
+  white-space: nowrap;
+}
+
+.acf-button-text {
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/*
  * A dark toast with a light edge reads clearly on light and dark pages alike,
  * and the site's theme setting doesn't always follow prefers-color-scheme.
  */

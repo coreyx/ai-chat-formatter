@@ -8,6 +8,7 @@
  * PASS or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { convertConversation, convertMessage, type ConversionOptions } from "../src/core/convert";
@@ -299,6 +300,14 @@ check("options page: no override for a site without its own Copy, no generic Mor
   const hint = (name: string) => document.querySelector(`input[name="${name}"]`)!.closest(".option")!.querySelector(".hint")!.textContent;
   assert.equal(hint("toy.showCopyButton"), "Adds buttons to the toolbar.");
   assert.equal(hint("plain.showCopyButton"), "Adds a button next to each reply's own Copy button.");
+});
+
+check("styles: the built style sheet shapes labelled buttons as pills with their label after the icon", () => {
+  const css = readFileSync("dist/content.css", "utf8");
+  const rule = (selector: string) => new RegExp(`${selector.replace(/[.*]/g, "\\$&")}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? "";
+  const labelled = rule(".acf-copy-button.acf-labelled");
+  for (const declaration of ["width: auto", "gap: 6px", "padding: 0 10px 0 6px", "border-radius: 16px", "font: inherit"]) assert.ok(labelled.includes(declaration), declaration);
+  assert.ok(rule(".acf-button-text").includes("font-size: 14px"));
 });
 
 // ---------------------------------------------------------------------------

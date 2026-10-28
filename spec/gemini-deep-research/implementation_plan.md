@@ -138,7 +138,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
   - "Show a Copy as Markdown button" uses `copyButtonDescription` when given.
 
 #### [MODIFY] `src/content/content.css`
-- [ ] **TASK-5:** Add `.acf-copy-button.acf-labelled`: auto width, `padding: 0 10px 0 6px`, `gap: 6px`, and `border-radius: 16px` to match Gemini's pill toolbar buttons. Add `.acf-button-text` in the toolbar's font (`font: inherit`) at 14px, so the label reads like Gemini's own buttons. Colors stay `currentColor`.
+- [x] **TASK-5:** Add `.acf-copy-button.acf-labelled`: auto width, `padding: 0 10px 0 6px`, `gap: 6px`, and `border-radius: 16px` to match Gemini's pill toolbar buttons. Add `.acf-button-text` in the toolbar's font (`font: inherit`) at 14px, so the label reads like Gemini's own buttons. Colors stay `currentColor`.
 
 ### Gemini
 
