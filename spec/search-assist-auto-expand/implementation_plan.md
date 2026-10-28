@@ -72,7 +72,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
 ### Core
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Add choice settings and the automation hook.
+- [x] **TASK-1:** Add choice settings and the automation hook.
   - **`SiteChoice`:** `{ id, name, description, defaultValue: string, values: { value: string; label: string }[], requiresAny?: string[] }`, documented. `requiresAny` lists options of the same adapter; the choice is greyed out on the options page while none of them is on.
   - **`SiteAdapter.choices?: SiteChoice[]`.**
   - **`SiteAutomation`:** what an adapter's automation can call.

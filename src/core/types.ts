@@ -95,6 +95,47 @@ export interface SiteOption {
 }
 
 /**
+ * A setting with several values that belongs to one site, shown as a
+ * drop-down in the site's section of the options page and stored per site.
+ */
+export interface SiteChoice {
+  /** Stable id, used as the settings key; never rename it once released. */
+  id: string;
+  /** Name shown on the options page. */
+  name: string;
+  /** One-line explanation shown under the drop-down. */
+  description: string;
+  /** The value before the user changes anything; one of {@link values}. */
+  defaultValue: string;
+  /** The values offered, in order, each with the label the drop-down shows; the values are stored, so never rename them. */
+  values: { value: string; label: string }[];
+  /**
+   * Options of the same adapter that this choice serves. The options page
+   * greys it out while none of them is on.
+   */
+  requiresAny?: string[];
+}
+
+/**
+ * What a site's automation (see {@link SiteAdapter.automate}) can call. The
+ * settings are read at each call, so a change applies before the automation's
+ * next step; while the site or the extension is switched off, every option
+ * reads as off.
+ */
+export interface SiteAutomation {
+  /** Whether the adapter's option `id` is on right now. */
+  isOptionEnabled(id: string): boolean;
+  /** The current value of the adapter's choice `id`. */
+  choice(id: string): string;
+  /** Resolves after `ms` milliseconds. */
+  sleep(ms: number): Promise<void>;
+  /** A random number in [0, 1), for randomized pauses. */
+  random(): number;
+  /** Whether the page is showing, as opposed to in a background tab or minimized. */
+  isPageVisible(): boolean;
+}
+
+/**
  * One entry in a reply's full source list, as the site keeps it: the sources
  * cited in the text and the ones it only lists (Copilot's "More"). It is the
  * richer counterpart to what a citation chip carries, so it's where page
@@ -205,6 +246,15 @@ export interface SiteAdapter {
   moreSources?: { defaultEnabled: boolean; description: string };
   /** Switches only this site has, in the order the options page lists them. */
   options?: SiteOption[];
+  /** Drop-down settings only this site has, listed after its {@link options}. */
+  choices?: SiteChoice[];
+  /**
+   * Acts on the page for the user, such as opening sections a copy needs.
+   * The controller calls it for every message on each check of the page
+   * while the site is enabled, so it must return at once, run any slow work
+   * in the background, and keep its own record of what it has already done.
+   */
+  automate?(message: Element, automation: SiteAutomation): void;
   /**
    * Name of a script under `src/page/` that the build bundles and the manifest
    * runs in the page's own JavaScript world, for data the isolated content
