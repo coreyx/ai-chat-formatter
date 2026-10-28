@@ -151,7 +151,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
 ### Tests
 
 #### [NEW] `scratch/test_search-assist-auto-expand.ts`, and [MODIFY] existing checks
-- [ ] **TASK-8:** A regression script, picked up by `pnpm test`. See Automated Tests below.
+- [x] **TASK-8:** A regression script, picked up by `pnpm test`. See Automated Tests below.
   - **Updated checks:** the whole-settings checks in `scratch/test_ai-chat-formatter.ts` and `scratch/test_search-assist-explore-more.ts`, which gain `choices`.
   - **README:** the development tree gains the new script.
 

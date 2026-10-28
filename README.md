@@ -229,6 +229,7 @@ ai-chat-formatter/
     ├── test_message-next-to-button.ts
     ├── test_min-heading-level.ts
     ├── test_pnpm-migration.ts
+    ├── test_search-assist-auto-expand.ts
     └── test_search-assist-explore-more.ts
 ```
 
