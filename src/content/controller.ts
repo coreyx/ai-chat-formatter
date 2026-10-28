@@ -198,6 +198,7 @@ export class ContentController {
       style: this.settings.citationStyle,
       includeMoreSources: site?.includeMoreSources ?? false,
       isRuleEnabled: (ruleId) => site?.rules[ruleId] ?? true,
+      isOptionEnabled: (optionId) => site?.options[optionId] ?? this.adapter.options?.find((option) => option.id === optionId)?.defaultEnabled ?? false,
       references,
       minHeadingLevel: this.settings.minHeadingLevel,
       ...(prompt ? { prompt: { text: prompt, format: this.settings.promptFormat, headingLevel: this.settings.promptHeadingLevel } } : {}),

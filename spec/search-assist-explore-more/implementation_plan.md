@@ -138,7 +138,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
 ### Content script and options page
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-6:** Pass `isOptionEnabled: (id) => site?.options[id] ?? <the option's default>` to `convertMessage`.
+- [x] **TASK-6:** Pass `isOptionEnabled: (id) => site?.options[id] ?? <the option's default>` to `convertMessage`.
 
 #### [MODIFY] `src/options/options.ts`
 - [ ] **TASK-7:** Show each adapter option as a checkbox in its site's section, after the Copy-button override and before **Include "More" sources**, named `<site>.options.<id>`.

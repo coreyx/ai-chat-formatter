@@ -9,6 +9,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
+import { ContentController } from "../src/content/controller";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
 import { buildDefaultSettings, mergeSettings } from "../src/core/settings";
 import type { SiteAdapter, SourceReference } from "../src/core/types";
@@ -21,6 +22,16 @@ const results: { name: string; error?: unknown }[] = [];
 function check(name: string, fn: () => void): void {
   try {
     fn();
+    results.push({ name });
+  } catch (error) {
+    results.push({ name, error });
+  }
+}
+
+/** Runs an async check, recording its result like {@link check}. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
     results.push({ name });
   } catch (error) {
     results.push({ name, error });
@@ -294,6 +305,47 @@ check("settings: stored values are kept, unknown or invalid ones dropped, and 0.
   assert.deepEqual(merged.sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": false });
   const older = mergeSettings({ sites: { duckduckgo: { enabled: true, rules: {} } } }, defaults);
   assert.deepEqual(older.sites.duckduckgo.options, defaults.sites.duckduckgo.options);
+});
+
+// ---------------------------------------------------------------------------
+// Controller
+// ---------------------------------------------------------------------------
+
+/**
+ * A controller on a fresh fixture page with Search Assist's options set to
+ * `options`, recording clipboard writes. The prompt is left out, so the copy
+ * is the answer alone.
+ */
+function startController(options: Record<string, boolean>, overrideNativeCopy = false) {
+  const document = searchPage();
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.includePrompt = false;
+  settings.sites.duckduckgo.overrideNativeCopy = overrideNativeCopy;
+  Object.assign(settings.sites.duckduckgo.options, options);
+  const written: string[] = [];
+  const controller = new ContentController(duckDuckGoAdapter, settings, { document, writeClipboard: async (text) => void written.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  return { afterMore: document.getElementById("after-more")!, written };
+}
+
+/** Lets pending timers and promise callbacks run. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+await checkAsync("controller: Copy as Markdown follows the stored options", async () => {
+  const page = startController({ "inline-chips": false, "explore-more-search-links": true });
+  page.afterMore.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+  await flush();
+  assert.equal(page.written.length, 1);
+  assert.match(page.written[0], /Most gadgets need two of them\.\[\[#\^c-[a-z0-9]{4}-1\|⁽¹⁾\]\]/);
+  assert.ok(page.written[0].includes(`${EXPLORE_MORE}\n\n${SEARCH_LINK}\n\n## Sources`), page.written[0]);
+});
+
+await checkAsync("controller: with the override on, Search Assist's own Copy follows them too", async () => {
+  const page = startController({ "explore-more": false }, true);
+  page.afterMore.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!.click();
+  await flush();
+  assert.equal(page.written.length, 1);
+  assert.ok(page.written[0].endsWith(`The guide has more detail. ${WIDGET_CHIP}`), page.written[0]);
 });
 
 // ---------------------------------------------------------------------------
