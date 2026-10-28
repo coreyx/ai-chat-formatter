@@ -89,7 +89,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
 ### Fixture
 
 #### [MODIFY] `scratch/fixtures/duckduckgo-search-assist.html`
-- [ ] **TASK-1:** Add an Explore More section to the `after-more` module, after the extended answer and before the Ask box, in the structure inspected on 2026-10-27.
+- [x] **TASK-1:** Add an Explore More section to the `after-more` module, after the extended answer and before the Ask box, in the structure inspected on 2026-10-27.
   - It has an `<h3>`, then three question buttons with `aria-expanded` and `aria-controls`.
   - The first question is expanded. Its panel holds a `<p>`, a run of two chips (one with a favicon `<img>`, one without), and a **More Search Results** link to `/?q=…`.
   - The other two are collapsed, with empty panels.
