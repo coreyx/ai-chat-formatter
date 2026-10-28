@@ -98,7 +98,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
 ### Core
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-2:** Add adapter options.
+- [x] **TASK-2:** Add adapter options.
   - A new `SiteOption` type, `{ id, name, description, defaultEnabled, replacesSourcesSection?: boolean, requires?: string }`, documented.
     - `replacesSourcesSection` means that while the option is on, the adapter writes no citations, so neither the Sources section nor More is used.
     - `requires` names another option of the same adapter that must be on for this one to apply. `isOptionEnabled` returns false for an option whose required option is off, whatever its own stored value.

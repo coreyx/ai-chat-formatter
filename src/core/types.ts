@@ -67,6 +67,34 @@ export interface FormatRule {
 }
 
 /**
+ * A switch that belongs to one site, for behavior only that site's markup has
+ * (such as Search Assist's Explore More section). Stored per site, like the
+ * clean-up rules, and shown in the site's section of the options page.
+ */
+export interface SiteOption {
+  /** Stable id, used as the settings key; never rename it once released. */
+  id: string;
+  /** Name shown on the options page. */
+  name: string;
+  /** One-line explanation shown under the name on the options page. */
+  description: string;
+  /** Whether the option is on before the user changes anything. */
+  defaultEnabled: boolean;
+  /**
+   * Whether the adapter writes no citations while this option is on, so
+   * neither the Sources section nor its More list is used. The options page
+   * greys out "Include "More" sources" while it's on.
+   */
+  replacesSourcesSection?: boolean;
+  /**
+   * The id of another option of the same adapter that must be on for this one
+   * to apply. While that option is off, this one reads as off whatever its
+   * stored value, and the options page greys it out.
+   */
+  requires?: string;
+}
+
+/**
  * One entry in a reply's full source list, as the site keeps it: the sources
  * cited in the text and the ones it only lists (Copilot's "More"). It is the
  * richer counterpart to what a citation chip carries, so it's where page
@@ -94,6 +122,12 @@ export interface ConversionContext {
   registerCitation(citation: Citation): string;
   /** The reply's source-list entry for `url` (compared normalized), when the caller gathered the list. */
   findReference(url: string): SourceReference | undefined;
+  /**
+   * Whether the adapter's option `id` (see {@link SiteAdapter.options}) is on
+   * for this copy. An option whose {@link SiteOption.requires} option is off
+   * reads as off.
+   */
+  isOptionEnabled(id: string): boolean;
 }
 
 /** Where an injected button goes: inside `parent`, before `before` (or at the end when `before` is null). */
@@ -129,9 +163,11 @@ export interface SiteAdapter {
    * before Turndown sees it. This is the place for anything whitespace-sensitive
    * that the site doesn't render with `<pre>`: Turndown collapses whitespace in
    * every other element before its rules run, so a rule would only ever see the
-   * damaged text. May throw {@link ConversionError}.
+   * damaged text. `context` gives the copy's options; citations aren't
+   * registered here, since Turndown hasn't run yet. May throw
+   * {@link ConversionError}.
    */
-  preprocess?(root: HTMLElement): void;
+  preprocess?(root: HTMLElement, context: ConversionContext): void;
   /** Turndown rules for this site's markup, keyed by rule name. */
   turndownRules(context: ConversionContext): Record<string, TurndownService.Rule>;
   /**
@@ -167,6 +203,8 @@ export interface SiteAdapter {
    * option starts on, with a generic description.
    */
   moreSources?: { defaultEnabled: boolean; description: string };
+  /** Switches only this site has, in the order the options page lists them. */
+  options?: SiteOption[];
   /**
    * Name of a script under `src/page/` that the build bundles and the manifest
    * runs in the page's own JavaScript world, for data the isolated content

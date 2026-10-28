@@ -116,6 +116,19 @@ function responseMinHeadingLevel(minHeadingLevel: HeadingLevel, prompt: Conversi
   return Math.min(6, prompt.headingLevel + 1) as HeadingLevel;
 }
 
+/**
+ * Whether `adapter`'s option `id` is on, given `lookup` for each option's own
+ * value. An option the adapter doesn't declare is off, and so is one whose
+ * required option is off, however it's set itself. Requirements are followed
+ * in a chain, stopping at a loop so a mistaken declaration can't hang a copy.
+ */
+function resolveOption(adapter: SiteAdapter, id: string, lookup: (id: string) => boolean, seen = new Set<string>()): boolean {
+  const option = adapter.options?.find((candidate) => candidate.id === id);
+  if (!option || seen.has(id) || !lookup(id)) return false;
+  seen.add(id);
+  return option.requires === undefined || resolveOption(adapter, option.requires, lookup, seen);
+}
+
 /** A Turndown instance with the output conventions shared by every site. */
 function createTurndown(): TurndownService {
   const service = new TurndownService({
@@ -159,8 +172,6 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   for (const selector of adapter.stripSelectors) {
     clone.querySelectorAll(selector).forEach((element) => element.remove());
   }
-  adapter.preprocess?.(clone);
-
   const collector = new CitationCollector();
   const referencesByUrl = new Map<string, SourceReference>();
   for (const reference of references ?? []) {
@@ -169,7 +180,9 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
   const context: ConversionContext = {
     registerCitation: (citation) => collector.register(citation),
     findReference: (url) => referencesByUrl.get(normalizeCitationUrl(url)),
+    isOptionEnabled: (id) => resolveOption(adapter, id, (optionId) => adapter.options?.find((option) => option.id === optionId)?.defaultEnabled ?? false),
   };
+  adapter.preprocess?.(clone, context);
 
   const service = createTurndown();
   // Site rules go last so they take precedence over the shared ones; Turndown checks the most recently added rule first.
