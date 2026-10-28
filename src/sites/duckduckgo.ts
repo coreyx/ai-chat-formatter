@@ -69,12 +69,16 @@ function findById(root: Element, id: string): Element | null {
 }
 
 /**
- * The absolute URL of `link`, resolved against the page's address since
- * Search Assist uses relative links, or null when it can't be resolved.
+ * The absolute URL in `element`'s `attribute`, resolved against the page's
+ * address, or null when it's missing or can't be resolved. Search Assist
+ * writes some URLs relative to the page: its More Search Results links
+ * (`/?q=…`) and its favicons, which have no scheme (`//external-content…`).
  */
-function absoluteHref(link: Element): URL | null {
+function absoluteUrl(element: Element, attribute: string): URL | null {
+  const value = element.getAttribute(attribute);
+  if (!value) return null;
   try {
-    return new URL(link.getAttribute("href") ?? "", link.ownerDocument.baseURI);
+    return new URL(value, element.ownerDocument.baseURI);
   } catch {
     return null;
   }
@@ -99,7 +103,7 @@ function prepareExploreMoreLinks(answer: HTMLElement, includeSearchLinks: boolea
       link.setAttribute(INLINE_CHIP_ATTRIBUTE, "");
       continue;
     }
-    const url = absoluteHref(link);
+    const url = absoluteUrl(link, "href");
     if (url && isDuckDuckGoSearch(url)) {
       link.remove();
       if (!includeSearchLinks) continue;
@@ -213,9 +217,10 @@ function isSearchAssistChip(node: Element): boolean {
 function inlineChip(chip: Element): string {
   const url = chip.getAttribute("href") ?? "";
   const name = escapeLinkText((chip.textContent ?? "").trim());
-  const favicon = chip.querySelector("img")?.getAttribute("src") ?? "";
+  const img = chip.querySelector("img");
+  const favicon = img ? absoluteUrl(img, "src") : null;
   const size = chip.closest("td, th") ? "\\|16" : "|16";
-  const icon = /^https?:\/\//i.test(favicon) ? `![${size}](${encodeLinkDestination(favicon)}) ` : "";
+  const icon = favicon && /^https?:$/.test(favicon.protocol) ? `![${size}](${encodeLinkDestination(favicon.href)}) ` : "";
   return `${followsWhitespace(chip) ? "" : " "}[${icon}${name}](${encodeLinkDestination(url)})`;
 }
 

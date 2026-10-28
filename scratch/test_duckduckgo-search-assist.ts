@@ -73,7 +73,7 @@ function fakeFiber(data: unknown, levels = 6): object {
  * script is installed as it is on the real page.
  */
 function searchPage({ pageScript = true, data = ANSWER_DATA as unknown } = {}): Document {
-  const page = new JSDOM(readFileSync("scratch/fixtures/duckduckgo-search-assist.html", "utf8")).window.document;
+  const page = new JSDOM(readFileSync("scratch/fixtures/duckduckgo-search-assist.html", "utf8"), { url: "https://duckduckgo.com/?ia=web" }).window.document;
   for (const answer of Array.from(page.querySelectorAll('[data-testid="duckassist-answer-content"]'))) {
     (answer as unknown as Record<string, object>)["__reactFiber$test"] = fakeFiber(data);
   }

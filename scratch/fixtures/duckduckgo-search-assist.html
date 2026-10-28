@@ -17,7 +17,9 @@
     3. Writing: a partly written extended answer, with the More pill labeled
        Stop.
   The chips' page titles live in React state on the real page; the tests
-  attach a fake React fiber holding them. Class names imitate DuckDuckGo's
+  attach a fake React fiber holding them. Favicon URLs have no scheme
+  (//external-content…), as on the real page, so tests load the fixture at a
+  duckduckgo.com address for them to resolve. Class names imitate DuckDuckGo's
   generated hashes; every attribute the adapter relies on is kept as observed.
   All names, titles and URLs are made up.
 -->
@@ -49,7 +51,7 @@
                   <p><span data-streamdown="strong">Widgets</span> are small parts that fit into gadgets.</p>
                   <p>Most gadgets need two of them.</p>
                 </div>
-                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-1" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span><span tabindex="0" aria-describedby="tip-2" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://gadget.example/parts#widgets" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/gadget.example.ico" alt="" width="14" height="14"><span><span>gadget.example</span></span></a></span></span>
+                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-1" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="//external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span><span tabindex="0" aria-describedby="tip-2" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://gadget.example/parts#widgets" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="//external-content.example/ip3/gadget.example.ico" alt="" width="14" height="14"><span><span>gadget.example</span></span></a></span></span>
               </div>
             </div>
             <div class="T3ylZqfVHiSYAaVNqC1Q">
@@ -76,7 +78,7 @@
                   <p><span data-streamdown="strong">Widgets</span> are small parts that fit into gadgets.</p>
                   <p>Most gadgets need two of them.</p>
                 </div>
-                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-3" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span><span tabindex="0" aria-describedby="tip-4" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://gadget.example/parts#widgets" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/gadget.example.ico" alt="" width="14" height="14"><span><span>gadget.example</span></span></a></span></span>
+                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-3" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="//external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span><span tabindex="0" aria-describedby="tip-4" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://gadget.example/parts#widgets" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="//external-content.example/ip3/gadget.example.ico" alt="" width="14" height="14"><span><span>gadget.example</span></span></a></span></span>
               </div>
             </div>
             <div class="T3ylZqfVHiSYAaVNqC1Q">
@@ -105,7 +107,7 @@
                   </div>
                   <p>The guide has more detail.</p>
                 </div>
-                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-5" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span></span>
+                <span class="sO0kNb0yCqKe4YRXhwm7"><span tabindex="0" aria-describedby="tip-5" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/guide" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="//external-content.example/ip3/widget.example.ico" alt="" width="14" height="14"><span><span>widget.example</span></span></a></span></span>
               </div>
               <div class="Mx0fBq7wTn2YhVc4LkRe">
                 <div class="Pz3nWd8sJc1QmVt6HxAo"><div><div><h3 class="Rb5kYe2nUf9LsWq0TgJi">Explore More</h3></div></div></div>
@@ -116,7 +118,7 @@
                       <div id=":re1:" class="Wn8cXv2bMq4LzAs6DfGh">
                         <div><div>
                           <div class="aZ9kQe2ltYp0XvB7wR1c"><p>The small widget fits most pocket gadgets.</p></div>
-                          <span class="sO0kNb0yCqKe4YRXhwm7"><span><span><span tabindex="0" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/sizes" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="https://external-content.example/ip3/widget.example.ico" width="16" height="16"><span><span><span>widget.example</span></span></span></a></span></span><span><span tabindex="0" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://pocket.example/fit" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img width="16" height="16"><span><span><span>Pocket Guide</span></span></span></a></span></span></span></span>
+                          <span class="sO0kNb0yCqKe4YRXhwm7"><span><span><span tabindex="0" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://widget.example/sizes" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img src="//external-content.example/ip3/widget.example.ico" width="16" height="16"><span><span><span>widget.example</span></span></span></a></span></span><span><span tabindex="0" class="mdwT2mk6fTJ6e_FiQ1Qx"><a href="https://pocket.example/fit" data-handled-by-react="true" target="_self" class="YfjcgjUaLJxb3E0qCgSe"><img width="16" height="16"><span><span><span>Pocket Guide</span></span></span></a></span></span></span></span>
                           <a href="/?q=What+size+widget+fits+a+pocket+gadget%3F" class="Jq1rTy5uIo7PaSd9FgHk">More Search Results</a>
                         </div></div>
                       </div>

@@ -76,6 +76,13 @@ Underneath, any site adapter can now declare options of its own.
 - **TASK-2 also touched `convert.ts`:** the context had to gain `isOptionEnabled` and be passed to `preprocess` for the type change to compile. Until TASK-4, each option read as its default.
 - **The new test script was started in TASK-4** and grew with each later task.
 
+### Fixed after the first manual check
+- **No icons showed** in the maintainer's first copy. On the live page, each chip's favicon `src` has no scheme (`//external-content.duckduckgo.com/ip3/…`), and the chip rule accepted only `http(s)://` values, so every chip fell back to its linked name.
+  - The fixture had used full `https://` favicon URLs, so no test caught it.
+  - The fix resolves the favicon against the page's address, as relative links already were (`absoluteUrl` replaces `absoluteHref`), so it's written as `https://…`.
+  - The fixture's favicons are now scheme-less. `test_duckduckgo-search-assist.ts` loads it at a `duckduckgo.com` address, as `test_search-assist-explore-more.ts` already did.
+  - Re-checked on a live search page, recording only the attribute's shape.
+
 ## Verification & Test Results
 
 ### Automated Tests
