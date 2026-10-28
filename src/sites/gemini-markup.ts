@@ -56,7 +56,7 @@ export const THOUGHT_BODY_SELECTOR = '[data-test-id="thought-body"]';
 /** A thinking step that lists the pages Gemini browsed, as chips. */
 export const BROWSE_LIST_SELECTOR = "browse-chip-list";
 
-/** The conversation in the left pane. Older turns of a long conversation may load only as it's scrolled up. */
+/** The conversation in the left pane. A long conversation's older turns load only as it's scrolled up, with no marker for the ones still missing. */
 export const HISTORY_SELECTOR = 'infinite-scroller[data-test-id="chat-history-container"]';
 
 /** One turn of the conversation: a prompt and Gemini's reply. */

@@ -180,7 +180,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
     - The names are `Include "Sources used in the report"`, `Include "Sources browsed but not used"` and `Include "Show thinking"`, with one-line descriptions.
     - `copyButtonDescription`: "Adds buttons to a Deep Research report's toolbar, next to Share & Export."
   - **Rules:** `invisibleCharactersRule` and `collapseBlankLinesRule`.
-- [ ] **TASK-8:** The conversation copy:
+- [x] **TASK-8:** The conversation copy:
   - **The button:** option `conversation-button`, named "Show a Copy conversation button", on by default. For the history element, `findButtonAnchor` returns the open report panel's `.action-buttons`:
     - before the Report button if it's there, otherwise before Share & Export, so the order is always **Conversation**, **Report**, Share & Export;
     - null while the option is off or no report panel is open.

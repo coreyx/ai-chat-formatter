@@ -25,7 +25,7 @@ import {
   UNUSED_SOURCES_SELECTOR,
   USED_SOURCES_SELECTOR,
 } from "../src/sites/gemini-markup";
-import { geminiAdapter, readGeminiPrompt, readGeminiReferences } from "../src/sites/gemini";
+import { geminiAdapter, readGeminiPrompt, readGeminiReferences, readGeminiTurns } from "../src/sites/gemini";
 import { AFTER_SOURCES_ATTRIBUTE, ConversionError, type SiteAdapter, type SourceReference } from "../src/core/types";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
@@ -287,6 +287,13 @@ await checkAsync("controller: a conversation is copied turn by turn with every p
   assert.equal(button.querySelector("svg + .acf-button-text")?.textContent, "Chat");
 });
 
+check("controller: a button an earlier run left inside a message still counts, so the message gets no second one", () => {
+  const document = new JSDOM('<!doctype html><body><div class="message"><div class="bar"><button data-acf-injected="">old</button></div><div class="reply"><p>Hi.</p></div></div></body>').window.document;
+  const adapter: SiteAdapter = { ...toyAdapter(), findButtonAnchor: (message) => ({ parent: message.querySelector(".bar")!, before: null }) };
+  new ContentController(adapter, buildDefaultSettings([adapter]), { document, writeClipboard: async () => {}, requestFrame: (callback) => callback() }).start();
+  assert.equal(document.querySelectorAll("[data-acf-injected]").length, 1);
+});
+
 await checkAsync("controller: a site without its own Copy button ignores the override setting", async () => {
   const page = startToyConversation((settings) => (settings.sites.toy.overrideNativeCopy = true));
   page.document.querySelector<HTMLButtonElement>(".share")!.click();
@@ -537,6 +544,103 @@ check("report: the button goes right before Share & Export, labelled Report", ()
   assert.deepEqual(geminiAdapter.buttonLabel!(panel), { title: "Copy report as Markdown", text: "Report" });
   share.remove();
   assert.equal(geminiAdapter.findButtonAnchor(panel), null);
+});
+
+// ---------------------------------------------------------------------------
+// The conversation copy
+// ---------------------------------------------------------------------------
+
+const HISTORY = 'infinite-scroller[data-test-id="chat-history-container"]';
+
+/** The fixture's conversation converted as the controller would, with prompts as H2 headings. */
+function convertGeminiConversation(document = geminiPage()): string {
+  return convertConversation(geminiAdapter, readGeminiTurns(document.querySelector(HISTORY)!)!, {
+    style: "linked-citations",
+    includeMoreSources: false,
+    isRuleEnabled: () => true,
+    idToken: "t",
+    promptFormat: { format: "heading", headingLevel: 2 },
+    referencesFor: (reply) => geminiAdapter.readReferences!(reply),
+  });
+}
+
+check("conversation: each prompt and reply in order, the plan as a numbered list of steps, and the report card as a line", () => {
+  assert.equal(
+    convertGeminiConversation(),
+    [
+      "## Please research how to keep widgets running smoothly.",
+      "",
+      "> Write a detailed report.",
+      ">",
+      "> 1. Which oils suit widget gears?",
+      "> 2. How often should they be serviced?",
+      "",
+      "I've put together a research plan. If you need to update it in any way, let me know.",
+      "",
+      "**Widget Care Research**",
+      "",
+      "1. **Research Websites**",
+      "   - (1) Find care guides for widgets.",
+      "   - (2) Compare gear oils.",
+      "2. **Analyze Results**",
+      "3. **Create Report**",
+      "",
+      "## Start research",
+      "",
+      "I've completed your research. Feel free to ask me follow-up questions or request changes.",
+      "",
+      "Deep Research report: *Widget Maintenance Report*",
+    ].join("\n"),
+  );
+});
+
+check("conversation: only the history splits into turns, and a turn without a reply keeps its prompt", () => {
+  const document = geminiPage();
+  assert.equal(readGeminiTurns(document.querySelector(REPORT_PANEL_SELECTOR)!), null);
+  document.querySelector("#turn-start model-response")!.remove();
+  assert.ok(convertGeminiConversation(document).endsWith("3. **Create Report**\n\n## Start research"));
+});
+
+/** The fixture page with the extension running on it, recording what's copied. */
+function startGemini(edit: (settings: Settings) => void = () => {}) {
+  const document = geminiPage();
+  const settings = buildDefaultSettings([geminiAdapter]);
+  settings.citationStyle = "footnotes";
+  edit(settings);
+  const copied: string[] = [];
+  const controller = new ContentController(geminiAdapter, settings, { document, writeClipboard: async (text) => void copied.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  const toolbar = () => Array.from(document.querySelector(".action-buttons")!.children, (child) => child.getAttribute("title") ?? child.getAttribute("data-test-id") ?? child.nodeName.toLowerCase());
+  return { document, controller, settings, copied, toolbar };
+}
+
+await checkAsync("buttons: Conversation, then Report, before Share & Export; each copies its own Markdown, the conversation with its prompts even when prompts are off", async () => {
+  const page = startGemini((settings) => (settings.includePrompt = false));
+  assert.deepEqual(page.toolbar().slice(0, 4), ["toc-menu", "Copy conversation as Markdown", "Copy report as Markdown", "export-menu-button"]);
+  const button = (title: string) => page.document.querySelector<HTMLButtonElement>(`[title="${title}"]`)!;
+  assert.equal(button("Copy report as Markdown").textContent, "Report");
+  assert.equal(button("Copy conversation as Markdown").textContent, "Conversation");
+  button("Copy report as Markdown").click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(page.copied[0], convertReport({}, { style: "footnotes", prompt: undefined }), "the report alone, since prompts are off");
+  assert.match(page.copied[0], /^# Keeping Widgets Running\n/);
+  button("Copy conversation as Markdown").click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(page.copied[1], convertGeminiConversation());
+});
+
+check("buttons: the conversation's button goes before Report whichever is added first, leaves with its option, and needs an open report", () => {
+  const page = startGemini((settings) => (settings.sites.gemini.options["conversation-button"] = false));
+  assert.deepEqual(page.toolbar().slice(1, 3), ["Copy report as Markdown", "export-menu-button"]);
+  page.controller.applySettings(buildDefaultSettings([geminiAdapter]));
+  assert.deepEqual(page.toolbar().slice(1, 4), ["Copy conversation as Markdown", "Copy report as Markdown", "export-menu-button"]);
+  const off = buildDefaultSettings([geminiAdapter]);
+  off.sites.gemini.options["conversation-button"] = false;
+  page.controller.applySettings(off);
+  assert.deepEqual(page.toolbar().slice(1, 3), ["Copy report as Markdown", "export-menu-button"]);
+  const closed = geminiPage();
+  closed.querySelector(REPORT_PANEL_SELECTOR)!.remove();
+  assert.equal(geminiAdapter.findButtonAnchor(closed.querySelector(HISTORY)!, () => true), null);
 });
 
 // ---------------------------------------------------------------------------

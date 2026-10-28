@@ -43,7 +43,7 @@ export class ContentController {
   private toast: HTMLElement | null = null;
   /** Each message's button, which may sit outside the message (as Gemini's conversation button does). */
   private readonly buttons = new WeakMap<Element, HTMLButtonElement>();
-  /** Each button's label, restored after the copied flash. */
+  /** Each button's label, restored after the copied flash; also how this run's own buttons are told from ones an earlier run left. */
   private readonly labels = new WeakMap<HTMLButtonElement, ButtonLabel>();
 
   constructor(
@@ -142,8 +142,9 @@ export class ContentController {
         if (!anchor) tracked.remove();
         continue;
       }
-      // A button left inside the message by an earlier run of the extension still counts.
-      if (!anchor || message.querySelector(`[${INJECTED_ATTRIBUTE}]`)) continue;
+      // A button left inside the message by an earlier run of the extension still counts; one of this run's own, for another message placed inside this one, doesn't.
+      const leftover = Array.from(message.querySelectorAll(`[${INJECTED_ATTRIBUTE}]`)).some((button) => !this.labels.has(button as HTMLButtonElement));
+      if (!anchor || leftover) continue;
       const button = this.createButton(message);
       this.buttons.set(message, button);
       anchor.parent.insertBefore(button, anchor.before);
