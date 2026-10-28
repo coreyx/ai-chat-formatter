@@ -107,7 +107,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
   - `preprocess?(root, context)` gains the context as a second argument. Copilot's and Duck.ai's preprocess functions ignore it.
 
 #### [MODIFY] `src/core/settings.ts`
-- [ ] **TASK-3:** Store the options per site.
+- [x] **TASK-3:** Store the options per site.
   - `SiteSettings.options: Record<string, boolean>`, filled from each adapter's `options` defaults, like `rules`.
   - `mergeSettings` keeps stored booleans for options the adapter declares, and drops unknown ones, so settings saved by 0.5.0 load with the defaults.
 

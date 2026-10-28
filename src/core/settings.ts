@@ -16,6 +16,8 @@ export interface SiteSettings {
   includeMoreSources: boolean;
   /** Which post-processing rules are on, keyed by rule id. */
   rules: Record<string, boolean>;
+  /** Which of the adapter's own options are on, keyed by option id; empty for an adapter that declares none. */
+  options: Record<string, boolean>;
 }
 
 /** Everything the user can configure, stored as one object in `chrome.storage.sync`. */
@@ -56,6 +58,7 @@ export function buildDefaultSettings(adapters: readonly SiteAdapter[]): Settings
       overrideNativeCopy: false,
       includeMoreSources: canReadReferences(adapter) && (adapter.moreSources?.defaultEnabled ?? true),
       rules: Object.fromEntries(adapter.rules.map((rule) => [rule.id, rule.defaultEnabled])),
+      options: Object.fromEntries((adapter.options ?? []).map((option) => [option.id, option.defaultEnabled])),
     };
   }
   return { enabled: true, citationStyle: "linked-citations", minHeadingLevel: 1, includePrompt: true, promptFormat: "heading", promptHeadingLevel: 2, sites };
@@ -72,10 +75,11 @@ function record(value: unknown): Record<string, unknown> {
 }
 
 /**
- * Overlays whatever was stored onto `defaults`. Only sites and rules that the
- * defaults know about are kept, and any value of the wrong type falls back to
- * its default, so settings saved by an older version (missing a newer site or
- * rule) or damaged by hand still load without a migration step.
+ * Overlays whatever was stored onto `defaults`. Only sites, rules and site
+ * options that the defaults know about are kept, and any value of the wrong
+ * type falls back to its default, so settings saved by an older version
+ * (missing a newer site, rule or option) or damaged by hand still load
+ * without a migration step.
  */
 export function mergeSettings(stored: unknown, defaults: Settings): Settings {
   const saved = record(stored);
@@ -84,12 +88,14 @@ export function mergeSettings(stored: unknown, defaults: Settings): Settings {
   for (const [id, siteDefaults] of Object.entries(defaults.sites)) {
     const site = record(savedSites[id]);
     const savedRules = record(site.rules);
+    const savedOptions = record(site.options);
     sites[id] = {
       enabled: bool(site.enabled, siteDefaults.enabled),
       showCopyButton: bool(site.showCopyButton, siteDefaults.showCopyButton),
       overrideNativeCopy: bool(site.overrideNativeCopy, siteDefaults.overrideNativeCopy),
       includeMoreSources: bool(site.includeMoreSources, siteDefaults.includeMoreSources),
       rules: Object.fromEntries(Object.entries(siteDefaults.rules).map(([ruleId, on]) => [ruleId, bool(savedRules[ruleId], on)])),
+      options: Object.fromEntries(Object.entries(siteDefaults.options).map(([optionId, on]) => [optionId, bool(savedOptions[optionId], on)])),
     };
   }
   const style = saved.citationStyle;
