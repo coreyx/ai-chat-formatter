@@ -144,7 +144,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
 ### Options page
 
 #### [MODIFY] `src/options/options.ts`
-- [ ] **TASK-7:** Show each adapter choice as a drop-down named `<site>.choices.<id>`, with its label and description, using `labelledField`. It goes after the site's option checkboxes and before **Include "More" sources**.
+- [x] **TASK-7:** Show each adapter choice as a drop-down named `<site>.choices.<id>`, with its label and description, using `labelledField`. It goes after the site's option checkboxes and before **Include "More" sources**.
   - **Greying out:** it's disabled while none of its `requiresAny` options is on, and updates as soon as one is toggled.
   - **`fill`:** shows the stored value.
 

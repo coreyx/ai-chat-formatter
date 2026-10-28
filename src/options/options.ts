@@ -1,8 +1,8 @@
 /**
  * The options page: a master switch, the citation style, the minimum heading
  * level, the user prompt settings, and one section per site with its button,
- * override, site option and rule toggles. Every change is saved as
- * soon as it's made, and open chat tabs pick it up without a reload.
+ * override, site options and choices, and rule toggles. Every change is
+ * saved as soon as it's made, and open chat tabs pick it up without a reload.
  */
 import { canReadReferences, loadSettings, onSettingsChanged, saveSettings, type Settings } from "../core/settings";
 import { CITATION_STYLES, HEADING_LEVELS, PROMPT_FORMATS, type CitationStyle, type HeadingLevel, type PromptFormat, type SiteAdapter } from "../core/types";
@@ -212,6 +212,12 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
         ),
       );
     }
+    for (const choice of adapter.choices ?? []) {
+      const select = dropDown(document, `${adapter.id}.choices.${choice.id}`, choice.values.map(({ value, label }) => [value, label]), (value) =>
+        update((s) => (s.sites[adapter.id].choices[choice.id] = value)),
+      );
+      details.append(labelledField(document, `${adapter.id}-${choice.id}`, choice.name, select, choice.description));
+    }
     if (canReadReferences(adapter)) {
       details.append(
         option(
@@ -262,6 +268,12 @@ export function renderOptions(document: Document, adapters: readonly SiteAdapter
         box.checked = site.options[siteOption.id];
         // An option that needs another one is greyed out while that one is off; its own value is kept for when it's back on.
         box.disabled = siteOption.requires !== undefined && !site.options[siteOption.requires];
+      }
+      for (const choice of adapter.choices ?? []) {
+        const choiceSelect = select(`${adapter.id}.choices.${choice.id}`);
+        choiceSelect.value = site.choices[choice.id];
+        // A choice that serves some options has no effect while none of them is on.
+        choiceSelect.disabled = choice.requiresAny !== undefined && !choice.requiresAny.some((id) => site.options[id]);
       }
       const includeMore = input(`${adapter.id}.includeMoreSources`);
       if (includeMore) {

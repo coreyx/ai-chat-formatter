@@ -9,8 +9,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { ContentController, type ControllerEnvironment } from "../src/content/controller";
-import { buildDefaultSettings, type Settings } from "../src/core/settings";
+import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter, SiteAutomation } from "../src/core/types";
+import { renderOptions } from "../src/options/options";
 import { automateSearchAssist } from "../src/sites/duckduckgo-automation";
 import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
 import { SITE_ADAPTERS } from "../src/sites/index";
@@ -300,6 +301,73 @@ await checkAsync("hidden page: nothing happens until it's showing; the first pau
   await settle();
   assert.equal(hiddenPolls, 2);
   assert.deepEqual(page.log.slice(0, 4), ["sleep 500", "sleep 500", "sleep 1750", "click q2"]);
+});
+
+// ---------------------------------------------------------------------------
+// Settings and the options page
+// ---------------------------------------------------------------------------
+
+await checkAsync("settings: both options start off and pacing Unhurried; Copilot and Duck.ai have no choices", async () => {
+  const defaults = buildDefaultSettings(SITE_ADAPTERS);
+  assert.equal(defaults.sites.duckduckgo.options["auto-more"], false);
+  assert.equal(defaults.sites.duckduckgo.options["auto-explore-more"], false);
+  assert.deepEqual(defaults.sites.duckduckgo.choices, { "automation-pacing": "unhurried" });
+  assert.deepEqual(defaults.sites.copilot.choices, {});
+  assert.deepEqual(defaults.sites.duckai.choices, {});
+});
+
+await checkAsync("settings: a stored pacing is kept; one that isn't offered falls back, and unknown choices are dropped", async () => {
+  const defaults = buildDefaultSettings(SITE_ADAPTERS);
+  const stored = (pacing: unknown) => ({ sites: { duckduckgo: { choices: { "automation-pacing": pacing, removed: "x" } } } });
+  assert.deepEqual(mergeSettings(stored("brisk"), defaults, SITE_ADAPTERS).sites.duckduckgo.choices, { "automation-pacing": "brisk" });
+  assert.deepEqual(mergeSettings(stored("frantic"), defaults, SITE_ADAPTERS).sites.duckduckgo.choices, { "automation-pacing": "unhurried" });
+  assert.deepEqual(mergeSettings(stored(3), defaults, SITE_ADAPTERS).sites.duckduckgo.choices, { "automation-pacing": "unhurried" });
+  assert.deepEqual(mergeSettings({}, defaults, SITE_ADAPTERS).sites.duckduckgo.choices, { "automation-pacing": "unhurried" });
+});
+
+/** The options form showing `settings`, recording each change it reports. */
+function optionsPage(settings: Settings) {
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const changes: Settings[] = [];
+  const form = renderOptions(document, SITE_ADAPTERS, (next) => changes.push(next));
+  document.body.append(form.root);
+  form.fill(settings);
+  const pacing = document.querySelector<HTMLSelectElement>('select[name="duckduckgo.choices.automation-pacing"]')!;
+  const input = (name: string) => document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+  return { document, pacing, input, changes };
+}
+
+await checkAsync("options page: the two checkboxes, then Click pacing with its three choices and the stored value, before More sources", async () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.sites.duckduckgo.choices["automation-pacing"] = "random";
+  const page = optionsPage(settings);
+  const controls = Array.from(page.document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('section[data-site="duckduckgo"] fieldset.site :is(input, select)')).map((control) => control.name);
+  assert.deepEqual(controls.slice(5, 9), ["duckduckgo.options.auto-more", "duckduckgo.options.auto-explore-more", "duckduckgo.choices.automation-pacing", "duckduckgo.includeMoreSources"]);
+  assert.deepEqual(
+    Array.from(page.pacing.options).map((option) => [option.value, option.textContent]),
+    [
+      ["unhurried", "Unhurried: pauses of 1.5–4 s, waiting for each answer"],
+      ["brisk", "Brisk: pauses of 0.5–1.5 s, waiting for each answer"],
+      ["random", "Random: pauses of 0.5–2 s, without waiting for answers"],
+    ],
+  );
+  assert.equal(page.pacing.value, "random");
+  assert.equal(page.document.getElementById(page.pacing.getAttribute("aria-labelledby")!)!.textContent, "Click pacing");
+  assert.equal(page.document.querySelectorAll('select[name^="copilot.choices."], select[name^="duckai.choices."]').length, 0);
+});
+
+await checkAsync("options page: Click pacing is greyed out while both options are off, available when either is on, and reports changes", async () => {
+  const page = optionsPage(buildDefaultSettings(SITE_ADAPTERS));
+  assert.equal(page.pacing.disabled, true);
+  page.input("duckduckgo.options.auto-explore-more").click();
+  assert.equal(page.pacing.disabled, false);
+  page.input("duckduckgo.options.auto-explore-more").click();
+  assert.equal(page.pacing.disabled, true);
+  page.input("duckduckgo.options.auto-more").click();
+  assert.equal(page.pacing.disabled, false);
+  page.pacing.value = "brisk";
+  page.pacing.dispatchEvent(new page.document.defaultView!.Event("change"));
+  assert.equal(page.changes.at(-1)!.sites.duckduckgo.choices["automation-pacing"], "brisk");
 });
 
 // ---------------------------------------------------------------------------
