@@ -276,9 +276,11 @@ export interface SiteAdapter {
    * The prompt that `message` answers, as plain text with `\n` between lines
    * and `\n\n` between paragraphs, or null when the page doesn't show one.
    * Synchronous, like {@link readReferences}, so the native Copy override can
-   * include it.
+   * include it. `isOptionEnabled` reads the adapter's options as a copy does,
+   * so a site can leave its prompt out while one is off; absent, every option
+   * takes its default.
    */
-  readPrompt?(message: Element): string | null;
+  readPrompt?(message: Element, isOptionEnabled?: (id: string) => boolean): string | null;
   /**
    * Splits `message` into turns copied one after another, each reply with its
    * own prompt, for a message that is a whole conversation. Null means

@@ -403,16 +403,20 @@ check("markup: the research request is the earliest plan turn before the report,
 /**
  * The fixture's report converted as the controller would, with Gemini's
  * options set as in `options` (defaults otherwise) and the prompt as a heading.
+ * The research request is turned on unless `options` turns it off, so these
+ * checks see the whole copy; the default, without it, is checked through the
+ * controller (see "report prompt" below).
  */
 function convertReport(options: Record<string, boolean> = {}, overrides: Partial<ConversionOptions> = {}, document = geminiPage()): string {
   const panel = document.querySelector(REPORT_PANEL_SELECTOR)!;
   const defaults = Object.fromEntries((geminiAdapter.options ?? []).map((option) => [option.id, option.defaultEnabled]));
-  const prompt = readGeminiPrompt(panel);
+  const isOptionEnabled = (id: string) => ({ ...defaults, "report-prompt": true, ...options })[id] ?? false;
+  const prompt = readGeminiPrompt(panel, isOptionEnabled);
   return convertMessage(geminiAdapter, panel, {
     style: "linked-citations",
     includeMoreSources: false,
     isRuleEnabled: () => true,
-    isOptionEnabled: (id) => ({ ...defaults, ...options })[id] ?? false,
+    isOptionEnabled,
     references: readGeminiReferences(panel),
     idToken: "t",
     ...(prompt ? { prompt: { text: prompt, format: "heading", headingLevel: 2 } } : {}),
@@ -538,10 +542,37 @@ check("report: an unfinished report (no end marker, or no source lists yet) isn'
   }
 });
 
-check("report: the prompt is the research request, not Start research; null outside the panel", () => {
+check("report: the prompt is the research request, not Start research, only with its option on; null outside the panel", () => {
   const document = geminiPage();
-  assert.match(readGeminiPrompt(document.querySelector(REPORT_PANEL_SELECTOR)!)!, /^Please research how to keep widgets running smoothly\.\nWrite a detailed report\.\n\n1\. /);
-  assert.equal(readGeminiPrompt(document.querySelector('infinite-scroller[data-test-id="chat-history-container"]')!), null);
+  const panel = document.querySelector(REPORT_PANEL_SELECTOR)!;
+  const on = (id: string) => id === "report-prompt";
+  assert.match(readGeminiPrompt(panel, on)!, /^Please research how to keep widgets running smoothly\.\nWrite a detailed report\.\n\n1\. /);
+  assert.equal(readGeminiPrompt(panel, () => false), null);
+  assert.equal(readGeminiPrompt(panel), null, "off by default");
+  assert.equal(readGeminiPrompt(document.querySelector('infinite-scroller[data-test-id="chat-history-container"]')!, on), null);
+});
+
+await checkAsync("report prompt: left out by default; with its option on, the request leads the copy, unless prompts are off; the conversation keeps its prompts", async () => {
+  const copyReport = async (edit: (settings: Settings) => void) => {
+    const page = startGemini(edit);
+    page.document.querySelector<HTMLButtonElement>('[title="Copy report as Markdown"]')!.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return page;
+  };
+  const byDefault = await copyReport(() => {});
+  assert.equal(byDefault.copied[0], convertReport({ "report-prompt": false }, { style: "footnotes" }));
+  assert.match(byDefault.copied[0], /^# Keeping Widgets Running\n/);
+  const withRequest = await copyReport((settings) => (settings.sites.gemini.options["report-prompt"] = true));
+  assert.equal(withRequest.copied[0], convertReport({}, { style: "footnotes" }));
+  assert.match(withRequest.copied[0], /^## Please research how to keep widgets running smoothly\.\n/);
+  const promptsOff = await copyReport((settings) => {
+    settings.sites.gemini.options["report-prompt"] = true;
+    settings.includePrompt = false;
+  });
+  assert.match(promptsOff.copied[0], /^# Keeping Widgets Running\n/);
+  promptsOff.document.querySelector<HTMLButtonElement>('[title="Copy conversation as Markdown"]')!.click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.match(promptsOff.copied[1], /^## Please research how to keep widgets running smoothly\./);
 });
 
 check("report: the button goes right before Share & Export, labelled Report", () => {
@@ -697,19 +728,19 @@ check("registration: Gemini reads everything from the page itself, so no script 
   assert.ok(manifest.content_scripts.every((script) => script.world !== "MAIN" || !script.matches.includes("https://gemini.google.com/*")));
 });
 
-check("settings: Gemini's options start on, off, off, on, with no generic More", () => {
+check("settings: Gemini's options start on, off, off, off (the report's prompt), on, with no generic More", () => {
   const site = buildDefaultSettings(SITE_ADAPTERS).sites.gemini;
-  assert.deepEqual(site.options, { "used-sources": true, "unused-sources": false, thinking: false, "conversation-button": true });
+  assert.deepEqual(site.options, { "used-sources": true, "unused-sources": false, thinking: false, "report-prompt": false, "conversation-button": true });
   assert.equal(site.includeMoreSources, true, "stored as for any site that reads references, but never shown or used");
 });
 
-check("options page: Gemini's section has the button with its hint, then its four options, and no override or generic More", () => {
+check("options page: Gemini's section has the button with its hint, then its five options, and no override or generic More", () => {
   const document = new JSDOM("<!doctype html><body></body>").window.document;
   const form = renderOptions(document, SITE_ADAPTERS, () => {});
   document.body.append(form.root);
   form.fill(buildDefaultSettings(SITE_ADAPTERS));
   const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('section[data-site="gemini"] fieldset.site input'), (input) => input.name).filter((name) => !name.includes(".rules."));
-  assert.deepEqual(inputs, ["gemini.showCopyButton", "gemini.options.used-sources", "gemini.options.unused-sources", "gemini.options.thinking", "gemini.options.conversation-button"]);
+  assert.deepEqual(inputs, ["gemini.showCopyButton", "gemini.options.used-sources", "gemini.options.unused-sources", "gemini.options.thinking", "gemini.options.report-prompt", "gemini.options.conversation-button"]);
   const hint = document.querySelector('input[name="gemini.showCopyButton"]')!.closest(".option")!.querySelector(".hint")!.textContent;
   assert.equal(hint, "Adds buttons to a Deep Research report's toolbar, next to Share & Export.");
 });

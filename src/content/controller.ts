@@ -254,7 +254,7 @@ export class ContentController {
   private readPrompt(message: Element): string | null {
     if (!this.settings.includePrompt) return null;
     try {
-      return this.adapter.readPrompt?.(message) ?? null;
+      return this.adapter.readPrompt?.(message, (id) => this.isOptionEnabled(id)) ?? null;
     } catch (error) {
       console.warn(`${LOG_PREFIX} Couldn't read the prompt from the page:`, error);
       return null;

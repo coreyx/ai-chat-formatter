@@ -57,6 +57,7 @@ export const USED_SOURCES_OPTION = "used-sources";
 export const UNUSED_SOURCES_OPTION = "unused-sources";
 export const THINKING_OPTION = "thinking";
 export const CONVERSATION_BUTTON_OPTION = "conversation-button";
+export const REPORT_PROMPT_OPTION = "report-prompt";
 
 /** How the two buttons name themselves. The report's title also finds its button, which the conversation's goes before. */
 const REPORT_LABEL: ButtonLabel = { title: "Copy report as Markdown", text: "Report" };
@@ -312,11 +313,12 @@ export function readGeminiReferences(message: Element): SourceReference[] | null
 
 /**
  * The research request behind the report in `message`: the prompt of the
- * turn that first proposed the research plan, not "Start research". Null for
- * anything but the report panel, or when the request isn't in the page.
+ * turn that first proposed the research plan, not "Start research". Null
+ * unless **Copy the research request with the report** is on (it starts off),
+ * for anything but the report panel, or when the request isn't in the page.
  */
-export function readGeminiPrompt(message: Element): string | null {
-  if (!message.matches(REPORT_PANEL_SELECTOR)) return null;
+export function readGeminiPrompt(message: Element, isOptionEnabled?: (id: string) => boolean): string | null {
+  if (!message.matches(REPORT_PANEL_SELECTOR) || !(isOptionEnabled?.(REPORT_PROMPT_OPTION) ?? false)) return null;
   const reportTurn = findReportTurn(message);
   const request = reportTurn ? findResearchRequest(reportTurn) : null;
   return request ? readQueryText(request) || null : null;
@@ -393,6 +395,12 @@ export const geminiAdapter: SiteAdapter = {
       id: THINKING_OPTION,
       name: 'Include "Show thinking"',
       description: "Adds Gemini's research steps and the pages it browsed, under Thinking at the end.",
+      defaultEnabled: false,
+    },
+    {
+      id: REPORT_PROMPT_OPTION,
+      name: "Copy the research request with the report",
+      description: 'Starts the report copy with the prompt that asked for the research. Needs "Copy the prompt with the response" on too. The Conversation copy always has its prompts.',
       defaultEnabled: false,
     },
     {

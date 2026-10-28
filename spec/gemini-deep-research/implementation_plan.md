@@ -218,7 +218,7 @@ Manual step 3 found the report's tables mangled in Obsidian. The live report's t
     - In `renderCitations`, a linked-citation marker on a line that is a table row (starting with `|`) is written `[[#^id\|⁽n⁾]]`. Otherwise its `|` ends the cell. Obsidian reads the escaped form as the same link.
     - The other styles have no `|` in their markers.
   - **The fixture:** gains a table whose cells hold paragraphs, two paragraphs in one cell, and citation markers.
-- [ ] **TASK-12:** Leave the prompt out of the report copy by default:
+- [x] **TASK-12:** Leave the prompt out of the report copy by default:
   - **`SiteAdapter.readPrompt(message, isOptionEnabled?)`:** gains the option lookup, as `findButtonAnchor` did. The controller passes the resolved lookup.
   - **The new Gemini option:** `report-prompt`, named "Copy the research request with the report", off by default. Its description says it also needs **Copy the prompt with the response**.
   - **`readGeminiPrompt`:** returns null unless the option is on.
