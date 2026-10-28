@@ -656,6 +656,12 @@ check("registration: Gemini is a site, matched on its app and a second account's
   assert.ok(manifest.content_scripts.some((script) => script.matches.includes("https://gemini.google.com/*")));
 });
 
+check("registration: Gemini reads everything from the page itself, so no script runs in its page", () => {
+  assert.equal(geminiAdapter.pageScript, undefined);
+  const manifest = JSON.parse(readFileSync("dist/manifest.json", "utf8")) as { content_scripts: { matches: string[]; world?: string }[] };
+  assert.ok(manifest.content_scripts.every((script) => script.world !== "MAIN" || !script.matches.includes("https://gemini.google.com/*")));
+});
+
 check("settings: Gemini's options start on, off, off, on, with no generic More", () => {
   const site = buildDefaultSettings(SITE_ADAPTERS).sites.gemini;
   assert.deepEqual(site.options, { "used-sources": true, "unused-sources": false, thinking: false, "conversation-button": true });

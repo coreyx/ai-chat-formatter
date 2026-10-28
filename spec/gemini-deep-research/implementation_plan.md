@@ -199,7 +199,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
 ### Tests
 
 #### [NEW] `scratch/fixtures/gemini-deep-research.html` and `scratch/test_gemini-deep-research.ts`, and [MODIFY] existing checks
-- [ ] **TASK-10:** Finish the fixture and the existing checks:
+- [x] **TASK-10:** Finish the fixture and the existing checks:
   - **The fixture:** a synthetic page modeled on the inspected structure, with made-up `*.example` sources and text. It has:
     - two turns: a research request with a numbered list, then "Start research";
     - the plan card and the report card;
