@@ -120,7 +120,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
 ### Search Assist
 
 #### [MODIFY] `src/sites/duckduckgo.ts`
-- [ ] **TASK-5:** Declare the three options and use them.
+- [x] **TASK-5:** Declare the three options and use them.
   - **The options:**
     - `explore-more`: "Include expanded Explore More answers", with the description "Adds the Explore More questions you've expanded, with their answers. Questions you haven't expanded are left out."
     - `explore-more-search-links`: "Include More Search Results links", off by default, with `requires: "explore-more"` and the description "Ends each expanded Explore More answer with its More Search Results link, which opens a DuckDuckGo search for that question."

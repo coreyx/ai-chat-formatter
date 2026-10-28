@@ -86,13 +86,19 @@ function module(page: Document, id: "collapsed" | "after-more" | "writing"): Ele
   return page.getElementById(id)!;
 }
 
-/** Converts `message` as the controller does, reading its references first. */
+/**
+ * Converts `message` as the controller does, reading its references first.
+ * Search Assist's own options (inline chips, Explore More) are all off, so
+ * these checks cover the numbered citations; the options have their own
+ * checks in test_search-assist-explore-more.ts.
+ */
 function convert(message: Element, { style = "linked-citations" as CitationStyle, includeMoreSources = false } = {}): string {
   return convertMessage(duckDuckGoAdapter, message, {
     style,
     includeMoreSources,
     isRuleEnabled: () => true,
     references: readSearchAssistReferences(message),
+    isOptionEnabled: () => false,
   });
 }
 
@@ -114,6 +120,13 @@ const CITATIONS = [
 
 /** The collapsed module's copy in linked-citations style. */
 const COLLAPSED = `${SHORT_ANSWER}\n\n${CITATIONS}`;
+
+/** The collapsed module's copy with the default settings, which keep Search Assist's inline chips. */
+const COLLAPSED_INLINE = [
+  "**Widgets** are small parts that fit into gadgets.",
+  "",
+  "Most gadgets need two of them. [![|16](https://external-content.example/ip3/widget.example.ico) widget.example](https://widget.example/guide) [![|16](https://external-content.example/ip3/gadget.example.ico) gadget.example](https://gadget.example/parts#widgets)",
+].join("\n");
 
 // ---------------------------------------------------------------------------
 // Messages and placement
@@ -308,7 +321,7 @@ await checkAsync("controller: each module gets a Copy as Markdown button before 
   assert.equal(buttons[0].nextElementSibling, module(page.document, "collapsed").querySelector(duckDuckGoAdapter.nativeCopyButtonSelector));
   buttons[0].click();
   await flush();
-  assert.deepEqual(page.written.map(withoutToken), [COLLAPSED]);
+  assert.deepEqual(page.written, [COLLAPSED_INLINE]);
   assert.deepEqual(page.siteClicks, []);
 });
 
@@ -324,7 +337,7 @@ await checkAsync("controller: with the override on, Search Assist's own Copy wri
   const page = startController(true);
   module(page.document, "collapsed").querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!.click();
   await flush();
-  assert.deepEqual(page.written.map(withoutToken), [COLLAPSED]);
+  assert.deepEqual(page.written, [COLLAPSED_INLINE]);
   assert.deepEqual(page.siteClicks, []);
 });
 

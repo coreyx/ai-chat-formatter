@@ -68,7 +68,7 @@ export function parseCitationTitle(ariaLabel: string | null | undefined, fallbac
 }
 
 /** Escapes the characters that would end a Markdown link's text early. */
-function escapeLinkText(text: string): string {
+export function escapeLinkText(text: string): string {
   return text.replace(/([\\[\]])/g, "\\$1");
 }
 
@@ -78,7 +78,7 @@ function escapeInlineText(text: string): string {
 }
 
 /** Percent-encodes the characters that would end a Markdown link's destination early. */
-function encodeLinkDestination(url: string): string {
+export function encodeLinkDestination(url: string): string {
   return url.replace(/ /g, "%20").replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/</g, "%3C").replace(/>/g, "%3E");
 }
 

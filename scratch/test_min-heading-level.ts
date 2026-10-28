@@ -275,7 +275,9 @@ check("options page: the drop-down is disabled while the master switch is off", 
 /**
  * A controller on the Search Assist fixture with the minimum heading level
  * set to H3, recording clipboard writes. Its after-More answer has H2 and H3
- * headings, and Sources adds another H2, so everything shifts by one.
+ * headings, and its expanded Explore More answer adds an H3 and an H4, so
+ * everything shifts by one. (With the default settings, Search Assist's chips
+ * stay inline, so there's no Sources section.)
  */
 function startController(overrideNativeCopy: boolean) {
   const document = new JSDOM(readFileSync("scratch/fixtures/duckduckgo-search-assist.html", "utf8")).window.document;
@@ -295,7 +297,7 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const headingsOf = (markdown: string) => markdown.split("\n").filter((line) => /^#{1,6} /.test(line));
 
 /** What the after-More answer's headings become with H3 as the minimum. */
-const SHIFTED_HEADINGS = ["### How widgets work", "#### Sizes", "### Sources", "#### Citations"];
+const SHIFTED_HEADINGS = ["### How widgets work", "#### Sizes", "#### Explore More", "##### What size widget fits a pocket gadget?"];
 
 await checkAsync("controller: Copy as Markdown copies with the headings shifted to the minimum", async () => {
   const page = startController(false);
