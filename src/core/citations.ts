@@ -141,9 +141,16 @@ export function citationBlockId(token: string, n: number): string {
  * The in-text marker for linked citations: a same-note link to the entry's
  * block, displayed as the number in superscript parentheses. The parentheses
  * keep adjacent markers apart; bare superscript digits would run together.
+ * Inside a table row the `|` before the display text is escaped, or it would
+ * end the cell; Obsidian reads `[[target\|text]]` as the same link.
  */
-function linkedMarker(token: string, n: number): string {
-  return `[[#^${citationBlockId(token, n)}|${SUPERSCRIPT_OPEN}${superscriptDigits(n)}${SUPERSCRIPT_CLOSE}]]`;
+function linkedMarker(token: string, n: number, inTableRow = false): string {
+  return `[[#^${citationBlockId(token, n)}${inTableRow ? "\\|" : "|"}${SUPERSCRIPT_OPEN}${superscriptDigits(n)}${SUPERSCRIPT_CLOSE}]]`;
+}
+
+/** Whether `line` is a row of a Markdown table, which starts with `|`. */
+function isTableRow(line: string): boolean {
+  return line.trimStart().startsWith("|");
 }
 
 /** Every citation as a numbered entry ending in its block ID, for linked citations. */
@@ -219,7 +226,10 @@ export function renderCitations(
   let citationLines: string;
   switch (style) {
     case "linked-citations":
-      body = body.replace(PLACEHOLDER, (_, n: string) => (citationFor(n) ? linkedMarker(idToken, Number(n)) : ""));
+      body = body
+        .split("\n")
+        .map((line) => line.replace(PLACEHOLDER, (_, n: string) => (citationFor(n) ? linkedMarker(idToken, Number(n), isTableRow(line)) : "")))
+        .join("\n");
       citationLines = linkedCitations(citations, idToken);
       break;
     case "footnotes": {

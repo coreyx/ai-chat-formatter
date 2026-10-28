@@ -442,6 +442,11 @@ const REPORT_BODY = [
   "",
   "The wear study measured both.[[#^c-t-3|⁽³⁾]] One forum claim had no source.",
   "",
+  "| Gear | Advice |",
+  "| --- | --- |",
+  "| **Small** | Oil monthly.[[#^c-t-1\\|⁽¹⁾]]<br>Wipe weekly. |",
+  "| Large | Replace yearly.[[#^c-t-3\\|⁽³⁾]] |",
+  "",
   "##### A service schedule",
   "",
   "```",
@@ -453,6 +458,9 @@ const REPORT_BODY = [
   "- Keep widgets **dry**.",
   "- Store them indoors.",
 ].join("\n");
+
+/** A linked-citation marker in the copy, with its `|` escaped or not. */
+const LINKED_MARKER = /\[\[#\^c-t-\d\\?\|[^\]]*\]\]/g;
 
 const REPORT_SOURCES = [
   "#### Sources",
@@ -483,7 +491,7 @@ check("report: the used list's sources are cited where a marker points to them; 
 
 check('report: with "Sources used in the report" off, no markers and no Sources section, whatever the generic More setting says', () => {
   const markdown = convertReport({ "used-sources": false }, { includeMoreSources: true });
-  assert.equal(markdown, REPORT_BODY.replace(/\[\[#\^c-t-\d\|[^\]]*\]\]/g, ""));
+  assert.equal(markdown, REPORT_BODY.replace(LINKED_MARKER, ""));
 });
 
 check("report: browsed-but-not-used and thinking come after the Sources section, in that order, each as a section of its own", () => {
@@ -509,7 +517,7 @@ check("report: browsed-but-not-used and thinking come after the Sources section,
   ].join("\n");
   assert.equal(convertReport({ "unused-sources": true, thinking: true }), `${REPORT_BODY}\n\n${REPORT_SOURCES}\n\n${unused}\n\n${thinking}`);
   assert.equal(convertReport({ thinking: true }), `${REPORT_BODY}\n\n${REPORT_SOURCES}\n\n${thinking}`);
-  assert.equal(convertReport({ "used-sources": false, "unused-sources": true }), `${REPORT_BODY.replace(/\[\[#\^c-t-\d\|[^\]]*\]\]/g, "")}\n\n${unused}`);
+  assert.equal(convertReport({ "used-sources": false, "unused-sources": true }), `${REPORT_BODY.replace(LINKED_MARKER, "")}\n\n${unused}`);
 });
 
 check("report: every citation style writes the report's citations", () => {
@@ -641,6 +649,33 @@ check("buttons: the conversation's button goes before Report whichever is added 
   const closed = geminiPage();
   closed.querySelector(REPORT_PANEL_SELECTOR)!.remove();
   assert.equal(geminiAdapter.findButtonAnchor(closed.querySelector(HISTORY)!, () => true), null);
+});
+
+// ---------------------------------------------------------------------------
+// Tables
+// ---------------------------------------------------------------------------
+
+/** The rows of the first table in `markdown`, each split into its cells at unescaped `|`. */
+function tableCells(markdown: string): string[][] {
+  const rows = markdown.split("\n").filter((line) => line.startsWith("|"));
+  return rows.map((row) => row.split(/(?<!\\)\|/).slice(1, -1).map((cell) => cell.trim()));
+}
+
+check("tables: cells holding paragraphs and citations stay on one row, in every citation style", () => {
+  for (const style of ["linked-citations", "footnotes", "inline-links-and-sources", "sources-only"] as const) {
+    const markdown = convertReport({}, { style });
+    const rows = tableCells(markdown.slice(markdown.indexOf("| Gear |")));
+    assert.equal(rows.length, 4, `${style}: header, divider and two rows`);
+    assert.ok(rows.every((cells) => cells.length === 2), `${style}: every row has two cells: ${JSON.stringify(rows)}`);
+    assert.match(rows[2][1], /^Oil monthly\..*<br>Wipe weekly\.$/, `${style}: the cell's two paragraphs are joined by <br>`);
+  }
+});
+
+check("tables: a linked marker in a table row is escaped on any site, and one outside a table isn't", () => {
+  const reply = '<p>Before <a class="cite" href="https://a.example/one">One</a>.</p><table><thead><tr><th>A</th></tr></thead><tbody><tr><td>In <a class="cite" href="https://a.example/one">One</a></td></tr></tbody></table>';
+  const markdown = convertMessage(toyAdapter(), toyMessage(reply), toyOptions());
+  assert.match(markdown, /^Before\[\[#\^c-t-1\|⁽¹⁾\]\]\.$/m);
+  assert.match(markdown, /^\| In\[\[#\^c-t-1\\\|⁽¹⁾\]\] \|$/m);
 });
 
 // ---------------------------------------------------------------------------

@@ -138,6 +138,32 @@ function thinkingSection(root: Element): HTMLElement | null {
   return content.length ? afterSourcesSection(document, "Thinking", ...content) : null;
 }
 
+/** What separates a table cell's paragraphs in the copy: Markdown tables allow no line breaks, and Obsidian shows `<br>` as one inside a cell. */
+const CELL_LINE_BREAK = "<br>";
+
+/**
+ * Puts each table cell in `root` on one line. Gemini wraps a cell's text in
+ * `<p>` (sometimes more than one), as seen on gemini.google.com on
+ * 2026-10-28; Turndown writes paragraphs on lines of their own, which splits
+ * the row. Each paragraph or `<div>` is unwrapped, with a `<br>` before every
+ * one after the first, and each `<br>` in a cell becomes the same literal.
+ */
+function flattenTableCells(root: Element): void {
+  const document = root.ownerDocument;
+  for (const cell of Array.from(root.querySelectorAll("td, th"))) {
+    cell.querySelectorAll("br").forEach((br) => br.replaceWith(document.createTextNode(CELL_LINE_BREAK)));
+    let blocks = Array.from(cell.querySelectorAll(":scope > p, :scope > div"));
+    // Unwrapping exposes any paragraphs nested a level down, so it repeats until none are left.
+    while (blocks.length) {
+      blocks.forEach((block, index) => {
+        const separator = index > 0 || block.previousSibling?.textContent?.trim() ? [document.createTextNode(CELL_LINE_BREAK)] : [];
+        block.replaceWith(...separator, ...Array.from(block.childNodes));
+      });
+      blocks = Array.from(cell.querySelectorAll(":scope > p, :scope > div"));
+    }
+  }
+}
+
 /**
  * Prepares a copy of the report panel's content for conversion. A report
  * that isn't finished (no end marker or source lists yet) isn't copied. Each
@@ -174,6 +200,7 @@ function preprocessReport(root: HTMLElement, body: Element, context: ConversionC
     marker.replaceWith(link);
   }
   body.querySelectorAll(SOURCES_CAROUSEL_SELECTOR).forEach((carousel) => carousel.remove());
+  flattenTableCells(body);
 
   const sections: HTMLElement[] = [];
   const unusedList = root.querySelector(UNUSED_SOURCES_SELECTOR);
@@ -248,6 +275,7 @@ function preprocessReply(root: HTMLElement): void {
   }
   root.querySelectorAll(PLAN_SELECTOR).forEach((plan) => plan.replaceWith(rewritePlan(plan)));
   root.querySelectorAll(REPORT_CARD_SELECTOR).forEach((card) => card.replaceWith(rewriteReportCard(card)));
+  flattenTableCells(root);
 }
 
 /** Prepares a copy of a panel's or a reply's content, by which of the two it is. */

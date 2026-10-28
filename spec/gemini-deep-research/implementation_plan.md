@@ -212,7 +212,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
 Manual step 3 found the report's tables mangled in Obsidian. The live report's table cells wrap their text in `<p>` and contain citation markers; the fixture's cells were plain text. The user also asked for the report copy to leave out the prompt by default.
 
 #### [MODIFY] `src/core/citations.ts`, `src/sites/gemini.ts`, the fixture and the test script
-- [ ] **TASK-11:** Keep tables intact:
+- [x] **TASK-11:** Keep tables intact:
   - **Paragraphs in cells (Gemini):** in `preprocessReport` and `preprocessReply`, each `td`/`th` has its `<p>` and `<div>` children unwrapped onto one line. Consecutive paragraphs and any `<br>` are separated by a literal `<br>`, which Obsidian shows as a line break inside a cell.
   - **Linked citations in table rows (every site):**
     - In `renderCitations`, a linked-citation marker on a line that is a table row (starting with `|`) is written `[[#^id\|⁽n⁾]]`. Otherwise its `|` ends the cell. Obsidian reads the escaped form as the same link.
