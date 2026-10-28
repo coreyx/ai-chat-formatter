@@ -131,7 +131,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
   - **Pauses:** `min + random() × (max − min)`, rounded to whole milliseconds.
 
 #### [MODIFY] `src/sites/duckduckgo.ts`
-- [ ] **TASK-6:** Declare the options and the choice, and hook up the automation.
+- [x] **TASK-6:** Declare the options and the choice, and hook up the automation.
   - **`auto-more`:** "Press More automatically", off by default. Description: "Expands the answer and presses More for you, so the extended answer is written without a click. DuckDuckGo writes it on every search where Search Assist answers."
   - **`auto-explore-more`:** "Expand Explore More questions automatically", off by default. Description: "Opens each Explore More question once Explore More appears, one at a time, pausing between them. A question you close stays closed."
   - **The `automation-pacing` choice:** "Click pacing", default `unhurried`, with `requiresAny: ["auto-more", "auto-explore-more"]`. Its values:

@@ -12,6 +12,8 @@ import { ContentController, type ControllerEnvironment } from "../src/content/co
 import { buildDefaultSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter, SiteAutomation } from "../src/core/types";
 import { automateSearchAssist } from "../src/sites/duckduckgo-automation";
+import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
+import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -298,6 +300,58 @@ await checkAsync("hidden page: nothing happens until it's showing; the first pau
   await settle();
   assert.equal(hiddenPolls, 2);
   assert.deepEqual(page.log.slice(0, 4), ["sleep 500", "sleep 500", "sleep 1750", "click q2"]);
+});
+
+// ---------------------------------------------------------------------------
+// Through the controller
+// ---------------------------------------------------------------------------
+
+/**
+ * A controller with Search Assist's adapter on an automation page, with its
+ * site settings edited by `edit`, the prompt left out, and the page's fake
+ * clock. Records clipboard writes.
+ */
+function startSearchAssist(edit: (settings: Settings) => void) {
+  const page = automationPage();
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  settings.includePrompt = false;
+  edit(settings);
+  const written: string[] = [];
+  const controller = new ContentController(duckDuckGoAdapter, settings, {
+    document: page.document,
+    writeClipboard: async (text) => void written.push(text),
+    requestFrame: (callback) => callback(),
+    sleep: page.automation.sleep,
+    random: page.automation.random,
+    isPageVisible: () => true,
+  });
+  controller.start();
+  return { ...page, written };
+}
+
+await checkAsync("controller: with the default settings, Search Assist clicks nothing", async () => {
+  const page = startSearchAssist(() => {});
+  await settle();
+  assert.deepEqual(page.log, []);
+});
+
+await checkAsync("controller: with the option on, the questions open, and Copy as Markdown copies every answer under Explore More", async () => {
+  const page = startSearchAssist((settings) => (settings.sites.duckduckgo.options["auto-explore-more"] = true));
+  await settle();
+  assert.deepEqual(page.log.filter((entry) => entry.startsWith("click")), ["click q2", "click q3"]);
+  page.afterMore.querySelector<HTMLButtonElement>(".acf-copy-button")!.click();
+  await settle();
+  assert.equal(page.written.length, 1);
+  assert.match(
+    page.written[0],
+    /### Explore More\n\n#### What size widget fits a pocket gadget\?\n\n[^\n]+\n\n#### How long does a widget last\?\n\nAnswer 2\.\n\n#### Can widgets be recycled\?\n\nAnswer 3\.$/,
+  );
+});
+
+await checkAsync("controller: with Press More on, a collapsed answer is expanded and More pressed, once", async () => {
+  const page = startSearchAssist((settings) => (settings.sites.duckduckgo.options["auto-more"] = true));
+  await settle();
+  assert.deepEqual(page.log.filter((entry) => entry.startsWith("click")), ["click expand", "click more"]);
 });
 
 // ---------------------------------------------------------------------------

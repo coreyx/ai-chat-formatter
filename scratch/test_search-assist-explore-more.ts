@@ -302,7 +302,7 @@ check("escaping: inside a table cell the size's | is escaped, so the cell doesn'
 
 check("settings: Explore More and inline chips start on, More Search Results links off; Copilot and Duck.ai have no options", () => {
   const defaults = buildDefaultSettings(SITE_ADAPTERS);
-  assert.deepEqual(defaults.sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": true });
+  assert.deepEqual(defaults.sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": true, "auto-more": false, "auto-explore-more": false });
   assert.deepEqual(defaults.sites.copilot.options, {});
   assert.deepEqual(defaults.sites.duckai.options, {});
 });
@@ -310,7 +310,7 @@ check("settings: Explore More and inline chips start on, More Search Results lin
 check("settings: stored values are kept, unknown or invalid ones dropped, and 0.5.0 settings get the defaults", () => {
   const defaults = buildDefaultSettings(SITE_ADAPTERS);
   const merged = mergeSettings({ sites: { duckduckgo: { options: { "inline-chips": false, "explore-more": "yes", removed: true } } } }, defaults);
-  assert.deepEqual(merged.sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": false });
+  assert.deepEqual(merged.sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": false, "auto-more": false, "auto-explore-more": false });
   const older = mergeSettings({ sites: { duckduckgo: { enabled: true, rules: {} } } }, defaults);
   assert.deepEqual(older.sites.duckduckgo.options, defaults.sites.duckduckgo.options);
 });
@@ -330,17 +330,19 @@ function optionsPage(settings: Settings) {
   return { document, form, input, changes };
 }
 
-check("options page: Search Assist's three options, after the override and before More sources, showing the stored values", () => {
+check("options page: Search Assist's options, after the override and before More sources, showing the stored values", () => {
   const settings = buildDefaultSettings(SITE_ADAPTERS);
   settings.sites.duckduckgo.options["explore-more-search-links"] = true;
   const page = optionsPage(settings);
   const names = Array.from(page.document.querySelectorAll<HTMLInputElement>('section[data-site="duckduckgo"] fieldset.site input')).map((input) => input.name);
-  assert.deepEqual(names.slice(0, 6), [
+  assert.deepEqual(names.slice(0, 8), [
     "duckduckgo.showCopyButton",
     "duckduckgo.overrideNativeCopy",
     "duckduckgo.options.explore-more",
     "duckduckgo.options.explore-more-search-links",
     "duckduckgo.options.inline-chips",
+    "duckduckgo.options.auto-more",
+    "duckduckgo.options.auto-explore-more",
     "duckduckgo.includeMoreSources",
   ]);
   assert.deepEqual(
@@ -354,7 +356,7 @@ check("options page: a change is reported in the settings", () => {
   const page = optionsPage(buildDefaultSettings(SITE_ADAPTERS));
   page.input("duckduckgo.options.inline-chips").click();
   assert.equal(page.changes.length, 1);
-  assert.deepEqual(page.changes[0].sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": false });
+  assert.deepEqual(page.changes[0].sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": false, "auto-more": false, "auto-explore-more": false });
 });
 
 check("options page: More sources is greyed out while inline chips are on, and says why", () => {

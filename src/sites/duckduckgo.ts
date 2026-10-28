@@ -12,6 +12,7 @@ import {
   QUESTION_BUTTON_SELECTOR,
   WRITING_PILL_SELECTOR,
 } from "./duckduckgo-markup";
+import { AUTO_EXPLORE_MORE_OPTION, AUTO_MORE_OPTION, automateSearchAssist, PACING_CHOICE } from "./duckduckgo-automation";
 import { rewriteStreamdownCodeBlocks, rewriteStreamdownStrong } from "./streamdown";
 
 /*
@@ -338,6 +339,33 @@ export const duckDuckGoAdapter: SiteAdapter = {
       defaultEnabled: true,
       replacesSourcesSection: true,
     },
+    {
+      id: AUTO_MORE_OPTION,
+      name: "Press More automatically",
+      description: "Expands the answer and presses More for you, so the extended answer is written without a click. DuckDuckGo writes it on every search where Search Assist answers.",
+      defaultEnabled: false,
+    },
+    {
+      id: AUTO_EXPLORE_MORE_OPTION,
+      name: "Expand Explore More questions automatically",
+      description: "Opens each Explore More question once Explore More appears, one at a time, pausing between them. A question you close stays closed.",
+      defaultEnabled: false,
+    },
   ],
+  choices: [
+    {
+      id: PACING_CHOICE,
+      name: "Click pacing",
+      description: "How the automatic clicks are spaced. Each pause is random, within the range shown.",
+      defaultValue: "unhurried",
+      values: [
+        { value: "unhurried", label: "Unhurried: pauses of 1.5–4 s, waiting for each answer" },
+        { value: "brisk", label: "Brisk: pauses of 0.5–1.5 s, waiting for each answer" },
+        { value: "random", label: "Random: pauses of 0.5–2 s, without waiting for answers" },
+      ],
+      requiresAny: [AUTO_MORE_OPTION, AUTO_EXPLORE_MORE_OPTION],
+    },
+  ],
+  automate: automateSearchAssist,
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };
