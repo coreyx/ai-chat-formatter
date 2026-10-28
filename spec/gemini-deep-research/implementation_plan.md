@@ -143,7 +143,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
 ### Gemini
 
 #### [NEW] `src/sites/gemini-markup.ts`
-- [ ] **TASK-6:** The selectors from the inspection, each with a comment saying where it comes from, and the readers shared by the report and conversation copies:
+- [x] **TASK-6:** The selectors from the inspection, each with a comment saying where it comes from, and the readers shared by the report and conversation copies:
   - **`readQueryText(userQuery): string`:** the prompt as plain text.
     - It works on a clone, without the visually hidden label.
     - Each `p.query-text-line` is a line, and one holding only a `<br>` is a paragraph break.

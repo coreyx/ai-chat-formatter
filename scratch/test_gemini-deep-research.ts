@@ -14,6 +14,17 @@ import { ContentController } from "../src/content/controller";
 import { convertConversation, convertMessage, type ConversionOptions } from "../src/core/convert";
 import { buildDefaultSettings, type Settings } from "../src/core/settings";
 import { renderOptions } from "../src/options/options";
+import {
+  findReportTurn,
+  findResearchRequest,
+  PANEL_TITLE_SELECTOR,
+  PLAN_SELECTOR,
+  readQueryText,
+  readSourceList,
+  REPORT_PANEL_SELECTOR,
+  UNUSED_SOURCES_SELECTOR,
+  USED_SOURCES_SELECTOR,
+} from "../src/sites/gemini-markup";
 import { AFTER_SOURCES_ATTRIBUTE, type SiteAdapter, type SourceReference } from "../src/core/types";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
@@ -308,6 +319,73 @@ check("styles: the built style sheet shapes labelled buttons as pills with their
   const labelled = rule(".acf-copy-button.acf-labelled");
   for (const declaration of ["width: auto", "gap: 6px", "padding: 0 10px 0 6px", "border-radius: 16px", "font: inherit"]) assert.ok(labelled.includes(declaration), declaration);
   assert.ok(rule(".acf-button-text").includes("font-size: 14px"));
+});
+
+// ---------------------------------------------------------------------------
+// Gemini's markup readers
+// ---------------------------------------------------------------------------
+
+const FIXTURE = readFileSync("scratch/fixtures/gemini-deep-research.html", "utf8");
+const GEMINI_URL = "https://gemini.google.com/u/1/app/0123456789abcdef";
+
+/** A fresh copy of the fixture page. */
+function geminiPage(): Document {
+  return new JSDOM(FIXTURE, { url: GEMINI_URL }).window.document;
+}
+
+check("markup: a prompt reads as typed, with its blank line and numbered list, and without the screen-reader label", () => {
+  const document = geminiPage();
+  assert.equal(
+    readQueryText(document.querySelector("#turn-request user-query")!),
+    "Please research how to keep widgets running smoothly.\nWrite a detailed report.\n\n1. Which oils suit widget gears?\n2. How often should they be serviced?",
+  );
+  assert.equal(readQueryText(document.querySelector("#turn-start user-query")!), "Start research");
+});
+
+check("markup: source lists and browsing steps read as URL, title and domain, in order", () => {
+  const document = geminiPage();
+  assert.deepEqual(readSourceList(document.querySelector(USED_SOURCES_SELECTOR)!), [
+    { url: "https://docs.widget.example/care", title: "Widget care guide", domain: "docs.widget.example" },
+    { url: "https://blog.gears.example/oil", title: "Oiling [gears] properly", domain: "blog.gears.example" },
+    { url: "https://forum.widget.example/t/42", title: "Squeaky widgets thread", domain: "forum.widget.example" },
+    { url: "https://lab.example/report", title: "Widget wear study", domain: "lab.example" },
+  ]);
+  assert.deepEqual(
+    readSourceList(document.querySelector(UNUSED_SOURCES_SELECTOR)!).map((source) => source.url),
+    ["https://shop.example/widgets", "https://news.example/widgets"],
+  );
+  assert.deepEqual(readSourceList(document.querySelector("browse-chip-list")!), [
+    { url: "https://docs.widget.example/care", title: "Widget care guide", domain: "docs.widget.example" },
+    { url: "https://shop.example/widgets", title: "Widget shop", domain: "shop.example" },
+  ]);
+  const bare = new JSDOM('<div><a href="https://www.plain.example/x">x</a><a href="javascript:void(0)">no</a></div>').window.document.body;
+  assert.deepEqual(readSourceList(bare), [{ url: "https://www.plain.example/x", title: "", domain: "plain.example" }]);
+});
+
+check("markup: the report's turn is the card with the panel's title, or the last card when none matches", () => {
+  const document = geminiPage();
+  const panel = document.querySelector(REPORT_PANEL_SELECTOR)!;
+  assert.equal(findReportTurn(panel)?.id, "turn-start");
+  panel.querySelector(PANEL_TITLE_SELECTOR)!.textContent = "Another Report";
+  assert.equal(findReportTurn(panel)?.id, "turn-start");
+});
+
+check("markup: the research request is the earliest plan turn before the report, past a revised plan and other chat", () => {
+  const document = geminiPage();
+  const request = document.getElementById("turn-request")!;
+  const reportTurn = document.getElementById("turn-start")!;
+  assert.equal(findResearchRequest(reportTurn), request.querySelector("user-query"));
+  // An earlier, unrelated turn, then a revision of the plan ("Edit plan") between the request and the report.
+  const chat = request.cloneNode(true) as Element;
+  chat.id = "turn-chat";
+  chat.querySelector(PLAN_SELECTOR)!.remove();
+  request.before(chat);
+  const revision = request.cloneNode(true) as Element;
+  revision.id = "turn-revision";
+  request.after(revision);
+  assert.equal(findResearchRequest(reportTurn), request.querySelector("user-query"));
+  for (const turn of [request, revision]) turn.querySelector(PLAN_SELECTOR)!.remove();
+  assert.equal(findResearchRequest(reportTurn), null);
 });
 
 // ---------------------------------------------------------------------------
