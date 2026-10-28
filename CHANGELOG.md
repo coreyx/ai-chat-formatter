@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **More Search Results links**, off by default: with **Include More Search Results links** on, each expanded Explore More answer ends with its link to a DuckDuckGo search for that question. Greyed out while Explore More is off.
 - **Inline source chips on Search Assist**, on by default: each chip stays where it is in the text, written as Search Assist shows it, `[![|16](favicon) name](url)` (`|16` is Obsidian's image-size syntax), with no Sources section. Turn off **Keep Search Assist's inline source chips** for the numbered citations and Sources section, as in 0.5.0.
 - Site adapters can declare options of their own (`SiteAdapter.options`), stored per site and shown in the site's section of the options page.
+- **Press More automatically** on Search Assist, off by default: expands a collapsed answer and presses **More**, once per answer.
+- **Expand Explore More questions automatically** on Search Assist, off by default: once More has finished, opens each Explore More question in turn. A question you close stays closed, and one you've opened is left alone.
+- **Click pacing** for those clicks: **Unhurried** (the default; random pauses of 1.5–4 s, waiting for each answer), **Brisk** (0.5–1.5 s, waiting for each answer) or **Random** (0.5–2 s, without waiting). Nothing is clicked while the tab is in the background.
+- Site adapters can declare drop-down settings (`SiteAdapter.choices`) and act on the page for the user (`SiteAdapter.automate`).
 
 ### Changed
 

@@ -55,6 +55,23 @@ Search Assist answers only some searches. Where it does, its answer gets the **C
 - **More Search Results**: each Explore More answer's link to a DuckDuckGo search for that question is left out by default. With **Include More Search Results links** on, it ends the answer, on a line of its own.
 - The toolbar, the More button and the "Ask Duck.ai" box are left out.
 
+#### Clicking for you (optional)
+
+Two options, both off by default, press Search Assist's buttons so a copy has everything without your clicks:
+
+- **Press More automatically** expands a collapsed answer and presses **More**, once per answer. DuckDuckGo then writes an extended answer on every search where Search Assist answers, whether or not you copy it.
+- **Expand Explore More questions automatically** opens each Explore More question in turn once More has finished. A question you close stays closed, and one you've opened yourself is left alone. Each question opened loads its own answer from DuckDuckGo.
+
+The clicks are the page's own buttons, one at a time, with a random pause before each, so they come at a person's pace rather than all at once. **Click pacing** sets the pauses:
+
+| Pacing | Before the first click | Waits for each answer | Between clicks |
+|---|---|---|---|
+| **Unhurried** (default) | 1–2.5 s | Yes | 1.5–4 s |
+| **Brisk** | 0.5–1.5 s | Yes | 0.5–1.5 s |
+| **Random** | 0.5–2 s | No | 0.5–2 s |
+
+Nothing is clicked while the tab is in the background; it starts once you switch to it. Turning an option off stops it before its next click.
+
 ## Citation styles
 
 Choose one on the options page. Each ends with a **Sources** section laid out like Copilot's Sources panel: **Citations**, then **More** (the sources the site lists but the reply doesn't cite). For a reply citing the Widget release notes, with one More source:
@@ -149,6 +166,8 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Include expanded Explore More answers**: on by default.
   - **Include More Search Results links**: off by default, and greyed out while Explore More is off.
   - **Keep Search Assist's inline source chips**: on by default.
+  - **Press More automatically** and **Expand Explore More questions automatically**: off by default (see [Clicking for you](#clicking-for-you-optional)).
+  - **Click pacing**: **Unhurried** (the default), **Brisk** or **Random**. Greyed out while both automatic options are off.
 
 ## Installation
 
@@ -246,6 +265,8 @@ ai-chat-formatter/
    - optionally, ways to read each reply's full source list: `readReferences` (synchronous, used by both buttons), `readReferencesSlowly` (asynchronous fallback, used by Copy as Markdown only), and `hasUntitledCitations` (whether the fallback is worth running when More sources is off),
    - optionally, `moreSources`: whether the More sources option starts on for this site, and how the options page describes it,
    - optionally, `options`: switches only this site has, stored per site and shown in its section of the options page. Each has a default, and can need another option to be on (`requires`) or take the place of the Sources section (`replacesSourcesSection`). The adapter reads them with `context.isOptionEnabled(id)`, in its Turndown rules or its `preprocess` step,
+   - optionally, `choices`: drop-down settings only this site has, stored per site, each with its values, a default, and the options it serves (`requiresAny`), which grey it out while none is on,
+   - optionally, `automate`: acts on the page for the user, called for every message on each check of the page while the site is on. It gets the current options and choices, plus `sleep`, `random` and `isPageVisible`, and keeps its own record of what it has done,
    - optionally, a `pageScript`: the name of a script in `src/page/` that the manifest runs in the page's own JavaScript world, for data only the page can see.
 3. Add it to `SITE_ADAPTERS` in `src/sites/index.ts`. The build adds its match patterns and page script to the manifest, and the options page gives it a section automatically.
 4. Save a trimmed copy of the site's markup under `scratch/fixtures/` and add a `scratch/test_<name>.ts` script with checks for it; `pnpm test` runs it.
