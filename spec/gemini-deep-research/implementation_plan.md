@@ -98,7 +98,7 @@ The test script, `scratch/test_gemini-deep-research.ts`, is started in TASK-1 an
 ### Core
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Extend the adapter contract, all optional, so existing adapters compile unchanged:
+- [x] **TASK-1:** Extend the adapter contract, all optional, so existing adapters compile unchanged:
   - **`SiteOption.governsMoreSources?: boolean`:** while this option is on, the More list is included. The generic `includeMoreSources` setting isn't used, and the options page hides it.
   - **`SiteAdapter.nativeCopyButtonSelector`** becomes optional. Without it, the site has no Copy button of its own to override.
   - **`findButtonAnchor(message, isOptionEnabled)`:** gains the site's option lookup (resolved as in `convertMessage`), so a site can hide a button while an option is off by returning null. A returned anchor may be outside `message`.

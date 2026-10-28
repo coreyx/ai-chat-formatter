@@ -132,7 +132,7 @@ await checkAsync("controller: the still-writing message goes below the Copy as M
 
 await checkAsync("controller: with the override on, 'Copied as Markdown' goes next to the site's own Copy button", async () => {
   const page = startController(true);
-  const copy = page.document.getElementById("collapsed")!.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!;
+  const copy = page.document.getElementById("collapsed")!.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector!)!;
   layOut(copy, 640, 120, 32, 32);
   copy.click();
   await flush();

@@ -456,7 +456,7 @@ await checkAsync("controller: Copy as Markdown starts with the prompt heading, a
 
 await checkAsync("controller: with the override on, Copilot's own Copy includes the prompt too", async () => {
   const page = startController((settings) => (settings.sites.copilot.overrideNativeCopy = true));
-  page.document.querySelector<HTMLButtonElement>(copilotAdapter.nativeCopyButtonSelector)!.click();
+  page.document.querySelector<HTMLButtonElement>(copilotAdapter.nativeCopyButtonSelector!)!.click();
   await flush();
   assert.equal(page.written.length, 1);
   assert.ok(page.written[0].startsWith(`${COPILOT_PROMPT}\n\n`));

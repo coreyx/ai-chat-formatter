@@ -143,7 +143,7 @@ check("messages: each Search Assist module is found, and the organic results are
 check("placement: directly before Copy in the toolbar; none without a Copy button", () => {
   const page = searchPage();
   const message = module(page, "collapsed");
-  const copy = message.querySelector(duckDuckGoAdapter.nativeCopyButtonSelector)!;
+  const copy = message.querySelector(duckDuckGoAdapter.nativeCopyButtonSelector!)!;
   assert.deepEqual(duckDuckGoAdapter.findButtonAnchor(message), { parent: copy.parentElement, before: copy });
   copy.remove();
   assert.equal(duckDuckGoAdapter.findButtonAnchor(message), null);
@@ -318,7 +318,7 @@ await checkAsync("controller: each module gets a Copy as Markdown button before 
   const page = startController(false);
   const buttons = Array.from(page.document.querySelectorAll<HTMLButtonElement>(".acf-copy-button"));
   assert.equal(buttons.length, 3);
-  assert.equal(buttons[0].nextElementSibling, module(page.document, "collapsed").querySelector(duckDuckGoAdapter.nativeCopyButtonSelector));
+  assert.equal(buttons[0].nextElementSibling, module(page.document, "collapsed").querySelector(duckDuckGoAdapter.nativeCopyButtonSelector!));
   buttons[0].click();
   await flush();
   assert.deepEqual(page.written, [COLLAPSED_INLINE]);
@@ -335,7 +335,7 @@ await checkAsync("controller: Copy as Markdown on a module that's still writing 
 
 await checkAsync("controller: with the override on, Search Assist's own Copy writes the same Markdown", async () => {
   const page = startController(true);
-  module(page.document, "collapsed").querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!.click();
+  module(page.document, "collapsed").querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector!)!.click();
   await flush();
   assert.deepEqual(page.written, [COLLAPSED_INLINE]);
   assert.deepEqual(page.siteClicks, []);
@@ -346,7 +346,7 @@ await checkAsync("controller: with the override on, a module that's still writin
   const warn = console.warn;
   console.warn = () => {};
   try {
-    module(page.document, "writing").querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!.click();
+    module(page.document, "writing").querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector!)!.click();
   } finally {
     console.warn = warn;
   }

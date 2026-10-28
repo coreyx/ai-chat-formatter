@@ -427,7 +427,7 @@ await checkAsync("controller: Copy as Markdown follows the stored options", asyn
 
 await checkAsync("controller: with the override on, Search Assist's own Copy follows them too", async () => {
   const page = startController({ "explore-more": false }, true);
-  page.afterMore.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!.click();
+  page.afterMore.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector!)!.click();
   await flush();
   assert.equal(page.written.length, 1);
   assert.ok(page.written[0].endsWith(`The guide has more detail. ${WIDGET_CHIP}`), page.written[0]);

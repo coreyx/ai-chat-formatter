@@ -314,7 +314,7 @@ check("copilot: code viewer labels map to fence languages", () => {
 check("copilot: the injected button anchors directly before the native Copy button", () => {
   const reply = copilotReply();
   const anchor = copilotAdapter.findButtonAnchor(reply)!;
-  const nativeCopy = reply.querySelector(copilotAdapter.nativeCopyButtonSelector)!;
+  const nativeCopy = reply.querySelector(copilotAdapter.nativeCopyButtonSelector!)!;
   assert.ok(nativeCopy, "the native Copy button is found");
   assert.equal(anchor.parent, nativeCopy.parentElement);
   assert.equal(anchor.before, nativeCopy);
@@ -485,7 +485,7 @@ await checkAsync("controller: a reply that can't be converted shows a toast and 
 
 await checkAsync("controller: native Copy is left alone while the override is off", async () => {
   const { document, written, siteClicks } = controllerOnFixture();
-  (document.querySelector(copilotAdapter.nativeCopyButtonSelector) as HTMLButtonElement).click();
+  (document.querySelector(copilotAdapter.nativeCopyButtonSelector!) as HTMLButtonElement).click();
   await flush();
   assert.deepEqual(written, []);
   assert.deepEqual(siteClicks, ["native copy ran"]);
@@ -493,7 +493,7 @@ await checkAsync("controller: native Copy is left alone while the override is of
 
 await checkAsync("controller: with the override on, native Copy writes the Markdown instead", async () => {
   const { document, written, siteClicks } = controllerOnFixture((settings) => (settings.sites.copilot.overrideNativeCopy = true));
-  (document.querySelector(copilotAdapter.nativeCopyButtonSelector) as HTMLButtonElement).click();
+  (document.querySelector(copilotAdapter.nativeCopyButtonSelector!) as HTMLButtonElement).click();
   await flush();
   assert.equal(written.length, 1);
   assert.ok(written[0].includes("1. [Widget 5.0.0 (Current)]"));
@@ -506,7 +506,7 @@ await checkAsync("controller: with the override on, a failed conversion falls ba
   const warn = console.warn;
   console.warn = () => {};
   try {
-    (document.querySelector(copilotAdapter.nativeCopyButtonSelector) as HTMLButtonElement).click();
+    (document.querySelector(copilotAdapter.nativeCopyButtonSelector!) as HTMLButtonElement).click();
   } finally {
     console.warn = warn;
   }

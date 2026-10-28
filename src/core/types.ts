@@ -92,6 +92,13 @@ export interface SiteOption {
    * stored value, and the options page greys it out.
    */
   requires?: string;
+  /**
+   * Whether this option decides if the More list is included, in place of the
+   * generic "Include "More" sources" setting, which the options page then
+   * doesn't show. For a site whose More list is part of a section it names
+   * itself (Gemini's "Sources used in the report").
+   */
+  governsMoreSources?: boolean;
 }
 
 /**
@@ -177,6 +184,27 @@ export interface ButtonAnchor {
   before: Node | null;
 }
 
+/** How an injected button names itself: `title` for its tooltip and accessible name, and `text` as a visible label beside the icon. */
+export interface ButtonLabel {
+  title: string;
+  text?: string;
+}
+
+/** One prompt and its reply, for a site that copies a whole conversation (see {@link SiteAdapter.readTurns}). */
+export interface ConversationTurn {
+  /** The prompt as plain text, as {@link SiteAdapter.readPrompt} returns it, or null when the turn shows none. */
+  prompt: string | null;
+  /** The reply, converted like a message on its own. */
+  reply: Element;
+}
+
+/**
+ * Marks an element that an adapter's `preprocess` wants written after the
+ * Sources section rather than in the body, such as a section the site shows
+ * below its sources.
+ */
+export const AFTER_SOURCES_ATTRIBUTE = "data-acf-after-sources";
+
 /**
  * Everything the extension needs to know about one chat site. Each site is a
  * separate module, so supporting a new site never touches the others or the
@@ -193,10 +221,24 @@ export interface SiteAdapter {
   messageSelector: string;
   /** Selects the reply body inside a message: the part converted to Markdown. */
   contentSelector: string;
-  /** Selects the site's own Copy button inside a message, for the optional override. */
-  nativeCopyButtonSelector: string;
-  /** Finds where the "Copy as Markdown" button goes for `message`, or null when the message has no toolbar yet (still streaming). */
-  findButtonAnchor(message: Element): ButtonAnchor | null;
+  /**
+   * Selects the site's own Copy button inside a message, for the optional
+   * override. Absent when the site has no Copy button the override can stand
+   * in for; the options page then doesn't offer it.
+   */
+  nativeCopyButtonSelector?: string;
+  /**
+   * Finds where the "Copy as Markdown" button goes for `message`, or null when
+   * the message has no toolbar yet (still streaming) or shouldn't have a
+   * button. The anchor may be outside `message`. `isOptionEnabled` reads the
+   * adapter's options as a copy does, so a site can hide a button while one is
+   * off; absent, every option takes its default.
+   */
+  findButtonAnchor(message: Element, isOptionEnabled?: (id: string) => boolean): ButtonAnchor | null;
+  /** How `message`'s button names itself. Absent means "Copy as Markdown", without a visible label. */
+  buttonLabel?(message: Element): ButtonLabel;
+  /** The options page's hint for the button setting, for a site whose button isn't next to each reply's own Copy. */
+  copyButtonDescription?: string;
   /** Page chrome inside the reply body (buttons, labels, live regions) removed before conversion. */
   stripSelectors: string[];
   /**
@@ -237,6 +279,12 @@ export interface SiteAdapter {
    * include it.
    */
   readPrompt?(message: Element): string | null;
+  /**
+   * Splits `message` into turns copied one after another, each reply with its
+   * own prompt, for a message that is a whole conversation. Null means
+   * `message` is copied as a single reply.
+   */
+  readTurns?(message: Element): ConversationTurn[] | null;
   /**
    * How this site's "More sources" option starts out and how the options page
    * describes it, since each site's uncited sources come from a different

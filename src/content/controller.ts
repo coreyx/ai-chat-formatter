@@ -242,9 +242,10 @@ export class ContentController {
    * slower one couldn't finish before the site's handler runs.
    */
   private readonly onNativeCopyClick = (event: Event): void => {
-    if (!this.activeSiteSettings?.overrideNativeCopy) return;
+    const selector = this.adapter.nativeCopyButtonSelector;
+    if (!selector || !this.activeSiteSettings?.overrideNativeCopy) return;
     const target = event.target as Element | null;
-    const nativeButton = target?.closest?.(this.adapter.nativeCopyButtonSelector);
+    const nativeButton = target?.closest?.(selector);
     const message = nativeButton?.closest(this.adapter.messageSelector);
     if (!message) return;
 

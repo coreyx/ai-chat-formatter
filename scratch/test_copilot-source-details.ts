@@ -471,7 +471,7 @@ await checkAsync("controller: no fallback when it couldn't add anything", async 
 
 await checkAsync("controller: the native override uses only the quick read", async () => {
   const page = stubbedController(null, (settings) => (settings.sites.copilot.overrideNativeCopy = true));
-  page.document.querySelector<HTMLButtonElement>(copilotAdapter.nativeCopyButtonSelector)!.click();
+  page.document.querySelector<HTMLButtonElement>(copilotAdapter.nativeCopyButtonSelector!)!.click();
   await flush();
   assert.deepEqual(page.calls, { quick: 1, slow: 0 });
   assert.equal(page.written.length, 1);

@@ -309,7 +309,7 @@ await checkAsync("controller: Copy as Markdown copies with the headings shifted 
 
 await checkAsync("controller: with the override on, the site's own Copy shifts the headings too", async () => {
   const page = startController(true);
-  page.afterMore.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector)!.click();
+  page.afterMore.querySelector<HTMLButtonElement>(duckDuckGoAdapter.nativeCopyButtonSelector!)!.click();
   await flush();
   assert.equal(page.written.length, 1);
   assert.deepEqual(headingsOf(page.written[0]), SHIFTED_HEADINGS);

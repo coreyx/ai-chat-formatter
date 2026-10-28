@@ -278,11 +278,11 @@ check("fallback: with no page script and no card for its domain, a popup chip co
 check("placement: directly after Copy's wrapper in the toolbar row; none without a Copy button", () => {
   const page = duckAiPage();
   const [first, second] = replies(page);
-  const wrapper = first.querySelector(duckAiAdapter.nativeCopyButtonSelector)!.parentElement!;
+  const wrapper = first.querySelector(duckAiAdapter.nativeCopyButtonSelector!)!.parentElement!;
   const anchor = duckAiAdapter.findButtonAnchor(first)!;
   assert.equal(anchor.parent, wrapper.parentElement);
   assert.equal(anchor.before, wrapper.nextSibling);
-  second.querySelector(duckAiAdapter.nativeCopyButtonSelector)!.remove();
+  second.querySelector(duckAiAdapter.nativeCopyButtonSelector!)!.remove();
   assert.equal(duckAiAdapter.findButtonAnchor(second), null);
 });
 
@@ -309,7 +309,7 @@ await checkAsync("controller: each reply gets a Copy as Markdown button after Co
   const page = startController(false);
   const buttons = Array.from(page.document.querySelectorAll<HTMLButtonElement>(".acf-copy-button"));
   assert.equal(buttons.length, 2);
-  assert.ok(buttons[0].previousElementSibling!.contains(page.document.querySelector(duckAiAdapter.nativeCopyButtonSelector)));
+  assert.ok(buttons[0].previousElementSibling!.contains(page.document.querySelector(duckAiAdapter.nativeCopyButtonSelector!)));
   buttons[0].click();
   await flush();
   assert.equal(withoutToken(page.written[0]), withoutToken(FIRST_REPLY));
@@ -317,7 +317,7 @@ await checkAsync("controller: each reply gets a Copy as Markdown button after Co
 
 await checkAsync("controller: with the override on, Duck.ai's own Copy writes the same Markdown", async () => {
   const page = startController(true);
-  page.document.querySelector<HTMLButtonElement>(duckAiAdapter.nativeCopyButtonSelector)!.click();
+  page.document.querySelector<HTMLButtonElement>(duckAiAdapter.nativeCopyButtonSelector!)!.click();
   await flush();
   assert.equal(page.written.length, 1);
   assert.equal(withoutToken(page.written[0]), withoutToken(FIRST_REPLY));
