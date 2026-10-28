@@ -2,7 +2,7 @@
 
 A Chrome extension (it also runs in Edge and Brave) that copies replies from AI chat sites as clean Markdown, citations included, ready to paste into Obsidian.
 
-It adds a **Copy as Markdown** button to every reply. If you prefer, it can also take over the site's own Copy button. It supports Microsoft Copilot, Duck.ai and DuckDuckGo's Search Assist; each site is a separate adapter, so more can be added.
+It adds a **Copy as Markdown** button to every reply. If you prefer, it can also take over the site's own Copy button. It supports Microsoft Copilot, Duck.ai, DuckDuckGo's Search Assist and Gemini Deep Research; each site is a separate adapter, so more can be added.
 
 ## Why
 
@@ -35,6 +35,7 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 | Microsoft Copilot | `copilot.microsoft.com`, `copilot.com` |
 | Duck.ai | `duck.ai` (Duck.ai opened from DuckDuckGo, `duckduckgo.com/?ia=chat`, redirects there) |
 | DuckDuckGo Search Assist | `duckduckgo.com` search results |
+| Gemini Deep Research | `gemini.google.com` Deep Research reports and their conversations |
 
 Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different markup, and isn't supported yet.
 
@@ -71,6 +72,25 @@ The clicks are the page's own buttons, one at a time, with a random pause before
 | **Random** | 0.5–2 s | No | 0.5–2 s |
 
 Nothing is clicked while the tab is in the background; it starts once you switch to it. Turning an option off stops it before its next click.
+
+### Gemini Deep Research
+
+A finished Deep Research report opens in a panel beside the chat. Its toolbar gets two buttons, before **Share & Export**:
+
+- **Report** copies the open report. The prompt is your research request, not the "Start research" that followed the plan.
+  - **Citations:** the report's citation markers become citations in your citation style, titled from **Sources used in the report**.
+  - **More:** the sources Gemini used without citing them go under **More**.
+  - **Tables and code blocks** come through as on the other sites.
+- **Conversation** copies the whole left pane: each prompt with Gemini's reply below it, in order.
+  - **The research plan** becomes a numbered list of its steps, each with its description.
+  - **The card that opens the report** becomes a line naming it: `Deep Research report: *Title*`.
+  - **Prompts:** every prompt is included, even with **Copy the prompt with the response** off.
+
+Two options add sections after the Sources section, in this order:
+- **Include "Sources browsed but not used":** `## Sources browsed but not used`, listing the pages Gemini looked at but didn't use.
+- **Include "Show thinking":** `## Thinking`, with each of Gemini's research steps (its heading in bold, then its text) and the pages each browsing step visited.
+
+Gemini's own **Copy contents** is in the **Share & Export** menu, outside the report. The extension doesn't take it over, so there's no override setting for Gemini.
 
 ## Citation styles
 
@@ -159,8 +179,8 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
 - Per site:
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
-  - **Use for _site_'s own Copy button**: off by default.
-  - **Include "More" sources**: on by default, except for Search Assist. Greyed out for Search Assist while its inline chips are on, since there's no Sources section.
+  - **Use for _site_'s own Copy button**: off by default. Not offered for Gemini.
+  - **Include "More" sources**: on by default, except for Search Assist. Greyed out for Search Assist while its inline chips are on, since there's no Sources section. Not offered for Gemini, where **Include "Sources used in the report"** covers it.
   - **Formatting rules**: one switch per clean-up rule.
 - Search Assist only (see [Search Assist](#search-assist)):
   - **Include expanded Explore More answers**: on by default.
@@ -168,6 +188,11 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Keep Search Assist's inline source chips**: on by default.
   - **Press More automatically** and **Expand Explore More questions automatically**: off by default (see [Clicking for you](#clicking-for-you-optional)).
   - **Click pacing**: **Unhurried** (the default), **Brisk** or **Random**. Greyed out while both automatic options are off.
+- Gemini only (see [Gemini Deep Research](#gemini-deep-research)):
+  - **Include "Sources used in the report"**: on by default. Off, the report is copied without citation markers or a Sources section.
+  - **Include "Sources browsed but not used"**: off by default.
+  - **Include "Show thinking"**: off by default.
+  - **Show a Copy conversation button**: on by default.
 
 ## Installation
 
@@ -178,13 +203,13 @@ AI Chat Formatter isn't in the Chrome Web Store. Install it from a GitHub releas
 3. Open `chrome://extensions` (in Edge, `edge://extensions`; in Brave, `brave://extensions`).
 4. Turn on **Developer mode**.
 5. Click **Load unpacked** and choose the folder from step 2.
-6. Open a Copilot or Duck.ai conversation, or a DuckDuckGo search with a Search Assist answer. Finished replies now have a **Copy as Markdown** button.
+6. Open a Copilot or Duck.ai conversation, or a DuckDuckGo search with a Search Assist answer. Finished replies now have a **Copy as Markdown** button. On Gemini, open a finished Deep Research report: its toolbar has **Conversation** and **Report** buttons.
 
 ### Updating
 
 1. Download the newer release's zip and extract it over the same folder, replacing its files.
 2. On `chrome://extensions`, click the reload icon on the **AI Chat Formatter** card.
-3. Reload any open Copilot, Duck.ai or DuckDuckGo tabs.
+3. Reload any open Copilot, Duck.ai, DuckDuckGo or Gemini tabs.
 
 ### Building from source
 
@@ -212,6 +237,10 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 - **Duck.ai's popup chips depend on Duck.ai's internal data** in the same way. If reading it stops working, a popup chip falls back to the Read More card for the domain it shows, so a chip standing for several sources keeps only that one.
 - **Search Assist's chip titles and More sources depend on DuckDuckGo's internal data** in the same way. If reading it stops working, chips are titled with their domains and there are no More sources.
 - **The extension loads on every DuckDuckGo search page**, since Search Assist can appear on any of them. It does nothing on a page without a Search Assist answer.
+- **Gemini's Conversation copy takes only the turns in the page.**
+  - **Why:** Gemini loads a long conversation's earliest turns only once you scroll up, and nothing in the page shows that some are missing.
+  - **What to do:** scroll to the top of the conversation before copying it.
+  - **Ordinary chats:** the buttons only appear once a Deep Research report is open, not on ordinary Gemini chats.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
 - **Very long code blocks.** Copilot may not keep every line of a long code block in the page. If any line is missing, the copy stops with a message instead of copying a shortened block. Scroll through the code block and try again, or use Copilot's own Copy button.
 
@@ -233,7 +262,7 @@ ai-chat-formatter/
 ├── src/
 │   ├── manifest.json    # Manifest template; version, match patterns and page scripts are filled in at build
 │   ├── core/            # Site-independent: types, conversion, citations, rules, settings
-│   ├── sites/           # One adapter per site (copilot.ts, duckai.ts, duckduckgo.ts), shared Streamdown helpers (streamdown.ts), and the registry (index.ts)
+│   ├── sites/           # One adapter per site (copilot.ts, duckai.ts, duckduckgo.ts, gemini.ts), shared Streamdown helpers (streamdown.ts), and the registry (index.ts)
 │   ├── page/            # Page-world scripts, for site data the isolated content script can't see
 │   ├── content/         # Content script: button injection and the Copy override
 │   └── options/         # Options page
@@ -245,6 +274,7 @@ ai-chat-formatter/
     ├── test_copilot-source-details.ts
     ├── test_duck-ai-adapter.ts
     ├── test_duckduckgo-search-assist.ts
+    ├── test_gemini-deep-research.ts
     ├── test_message-next-to-button.ts
     ├── test_min-heading-level.ts
     ├── test_pnpm-migration.ts
@@ -257,14 +287,16 @@ ai-chat-formatter/
 1. Inspect the site: how each reply is marked up, where its Copy button and toolbar are, how citations and code blocks are rendered, and what the Copy button actually writes.
 2. Write `src/sites/<site>.ts` exporting a `SiteAdapter` (see `src/core/types.ts`). It provides:
    - its id, name and URL match patterns,
-   - selectors for messages, the reply body and the native Copy button,
-   - where the button goes,
+   - selectors for messages and the reply body, and for the native Copy button if the site has one to take over (without it, the options page doesn't offer the override),
+   - where the button goes (`findButtonAnchor`). It may be outside the message, and it gets the site's options, so returning null while one is off hides the button,
+   - optionally, `buttonLabel`: the button's tooltip and a visible label beside the icon, for a site with more than one button side by side, and `copyButtonDescription`, the options page's hint for the button setting,
    - Turndown rules for anything site-specific, such as citations,
-   - an optional `preprocess` step for whitespace-sensitive markup like code viewers,
+   - an optional `preprocess` step for whitespace-sensitive markup like code viewers. It can mark elements with `AFTER_SOURCES_ATTRIBUTE` to have them written after the Sources section,
+   - optionally, `readTurns`: splits a message that is a whole conversation into prompts and replies, copied one after another,
    - its post-processing rules,
    - optionally, ways to read each reply's full source list: `readReferences` (synchronous, used by both buttons), `readReferencesSlowly` (asynchronous fallback, used by Copy as Markdown only), and `hasUntitledCitations` (whether the fallback is worth running when More sources is off),
    - optionally, `moreSources`: whether the More sources option starts on for this site, and how the options page describes it,
-   - optionally, `options`: switches only this site has, stored per site and shown in its section of the options page. Each has a default, and can need another option to be on (`requires`) or take the place of the Sources section (`replacesSourcesSection`). The adapter reads them with `context.isOptionEnabled(id)`, in its Turndown rules or its `preprocess` step,
+   - optionally, `options`: switches only this site has, stored per site and shown in its section of the options page. Each has a default, and can need another option to be on (`requires`), take the place of the Sources section (`replacesSourcesSection`), or decide whether the More list is included in place of the generic setting (`governsMoreSources`). The adapter reads them with `context.isOptionEnabled(id)`, in its Turndown rules or its `preprocess` step,
    - optionally, `choices`: drop-down settings only this site has, stored per site, each with its values, a default, and the options it serves (`requiresAny`), which grey it out while none is on,
    - optionally, `automate`: acts on the page for the user, called for every message on each check of the page while the site is on. It gets the current options and choices, plus `sleep`, `random` and `isPageVisible`, and keeps its own record of what it has done,
    - optionally, a `pageScript`: the name of a script in `src/page/` that the manifest runs in the page's own JavaScript world, for data only the page can see.

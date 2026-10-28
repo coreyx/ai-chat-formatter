@@ -16,6 +16,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Expand Explore More questions automatically** on Search Assist, off by default: once More has finished, opens each Explore More question in turn. A question you close stays closed, and one you've opened is left alone.
 - **Click pacing** for those clicks: **Unhurried** (the default; random pauses of 1.5–4 s, waiting for each answer), **Brisk** (0.5–1.5 s, waiting for each answer) or **Random** (0.5–2 s, without waiting). Nothing is clicked while the tab is in the background.
 - Site adapters can declare drop-down settings (`SiteAdapter.choices`) and act on the page for the user (`SiteAdapter.automate`).
+- **Gemini Deep Research support** (`gemini.google.com`): a finished report's toolbar gets **Conversation** and **Report** buttons, before **Share & Export**.
+  - **Report** copies the report with your research request as its prompt.
+  - **Conversation** copies the whole left pane: every prompt and reply, with the research plan as a numbered list of steps.
+- **Include "Sources used in the report"** for Gemini, on by default: the report's markers become citations in your citation style, and the sources it used without citing go under **More**.
+- **Include "Sources browsed but not used"** and **Include "Show thinking"** for Gemini, both off by default. Each adds a section after the Sources section.
+- **Show a Copy conversation button** for Gemini, on by default.
+- Site adapters can:
+  - place a button outside its message, hide it while an option is off, and give it a visible label (`findButtonAnchor`, `buttonLabel`);
+  - copy a conversation turn by turn (`readTurns`);
+  - let an option govern the More list (`governsMoreSources`);
+  - write sections after the Sources section (`AFTER_SOURCES_ATTRIBUTE`);
+  - leave out the native Copy override when the site has no Copy button of its own.
 
 ### Changed
 
