@@ -90,7 +90,7 @@ None at this time. The trigger (as soon as Explore More appears), the separate M
 ### Content script
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-3:** Run the adapter's automation.
+- [x] **TASK-3:** Run the adapter's automation.
   - **Environment:** `ControllerEnvironment` gains optional `sleep`, `random` and `isPageVisible`. The live page uses `setTimeout`, `Math.random` and `document.visibilityState === "visible"`; tests pass their own.
   - **`sync()`:** while the site is active (extension and site switches on), call `adapter.automate(message, automation)` for every message. This happens before the button logic, so it runs even when the button is hidden.
   - **The `SiteAutomation`:**

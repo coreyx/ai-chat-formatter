@@ -1,6 +1,6 @@
 import { convertMessage } from "../core/convert";
 import type { Settings, SiteSettings } from "../core/settings";
-import { ConversionError, type SiteAdapter, type SourceReference } from "../core/types";
+import { ConversionError, type SiteAdapter, type SiteAutomation, type SourceReference } from "../core/types";
 
 /** Prefix for console messages, so the extension's output is easy to filter in a busy page console. */
 const LOG_PREFIX = "[AI Chat Formatter]";
@@ -23,6 +23,12 @@ export interface ControllerEnvironment {
   writeClipboard(text: string): Promise<void>;
   /** Runs `callback` before the next repaint; batches the bursts of DOM mutations a streaming reply causes. */
   requestFrame(callback: () => void): void;
+  /** Resolves after `ms` milliseconds, for a site's automation. Defaults to `setTimeout`. */
+  sleep?(ms: number): Promise<void>;
+  /** A random number in [0, 1), for a site's automation. Defaults to `Math.random`. */
+  random?(): number;
+  /** Whether the page is showing. Defaults to the document's `visibilityState`. */
+  isPageVisible?(): boolean;
 }
 
 /**
@@ -66,6 +72,22 @@ export class ContentController {
     return this.settings.enabled && site?.enabled ? site : null;
   }
 
+  /**
+   * What the adapter's automation reads and waits with. Every option reads
+   * the settings at the moment it's asked, so switching an option, the site
+   * or the extension off stops the automation before its next step.
+   */
+  private readonly automation: SiteAutomation = {
+    isOptionEnabled: (id) => {
+      const site = this.activeSiteSettings;
+      return site !== null && (site.options[id] ?? this.adapter.options?.find((option) => option.id === id)?.defaultEnabled ?? false);
+    },
+    choice: (id) => this.activeSiteSettings?.choices[id] ?? this.adapter.choices?.find((choice) => choice.id === id)?.defaultValue ?? "",
+    sleep: (ms) => this.env.sleep?.(ms) ?? new Promise((resolve) => setTimeout(resolve, ms)),
+    random: () => this.env.random?.() ?? Math.random(),
+    isPageVisible: () => this.env.isPageVisible?.() ?? this.env.document.visibilityState === "visible",
+  };
+
   /** Coalesces mutation bursts into one {@link sync} per frame. */
   private scheduleSync(): void {
     if (this.syncScheduled) return;
@@ -84,6 +106,12 @@ export class ContentController {
    */
   sync(): void {
     const document = this.env.document;
+    // Automation runs whether or not the button is shown: it serves the site's own Copy too, or just reading.
+    if (this.adapter.automate && this.activeSiteSettings) {
+      for (const message of Array.from(document.querySelectorAll(this.adapter.messageSelector))) {
+        this.adapter.automate(message, this.automation);
+      }
+    }
     const showButtons = this.activeSiteSettings?.showCopyButton ?? false;
     if (!showButtons) {
       document.querySelectorAll(`[${INJECTED_ATTRIBUTE}]`).forEach((button) => button.remove());
