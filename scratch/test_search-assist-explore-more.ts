@@ -263,6 +263,13 @@ check("More Search Results on: each expanded answer ends with its link, absolute
   assert.equal(markdown.split("More Search Results").length - 1, 1);
 });
 
+check("the live page is left unchanged by a copy with every option on", () => {
+  const message = searchPage().getElementById("after-more")!;
+  const before = message.outerHTML;
+  convert(message, { "explore-more": true, "explore-more-search-links": true, "inline-chips": true });
+  assert.equal(message.outerHTML, before);
+});
+
 check("More Search Results off (default): no link", () => {
   assert.doesNotMatch(convert(searchPage().getElementById("after-more")!, { "explore-more-search-links": false }), /More Search Results/);
 });

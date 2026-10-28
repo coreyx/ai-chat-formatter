@@ -215,7 +215,8 @@ ai-chat-formatter/
     ├── test_duckduckgo-search-assist.ts
     ├── test_message-next-to-button.ts
     ├── test_min-heading-level.ts
-    └── test_pnpm-migration.ts
+    ├── test_pnpm-migration.ts
+    └── test_search-assist-explore-more.ts
 ```
 
 ### Adding a site

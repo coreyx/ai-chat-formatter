@@ -149,7 +149,7 @@ None at this time. The favicon format (16px, Obsidian syntax) and the Explore Mo
 ### Tests
 
 #### [NEW] `scratch/test_search-assist-explore-more.ts`, and [MODIFY] existing checks
-- [ ] **TASK-8:** A regression script, picked up by `pnpm test`. See Automated Tests below.
+- [x] **TASK-8:** A regression script, picked up by `pnpm test`. See Automated Tests below.
   - **Updated checks:** the Search Assist checks in `scratch/test_duckduckgo-search-assist.ts` that expect numbered citations, and the two whole-settings checks in `scratch/test_ai-chat-formatter.ts`.
   - **README:** the development tree gains the new script.
 
