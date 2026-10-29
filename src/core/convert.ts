@@ -35,6 +35,11 @@ export interface ConversionOptions {
    * required option is off reads as off to the adapter either way.
    */
   isOptionEnabled?: (optionId: string) => boolean;
+  /**
+   * The value of the adapter's drop-down setting `choiceId` (see
+   * {@link SiteAdapter.choices}). Absent means every choice takes its default.
+   */
+  choice?: (choiceId: string) => string;
   /** The message's full source list, if the caller could read it; titles and the More list come from here. */
   references: SourceReference[] | null;
   /**
@@ -220,6 +225,7 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
     registerCitation: (citation) => collector.register(citation),
     findReference: (url) => referencesByUrl.get(normalizeCitationUrl(url)),
     isOptionEnabled: (id) => resolveOption(adapter, id, lookupOption),
+    choice: (id) => options.choice?.(id) ?? adapter.choices?.find((choice) => choice.id === id)?.defaultValue ?? "",
   };
   adapter.preprocess?.(clone, context, message);
   const afterSources = takeAfterSourcesSections(clone);

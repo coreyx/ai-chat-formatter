@@ -176,6 +176,12 @@ export interface ConversionContext {
    * reads as off.
    */
   isOptionEnabled(id: string): boolean;
+  /**
+   * The value of the adapter's drop-down setting `id` (see
+   * {@link SiteAdapter.choices}) for this copy, or `""` for an id the adapter
+   * doesn't declare.
+   */
+  choice(id: string): string;
 }
 
 /** Where an injected button goes: inside `parent`, before `before` (or at the end when `before` is null). */

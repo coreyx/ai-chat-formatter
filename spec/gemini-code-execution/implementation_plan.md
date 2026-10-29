@@ -74,12 +74,12 @@ None at this time.
 ### Shared code
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Add `choice(id: string): string` to `ConversionContext`.
+- [x] **TASK-1:** Add `choice(id: string): string` to `ConversionContext`.
   - **What it returns:** the value of the adapter's drop-down setting `id` (see `SiteAdapter.choices`) for this copy.
   - **An unknown id:** gives `""`.
 
 #### [MODIFY] `src/core/convert.ts`
-- [ ] **TASK-2:** Add `choice?: (choiceId: string) => string` to `ConversionOptions`.
+- [x] **TASK-2:** Add `choice?: (choiceId: string) => string` to `ConversionOptions`.
   - **In `convertMessage`:** `context.choice` is that reader, falling back to the adapter's `defaultValue` for the choice. An absent reader means every choice takes its default.
   - **In `convertConversation`:** passes the reader through for each turn, with the other shared options.
 
