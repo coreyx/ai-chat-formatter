@@ -9,7 +9,8 @@
   React state on the real page; the tests attach a fake React fiber holding
   them. Class names imitate Duck.ai's generated hashes; every attribute the
   adapter relies on is kept as observed. All names, titles and URLs are made
-  up.
+  up. The Read More cards' icon addresses leave out the scheme
+  (//external-content…), as on duck.ai on 2026-10-28.
 
   Each reply follows its own user prompt, in the structure of a multi-line
   prompt inspected on 2026-10-27: a screen-reader-only "You said" heading,
@@ -55,10 +56,10 @@
         <section class="XFWmL2CnhbtDyKjgpizi">
           <h4 class="ntnMhuV4FDCrxpfPOgPC">Read More</h4>
           <ul>
-            <li><a href="https://widget.example/releases/5.0.0" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/widget.example.ico" alt=""><span>Widget 5.0.0 (Current)<span>widget.example</span></span></a></li>
-            <li><a href="https://docs.widget.example/api/path-matcher" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/docs.widget.example.ico" alt=""><span>PathMatcher - API Reference | Widget Docs<span>docs.widget.example</span></span></a></li>
-            <li><a href="https://blog.widget.example/widget-5" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/blog.widget.example.ico" alt=""><span>Widget 5 is now available | Widget Blog<span>blog.widget.example</span></span></a></li>
-            <li><a href="https://news.example/widget-5-hands-on" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/news.example.ico" alt=""><span>Widget 5 hands-on | News Example<span>news.example</span></span></a></li>
+            <li><a href="https://widget.example/releases/5.0.0" rel="noopener" target="_blank" data-handled-by-react="true"><img src="//external-content.example/ip3/widget.example.ico" alt=""><span>Widget 5.0.0 (Current)<span>widget.example</span></span></a></li>
+            <li><a href="https://docs.widget.example/api/path-matcher" rel="noopener" target="_blank" data-handled-by-react="true"><img src="//external-content.example/ip3/docs.widget.example.ico" alt=""><span>PathMatcher - API Reference | Widget Docs<span>docs.widget.example</span></span></a></li>
+            <li><a href="https://blog.widget.example/widget-5" rel="noopener" target="_blank" data-handled-by-react="true"><img src="//external-content.example/ip3/blog.widget.example.ico" alt=""><span>Widget 5 is now available | Widget Blog<span>blog.widget.example</span></span></a></li>
+            <li><a href="https://news.example/widget-5-hands-on" rel="noopener" target="_blank" data-handled-by-react="true"><img src="//external-content.example/ip3/news.example.ico" alt=""><span>Widget 5 hands-on | News Example<span>news.example</span></span></a></li>
           </ul>
         </section>
       </div>
@@ -89,8 +90,8 @@ List two.</p><div class="dpHd4zfmzR2cT0YpkHA7"><svg viewBox="0 0 16 16"><path d=
         <section class="XFWmL2CnhbtDyKjgpizi">
           <h4 class="ntnMhuV4FDCrxpfPOgPC">Read More</h4>
           <ul>
-            <li><a href="https://news.example/widget-5-review" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/news.example.ico" alt=""><span>Widget 5 review<span>news.example</span></span></a></li>
-            <li><a href="https://www.tutorials.example/widget-5" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/tutorials.example.ico" alt=""><span>Getting started with Widget 5<span>tutorials.example</span></span></a></li>
+            <li><a href="https://news.example/widget-5-review" rel="noopener" target="_blank" data-handled-by-react="true"><img src="//external-content.example/ip3/news.example.ico" alt=""><span>Widget 5 review<span>news.example</span></span></a></li>
+            <li><a href="https://www.tutorials.example/widget-5" rel="noopener" target="_blank" data-handled-by-react="true"><img src="//external-content.example/ip3/tutorials.example.ico" alt=""><span>Getting started with Widget 5<span>tutorials.example</span></span></a></li>
           </ul>
         </section>
       </div>

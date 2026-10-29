@@ -103,6 +103,25 @@ function preprocessDuckAi(root: HTMLElement, context: ConversionContext, message
 const READ_MORE_ICON_ATTRIBUTE = "data-acf-read-more-icon";
 
 /**
+ * The web address of a Read More card's icon, or null when it has none. On
+ * duck.ai the icon's `src` leaves out the scheme
+ * (`//external-content.duckduckgo.com/…`, seen on 2026-10-28), so it's
+ * resolved against the page, or against duck.ai where the page has no web
+ * address of its own (as in the tests).
+ */
+function cardIconUrl(card: Element): string | null {
+  const src = card.querySelector(":scope > img")?.getAttribute("src");
+  if (!src) return null;
+  const base = /^https?:/i.test(card.ownerDocument.baseURI) ? card.ownerDocument.baseURI : "https://duck.ai/";
+  try {
+    const url = new URL(src, base);
+    return /^https?:$/.test(url.protocol) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * `message`'s Read More cards as the copy's Read More section: an `<h2>`, then
  * a list with a line for each card, in page order. Each line is the card's
  * icon (when it's a web address), its title linked to the page (its domain
@@ -117,8 +136,8 @@ function readMoreSection(message: Element): HTMLElement | null {
   for (const card of cards) {
     const { url, title, domain } = readCard(card);
     const item = document.createElement("li");
-    const icon = card.querySelector(":scope > img")?.getAttribute("src") ?? "";
-    if (/^https?:\/\//i.test(icon)) {
+    const icon = cardIconUrl(card);
+    if (icon) {
       const image = document.createElement("img");
       image.setAttribute(READ_MORE_ICON_ATTRIBUTE, "");
       image.setAttribute("src", icon);
