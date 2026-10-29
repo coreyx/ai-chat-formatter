@@ -116,6 +116,18 @@ export const CODE_LANGUAGE_SELECTOR = ".code-block-decoration > span";
 /** A code block's code, with real newlines. */
 export const CODE_CONTENT_SELECTOR = 'code[data-test-id="code-content"]';
 
+/**
+ * The output of code Gemini ran, below the code in the same `code-block`,
+ * under a second header reading "Code output" (seen on 2026-10-28). Its
+ * presence is what marks a block as code Gemini ran rather than code it
+ * wrote; Gemini folds such blocks behind the reply's Show code toggle, but
+ * they're in the page in full either way.
+ */
+export const CODE_OUTPUT_SELECTOR = '[data-test-id="code-output-stdout-stderr"]';
+
+/** The wrapper Gemini puts around a block-level part of a reply, such as a code block. */
+export const RESPONSE_ELEMENT_SELECTOR = "response-element";
+
 /** A chip naming the source of a passage (in the chats inspected, an uploaded file), with no link. */
 export const INLINE_SOURCE_CHIP_SELECTOR = "source-inline-chip";
 

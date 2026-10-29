@@ -90,7 +90,7 @@ None at this time.
 ### Gemini
 
 #### [MODIFY] `src/sites/gemini-markup.ts`
-- [ ] **TASK-4:** Add these selectors, with doc comments from the inspection above:
+- [x] **TASK-4:** Add these selectors, with doc comments from the inspection above:
   - `CODE_OUTPUT_SELECTOR` (`[data-test-id="code-output-stdout-stderr"]`);
   - `RESPONSE_ELEMENT_SELECTOR` (`response-element`).
 
