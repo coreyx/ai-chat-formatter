@@ -136,7 +136,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
 ### Gemini adapter
 
 #### [MODIFY] `src/sites/gemini.ts`
-- [ ] **TASK-5:** Add `rewriteCodeBlocks(root)`, run in `preprocessReply` and `preprocessReport`.
+- [x] **TASK-5:** Add `rewriteCodeBlocks(root)`, run in `preprocessReply` and `preprocessReport`.
   - **What it does:** each `code-block` becomes `<pre><code class="language-…">` with the text of its `CODE_CONTENT_SELECTOR`.
   - **The language:** read from `CODE_LANGUAGE_SELECTOR` with `streamdownLanguageId`, so it's lowercased, and "text" or "plain" give no tag.
   - **No language label** (as in reports today): the block keeps its plain fence.

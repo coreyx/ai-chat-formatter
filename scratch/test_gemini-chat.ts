@@ -10,9 +10,11 @@
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
+import { convertMessage, type ConversionOptions } from "../src/core/convert";
 import { buildDefaultSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 import { readPromptText } from "../src/sites/gemini-markup";
+import { geminiAdapter } from "../src/sites/gemini";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -105,6 +107,39 @@ check("prompts: an attachment showing only a picture is *image*, a missing type 
 
 check("prompts: a prompt with no attachments is its text alone", () => {
   assert.equal(readPromptText(userQuery("Just text.", [])), "Just text.");
+});
+
+// ---------------------------------------------------------------------------
+// A reply's content
+// ---------------------------------------------------------------------------
+
+/** A finished `model-response` whose text is `html`, with its toolbar; `outside` goes after the text, beside `message-content`. */
+function reply(html: string, outside = ""): Element {
+  const document = new JSDOM(
+    `<!doctype html><body><model-response><div class="response-container-content has-thoughts"><div class="response-content"><thinking-overlay></thinking-overlay><model-response-content><message-content><div class="markdown markdown-main-panel">${html}</div></message-content>${outside}</model-response-content></div></div><message-actions><div class="buttons-container-v2"><thumb-up-button></thumb-up-button><copy-button><gem-icon-button><button aria-label="Copy"></button></gem-icon-button></copy-button></div></message-actions></model-response></body>`,
+  ).window.document;
+  return document.querySelector("model-response")!;
+}
+
+/** Converts `message` as a reply copy: linked citations with a fixed token, the default Gemini options. */
+function convertReply(message: Element, overrides: Partial<ConversionOptions> = {}): string {
+  return convertMessage(geminiAdapter, message, { style: "linked-citations", includeMoreSources: false, isRuleEnabled: () => true, references: null, idToken: "t", ...overrides });
+}
+
+/** A code block as Gemini draws it in a chat: a header with the language and two buttons, then the code. */
+function codeBlock(language: string | null, code: string): string {
+  const header = language === null ? "" : `<div class="code-block-decoration header-formatted gds-title-s"><span>${language}</span><div class="buttons"><button aria-label="Download">Download</button><button aria-label="Copy code">Copy</button></div></div>`;
+  return `<code-block><div class="code-block">${header}<div class="formatted-code-block-internal-container"><div class="animated-opacity"><pre><code class="code-container formatted" data-test-id="code-content">${code}</code></pre></div></div></div></code-block>`;
+}
+
+check("code: a code block is fenced with its header's language, lowercased, and the header and its buttons are gone", () => {
+  const markdown = convertReply(reply(`<p>Run this:</p>${codeBlock("Python", '<span class="hljs-keyword">def</span> main():\n    print(<span class="hljs-string">"hi"</span>)')}`));
+  assert.equal(markdown, 'Run this:\n\n```python\ndef main():\n    print("hi")\n```');
+});
+
+check("code: a plain-text block, or one without a header, gets a fence with no language", () => {
+  assert.equal(convertReply(reply(codeBlock("Text", "a\n  b"))), "```\na\n  b\n```");
+  assert.equal(convertReply(reply(codeBlock(null, "x = 1"))), "```\nx = 1\n```");
 });
 
 // ---------------------------------------------------------------------------

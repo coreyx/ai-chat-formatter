@@ -1,5 +1,6 @@
 import type TurndownService from "turndown";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
+import { streamdownLanguageId } from "./streamdown";
 import {
   AFTER_SOURCES_ATTRIBUTE,
   ConversionError,
@@ -14,6 +15,9 @@ import {
   BROWSE_LIST_SELECTOR,
   CITATION_INDEX_ATTRIBUTE,
   CITATION_SELECTOR,
+  CODE_BLOCK_SELECTOR,
+  CODE_CONTENT_SELECTOR,
+  CODE_LANGUAGE_SELECTOR,
   END_OF_REPORT_SELECTOR,
   findReportTurn,
   findResearchRequest,
@@ -166,6 +170,27 @@ function flattenTableCells(root: Element): void {
 }
 
 /**
+ * Rewrites each of Gemini's code blocks in `root` as `<pre><code>` that
+ * Turndown fences, tagged with the language its header shows ("Python"
+ * becomes `python`; "Text" gives no tag). The header, with its download and
+ * copy buttons, is dropped. A block without a header, as in reports, keeps a
+ * plain fence.
+ */
+function rewriteCodeBlocks(root: Element): void {
+  const document = root.ownerDocument;
+  for (const block of Array.from(root.querySelectorAll(CODE_BLOCK_SELECTOR))) {
+    const source = block.querySelector(CODE_CONTENT_SELECTOR) ?? block.querySelector("pre code, pre");
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+    const language = streamdownLanguageId(block.querySelector(CODE_LANGUAGE_SELECTOR)?.textContent);
+    if (language) code.className = `language-${language}`;
+    code.textContent = source?.textContent ?? "";
+    pre.append(code);
+    block.replaceWith(pre);
+  }
+}
+
+/**
  * Prepares a copy of the report panel's content for conversion. A report
  * that isn't finished (no end marker or source lists yet) isn't copied. Each
  * citation marker becomes a link to its source in the used list, for
@@ -201,6 +226,7 @@ function preprocessReport(root: HTMLElement, body: Element, context: ConversionC
     marker.replaceWith(link);
   }
   body.querySelectorAll(SOURCES_CAROUSEL_SELECTOR).forEach((carousel) => carousel.remove());
+  rewriteCodeBlocks(body);
   flattenTableCells(body);
 
   const sections: HTMLElement[] = [];
@@ -276,6 +302,7 @@ function preprocessReply(root: HTMLElement): void {
   }
   root.querySelectorAll(PLAN_SELECTOR).forEach((plan) => plan.replaceWith(rewritePlan(plan)));
   root.querySelectorAll(REPORT_CARD_SELECTOR).forEach((card) => card.replaceWith(rewriteReportCard(card)));
+  rewriteCodeBlocks(root);
   flattenTableCells(root);
 }
 
