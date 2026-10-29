@@ -1,7 +1,7 @@
 # Walkthrough: Conversation copies on Duck.ai and Copilot
 
 Duck.ai and Copilot now have a **Conversation** button, like Gemini's. It copies every turn in the page: each prompt, then its reply with that reply's own Sources section. Each site has a **Show a Copy conversation button** setting, on by default.
-- **Duck.ai:** the button sits beside the chat's title, before its ⋮ menu.
+- **Duck.ai:** the button sits in the chat's header, on a line of its own under the title and the privacy line.
 - **Copilot:** the button sits in the top bar, before **Share**.
 
 ## What Was Implemented
@@ -94,7 +94,7 @@ The four updated scripts are described under Tests above.
 ## Manual Verification
 1. Run `pnpm run build`, then click the reload icon on the extension in `chrome://extensions`, then reload a Duck.ai tab and a Copilot tab.
 2. **Duck.ai:**
-   1. Open a conversation with several turns and scroll to the top. **Conversation** should sit just left of the ⋮ beside the chat's title.
+   1. Open a conversation with several turns and scroll to the top. **Conversation** should sit on its own line under the chat's title and the privacy line.
    2. Click it and paste into Obsidian. Every turn should be there in order, each prompt as a heading over its reply, and each reply with its own sources.
 3. **Duck.ai's style:** turn on **Cite sources as Duck.ai does** and copy the conversation again. Each reply should end with its own Read More list, and there should be no Sources sections.
 4. **A regenerated reply:** if a turn's reply was regenerated, only the version on screen should be in the copy.
@@ -103,6 +103,19 @@ The four updated scripts are described under Tests above.
    2. Copy it and paste. Every loaded turn should be there in order, with each reply's sources and page titles.
    3. No Sources panel should open while it copies.
 6. **The setting:** turn off **Show a Copy conversation button** for each site. The Conversation button should disappear, and the per-reply buttons should stay.
+
+## Revised after manual testing
+
+**What turned up:** on the live site, Duck.ai's **Conversation** button shows on a line of its own under the chat's title and the privacy line, not just left of the ⋮ as the plan first said.
+- **Why:** Duck.ai's header is a grid that keeps the ⋮ in a narrow column of its own. The button is placed before the ⋮ in the page, so the grid gives it a new row.
+
+**What changed:** you chose to keep it there, so the plan was revised and re-approved, adding TASK-9. That task changed only wording, in four places:
+- the setting's description, now "Adds a Conversation button to the chat's header, under its title, …";
+- the code comment;
+- the README and changelog;
+- this walkthrough.
+
+**What didn't:** where the button goes. All 16 test scripts still pass.
 
 ## Follow-ups
 

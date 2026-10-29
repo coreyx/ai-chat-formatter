@@ -45,8 +45,11 @@ export const CONVERSATION_BUTTON_OPTION = "conversation-button";
 /**
  * Where the conversation's button goes: in the chat's header, the parent of
  * its title `h1`, right before the header's child holding the ⋮ menu
- * (`button[aria-haspopup="menu"]`), as seen on 2026-10-28. The header sits at
- * the top of the first turn and scrolls with the chat. A heading inside a
+ * (`button[aria-haspopup="menu"]`), as seen on 2026-10-28. The header is a
+ * grid that keeps the ⋮ in a narrow column of its own, so the button shows on
+ * a line of its own under the title and the privacy line; that's where it was
+ * chosen to stay. The header sits at the top of the first turn and scrolls
+ * with the chat. A heading inside a
  * prompt or a reply is never taken for the title. Null while the option is
  * off, or when there's no header with a menu, as before a chat starts.
  */
@@ -395,7 +398,7 @@ export const duckAiAdapter: SiteAdapter = {
     {
       id: CONVERSATION_BUTTON_OPTION,
       name: "Show a Copy conversation button",
-      description: "Adds a Conversation button beside the chat's title, before its ⋮ menu, that copies the whole conversation: each prompt and its reply.",
+      description: "Adds a Conversation button to the chat's header, under its title, that copies the whole conversation: each prompt and its reply.",
       defaultEnabled: true,
     },
   ],

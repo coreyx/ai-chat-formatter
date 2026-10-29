@@ -78,7 +78,7 @@ None at this time.
     - **Description:** "Adds a Conversation button to the chat's header, under its title, that copies the whole conversation: each prompt and its reply."
     - **`defaultEnabled`:** true.
   - **`copyButtonDescription`:** not added. Duck.ai's button setting keeps its usual hint.
-- [ ] **TASK-9:** Match the code to the revised placement. Added in revision, after manual testing; nothing about where the button goes changes.
+- [x] **TASK-9:** Match the code to the revised placement. Added in revision, after manual testing; nothing about where the button goes changes.
   - **The option's description:** the new wording above.
   - **`findConversationButtonAnchor`'s doc comment:** say that the button is placed before the ⋮ in the page, and that Duck.ai's header grid shows it on a line of its own under the title.
   - **README, CHANGELOG and walkthrough:** describe it the same way.

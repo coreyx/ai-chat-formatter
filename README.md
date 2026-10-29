@@ -44,7 +44,7 @@ Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different 
 Copilot, Duck.ai and Gemini also have a **Conversation** button, which copies every turn in the page: each prompt in your prompt format, then its reply with its own Sources section. Prompts are included even with **Copy the prompt with the response** off.
 
 - **Copilot:** in the top bar, just left of **Share**.
-- **Duck.ai:** beside the chat's title, just left of its ⋮ menu. The title scrolls with the chat, so the button is at the top of the conversation. Where a reply was regenerated, only the version on screen is copied. With **Cite sources as Duck.ai does** on, each reply ends with its own Read More list.
+- **Duck.ai:** in the chat's header, on a line of its own under the title. The title scrolls with the chat, so the button is at the top of the conversation. Where a reply was regenerated, only the version on screen is copied. With **Cite sources as Duck.ai does** on, each reply ends with its own Read More list.
 - **Gemini:** see [Gemini](#gemini).
 
 On Copilot, each reply's sources are read the quick way only, as with **Use for Copilot's own Copy button**; a reply's Sources panel is never opened for a conversation copy. Turn the button off with **Show a Copy conversation button**.
