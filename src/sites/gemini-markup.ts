@@ -119,8 +119,13 @@ export const CODE_CONTENT_SELECTOR = 'code[data-test-id="code-content"]';
 /** A chip naming the source of a passage (in the chats inspected, an uploaded file), with no link. */
 export const INLINE_SOURCE_CHIP_SELECTOR = "source-inline-chip";
 
-/** A file attached to a prompt, outside the prompt's text, and its name (without its extension) and type ("PDF"). */
-export const UPLOADED_FILE_SELECTOR = '[data-test-id="uploaded-file"]';
+/**
+ * One file attached to a prompt, outside the prompt's text. A document shows
+ * its name (without its extension) and type ("PDF") in the labels below; an
+ * attached picture shows only a preview, `img[data-test-id="uploaded-img"]`,
+ * with no name (seen on 2026-10-28).
+ */
+export const UPLOADED_FILE_SELECTOR = "user-query-file-preview";
 export const FILENAME_LABEL_SELECTOR = '[data-test-id="filename-label"]';
 export const EXTENSION_LABEL_SELECTOR = '[data-test-id="extension-label"]';
 

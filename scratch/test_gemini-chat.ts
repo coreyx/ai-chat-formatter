@@ -90,10 +90,14 @@ check("controller: a tracked button moves when its anchor's parent changes, and 
 // Prompts and their attachments
 // ---------------------------------------------------------------------------
 
-/** A `user-query` holding `text` as its one line, then a preview for each of `files` (`[name, type]`, a missing name for a picture). */
+/** A `user-query` holding `text` as its one line, then a preview for each of `files` (`[name, type]`; `[null, ""]` is a picture, shown as Gemini shows one, with no name). */
 function userQuery(text: string, files: [string | null, string][]): Element {
   const previews = files
-    .map(([name, type]) => `<user-query-file-preview><div data-test-id="uploaded-file"><button>${type ? `<div data-test-id="extension-label">${type}</div>` : ""}${name === null ? '<img src="blob:https://gemini.google.com/x">' : `<div data-test-id="filename-label">${name}</div>`}</button></div></user-query-file-preview>`)
+    .map(([name, type]) =>
+      name === null && !type
+        ? '<user-query-file-preview><div class="file-preview-container"><button class="preview-image-button" aria-label="Show the uploaded image in a lightbox"><img class="preview-image" data-test-id="uploaded-img" src="https://images.example/x.jpg" alt="Uploaded image preview"></button></div></user-query-file-preview>'
+        : `<user-query-file-preview><div data-test-id="uploaded-file"><button>${type ? `<div data-test-id="extension-label">${type}</div>` : ""}${name === null ? '<img src="https://images.example/x.png">' : `<div data-test-id="filename-label">${name}</div>`}</button></div></user-query-file-preview>`,
+    )
     .join("");
   const document = new JSDOM(`<!doctype html><body><user-query><span class="user-query-container"><div class="file-preview-container"><user-query-file-carousel>${previews}</user-query-file-carousel></div><div class="query-text"><span class="cdk-visually-hidden">You said</span>${text ? `<p class="query-text-line">${text}</p>` : ""}</div></span></user-query></body>`).window.document;
   return document.querySelector("user-query")!;

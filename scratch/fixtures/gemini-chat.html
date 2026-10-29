@@ -7,8 +7,8 @@
      block with a language header, a source chip and a citation marker (both
      without links, as they were for uploaded files), a plain link and a
      table, then its toolbar with Copy.
-  2. A prompt with an attached picture (assumed: a preview with an image and
-     no filename label), and a reply holding a generated file, a generated
+  2. A prompt with an attached picture (a preview image with no name, as seen
+     on a live prompt), and a reply holding a generated file, a generated
      image with its own buttons, generated music and a generated video (as
      seen on a live video reply), then a toolbar with Share in place of Copy,
      as on image-only and video-only replies.
@@ -90,7 +90,7 @@
             <div class="user-query-container">
               <div class="file-preview-container">
                 <user-query-file-carousel>
-                  <user-query-file-preview><div class="new-file-preview-container" data-test-id="uploaded-file"><button class="new-file-preview-file" aria-label="Uploaded image"><img src="blob:https://gemini.google.com/00000000-0000-4000-8000-000000000000" alt=""></button></div></user-query-file-preview>
+                  <user-query-file-preview class="query-file-preview"><div class="file-preview-container"><button class="preview-image-button large-preview-image" aria-label="Show the uploaded image in a lightbox"><img class="preview-image" data-test-id="uploaded-img" src="https://images.example/uploads/widget-photo.jpg" alt="Uploaded image preview"></button></div></user-query-file-preview>
                 </user-query-file-carousel>
               </div>
               <div class="query-text"><span class="cdk-visually-hidden">You said</span><p class="query-text-line">Make a parts list, a picture and a jingle for this widget.</p></div>
