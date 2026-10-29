@@ -11,6 +11,7 @@ import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { buildDefaultSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
+import { COPILOT_REPLY_SELECTOR, copilotAdapter, readCopilotTurns } from "../src/sites/copilot";
 import { DUCK_AI_REPLY_SELECTOR, duckAiAdapter, readDuckAiTurns } from "../src/sites/duckai";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -80,6 +81,24 @@ check("duck.ai: no header, no Conversation button; a reply's heading isn't taken
   off.sites.duckai.options["conversation-button"] = false;
   page.controller.applySettings(off);
   assert.equal(page.conversationButtons().length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// Copilot: the conversation as a message
+// ---------------------------------------------------------------------------
+
+check("copilot: the conversation feed is a message, split into one turn per reply with its prompt; a reply isn't split", () => {
+  const articles = readFileSync("scratch/fixtures/copilot-message.html", "utf8").replace(/<!--[\s\S]*?-->/, "").replace(/<\/?main>/g, "");
+  const page = new JSDOM(`<!doctype html><body><main><div data-testid="MessageListContainer"><div role="group"><div role="feed" aria-label="Chat conversation">${articles}</div></div></div></main></body>`).window.document;
+  const conversations = Array.from(page.querySelectorAll(copilotAdapter.messageSelector)).filter((message) => !message.matches(COPILOT_REPLY_SELECTOR));
+  assert.equal(conversations.length, 1);
+  const turns = readCopilotTurns(conversations[0])!;
+  assert.equal(turns.length, 1);
+  assert.equal(turns[0].prompt, "Search the web: what is new in Widget 5?\n\nKeep it short.");
+  assert.ok(turns[0].reply.matches(COPILOT_REPLY_SELECTOR));
+  assert.equal(readCopilotTurns(turns[0].reply), null);
+  assert.equal(copilotAdapter.buttonLabel?.(turns[0].reply), null);
+  assert.equal(copilotAdapter.buttonLabel?.(conversations[0])?.text, "Conversation");
 });
 
 // ---------------------------------------------------------------------------

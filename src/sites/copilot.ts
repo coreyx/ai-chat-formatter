@@ -3,7 +3,7 @@ import { parseCitationTitle, parseReferencesAttribute, sourceDomain } from "../c
 import { promptText } from "../core/prompt";
 import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import { ConversionError, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
+import { ConversionError, type ButtonLabel, type ConversationTurn, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
 
 // Re-exported for the Copilot tests, which import it from this module.
 export { parseReferencesAttribute };
@@ -381,16 +381,37 @@ export function readCopilotPrompt(message: Element): string | null {
   return text ? promptText(text) : promptText(previous, "h1, h2, h3, h4, h5, h6");
 }
 
+/** A reply. User prompts are articles too; only replies contain a markdown-reply body. */
+export const COPILOT_REPLY_SELECTOR = 'div[role="article"]:has([data-testid="markdown-reply"])';
+
+/** The conversation, holding an article per prompt and per reply, as seen on 2026-10-28. */
+const CONVERSATION_SELECTOR = '[data-testid="MessageListContainer"] div[role="feed"]';
+
+/** How the conversation's button names itself; the replies' buttons keep the plain icon. */
+const CONVERSATION_LABEL: ButtonLabel = { title: "Copy conversation as Markdown", text: "Conversation" };
+
+/**
+ * The conversation in `message`, one turn per reply, in page order, each with
+ * the prompt before it (see {@link readCopilotPrompt}). Only the replies in the
+ * page are read: Copilot can drop a long conversation's older messages. Null
+ * for a reply, which is copied on its own.
+ */
+export function readCopilotTurns(message: Element): ConversationTurn[] | null {
+  if (!message.matches(CONVERSATION_SELECTOR)) return null;
+  return Array.from(message.querySelectorAll(COPILOT_REPLY_SELECTOR), (reply) => ({ prompt: readCopilotPrompt(reply), reply }));
+}
+
 export const copilotAdapter: SiteAdapter = {
   id: "copilot",
   name: "Copilot",
   matches: ["https://copilot.microsoft.com/*", "https://copilot.com/*"],
-  // User prompts are articles too; only replies contain a markdown-reply body.
-  messageSelector: 'div[role="article"]:has([data-testid="markdown-reply"])',
+  // Each reply, and the conversation, which gets a copy button of its own.
+  messageSelector: `${COPILOT_REPLY_SELECTOR}, ${CONVERSATION_SELECTOR}`,
   contentSelector: REPLY_SELECTOR,
   nativeCopyButtonSelector: 'button[data-testid="CopyButtonTestId"]',
   // Directly before the native Copy button, at the start of its flex row with the feedback buttons, so Copy as Markdown comes first.
   findButtonAnchor(message) {
+    if (message.matches(CONVERSATION_SELECTOR)) return null;
     const copy = message.querySelector('button[data-testid="CopyButtonTestId"]');
     return copy?.parentElement ? { parent: copy.parentElement, before: copy } : null;
   },
@@ -411,6 +432,8 @@ export const copilotAdapter: SiteAdapter = {
       }
     }),
   readPrompt: readCopilotPrompt,
+  readTurns: readCopilotTurns,
+  buttonLabel: (message) => (message.matches(CONVERSATION_SELECTOR) ? CONVERSATION_LABEL : null),
   pageScript: "copilot",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],
 };

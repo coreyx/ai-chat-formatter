@@ -80,7 +80,7 @@ None at this time.
 ### Copilot
 
 #### [MODIFY] `src/sites/copilot.ts`
-- [ ] **TASK-3:** Make the conversation a message of its own.
+- [x] **TASK-3:** Make the conversation a message of its own.
   - **`CONVERSATION_SELECTOR`:** `[data-testid="MessageListContainer"] div[role="feed"]`, added to `messageSelector`.
   - **`readTurns`:** returns null for a reply. For the conversation, it returns one turn per reply article (`div[role="article"]:has([data-testid="markdown-reply"])`) in it, each with `readCopilotPrompt(reply)` as its prompt.
   - **`buttonLabel`:** as for Duck.ai.
