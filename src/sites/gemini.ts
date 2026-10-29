@@ -18,6 +18,7 @@ import {
   CODE_BLOCK_SELECTOR,
   CODE_CONTENT_SELECTOR,
   CODE_LANGUAGE_SELECTOR,
+  CODE_OUTPUT_SELECTOR,
   CONVERSATION_MENU_SELECTOR,
   END_OF_REPORT_SELECTOR,
   GENERATED_FILE_NAME_SELECTOR,
@@ -48,6 +49,7 @@ import {
   REPORT_CARD_SELECTOR,
   REPORT_CARD_TITLE_SELECTOR,
   REPORT_PANEL_SELECTOR,
+  RESPONSE_ELEMENT_SELECTOR,
   SHARE_EXPORT_SELECTOR,
   SOURCE_LISTS_SELECTOR,
   SOURCES_CAROUSEL_SELECTOR,
@@ -211,6 +213,91 @@ function rewriteCodeBlocks(root: Element): void {
   }
 }
 
+/** One run of code Gemini ran: the code's language (a fence info string), the code, and what it printed. */
+interface CodeRun {
+  language: string;
+  code: string;
+  output: string;
+}
+
+/** Marks a placeholder for a folded callout of code Gemini ran; its value is the runs, as JSON, for {@link codeRunCalloutRule}. */
+const CODE_RUN_ATTRIBUTE = "data-acf-gemini-code-run";
+
+/** The runs a callout placeholder holds; none when its attribute can't be read. */
+function readCodeRuns(holder: Element): CodeRun[] {
+  try {
+    const runs: unknown = JSON.parse(holder.getAttribute(CODE_RUN_ATTRIBUTE) ?? "[]");
+    return Array.isArray(runs) ? (runs as CodeRun[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** The element before `node`, skipping whitespace-only text, or null when other text or nothing comes first. */
+function previousElementAcrossWhitespace(node: Node): Element | null {
+  let previous = node.previousSibling;
+  while (previous && previous.nodeType === previous.TEXT_NODE && !(previous.textContent ?? "").trim()) previous = previous.previousSibling;
+  return previous?.nodeType === previous?.ELEMENT_NODE ? (previous as Element) : null;
+}
+
+/**
+ * Rewrites the code Gemini ran in `root`, each a `code-block` holding the
+ * code's output (see {@link CODE_OUTPUT_SELECTOR}), as the **Code Gemini ran**
+ * setting says. Each run, with the `response-element` around it, is either
+ * left out, or written as its code in a fence tagged with its language,
+ * followed by `**Code output**` and the output in a plain fence when it
+ * printed anything, or (the default, and for any value the setting doesn't
+ * know) gathered into a placeholder for a folded callout (see
+ * {@link codeRunCalloutRule}). Runs next to each other share a placeholder.
+ * Runs are found by their output, not by being folded, so one the user has
+ * unfolded is copied the same way. Runs before other code blocks are
+ * rewritten, so {@link rewriteCodeBlocks} never sees them.
+ */
+function rewriteCodeRuns(root: Element, context: ConversionContext): void {
+  const document = root.ownerDocument;
+  const mode = context.choice(CODE_EXECUTION_CHOICE);
+  const blocks = Array.from(root.querySelectorAll(CODE_BLOCK_SELECTOR)).filter((block) => block.querySelector(CODE_OUTPUT_SELECTOR));
+  for (const block of blocks) {
+    const wrapper = block.parentElement?.closest(RESPONSE_ELEMENT_SELECTOR);
+    const unit = wrapper && root.contains(wrapper) ? wrapper : block;
+    const run: CodeRun = {
+      language: streamdownLanguageId(block.querySelector(CODE_LANGUAGE_SELECTOR)?.textContent),
+      code: (block.querySelector(CODE_CONTENT_SELECTOR)?.textContent ?? "").replace(/\n+$/, ""),
+      output: (block.querySelector(CODE_OUTPUT_SELECTOR)?.textContent ?? "").replace(/\s+$/, ""),
+    };
+    if (mode === CODE_RUNS_OMITTED) {
+      unit.remove();
+    } else if (mode === CODE_RUNS_AS_CODE_BLOCKS) {
+      const parts: Node[] = [codeFence(document, run.language, run.code)];
+      if (run.output) parts.push(paragraph(document, "Code output", true), codeFence(document, "", run.output));
+      unit.replaceWith(...parts);
+    } else {
+      const previous = previousElementAcrossWhitespace(unit);
+      if (previous?.hasAttribute(CODE_RUN_ATTRIBUTE)) {
+        previous.setAttribute(CODE_RUN_ATTRIBUTE, JSON.stringify([...readCodeRuns(previous), run]));
+        previous.append(document.createTextNode(` ${run.code}`));
+        unit.remove();
+      } else {
+        const holder = document.createElement("div");
+        holder.setAttribute(CODE_RUN_ATTRIBUTE, JSON.stringify([run]));
+        // Turndown drops an element with no text before any rule sees it, so the placeholder carries the code as text too.
+        holder.textContent = run.code || "code";
+        unit.replaceWith(holder);
+      }
+    }
+  }
+}
+
+/** `<pre><code>` holding `text`, tagged with `language` when there is one, for Turndown to fence. */
+function codeFence(document: Document, language: string, text: string): HTMLPreElement {
+  const pre = document.createElement("pre");
+  const code = document.createElement("code");
+  if (language) code.className = `language-${language}`;
+  code.textContent = text;
+  pre.append(code);
+  return pre;
+}
+
 /**
  * Prepares a copy of the report panel's content for conversion. A report
  * that isn't finished (no end marker or source lists yet) isn't copied. Each
@@ -247,6 +334,7 @@ function preprocessReport(root: HTMLElement, body: Element, context: ConversionC
     marker.replaceWith(link);
   }
   body.querySelectorAll(SOURCES_CAROUSEL_SELECTOR).forEach((carousel) => carousel.remove());
+  rewriteCodeRuns(body, context);
   rewriteCodeBlocks(body);
   flattenTableCells(body);
 
@@ -351,7 +439,7 @@ function rewriteGeneratedItems(root: Element): void {
  * and the report card are rewritten (see {@link rewritePlan} and
  * {@link rewriteReportCard}).
  */
-function preprocessReply(root: HTMLElement): void {
+function preprocessReply(root: HTMLElement, context: ConversionContext): void {
   rewriteGeneratedItems(root);
   const content = root.querySelector(MESSAGE_CONTENT_SELECTOR);
   if (content) {
@@ -363,6 +451,7 @@ function preprocessReply(root: HTMLElement): void {
   }
   root.querySelectorAll(PLAN_SELECTOR).forEach((plan) => plan.replaceWith(rewritePlan(plan)));
   root.querySelectorAll(REPORT_CARD_SELECTOR).forEach((card) => card.replaceWith(rewriteReportCard(card)));
+  rewriteCodeRuns(root, context);
   rewriteCodeBlocks(root);
   flattenTableCells(root);
 }
@@ -371,7 +460,7 @@ function preprocessReply(root: HTMLElement): void {
 function preprocessGemini(root: HTMLElement, context: ConversionContext): void {
   const body = root.querySelector(REPORT_BODY_SELECTOR);
   if (body) preprocessReport(root, body, context);
-  else preprocessReply(root);
+  else preprocessReply(root, context);
 }
 
 /** Turndown rule for the citation links {@link preprocessReport} made: each is registered and replaced by its placeholder. */

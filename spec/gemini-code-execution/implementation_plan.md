@@ -99,7 +99,7 @@ None at this time.
   - **Name:** "Code Gemini ran".
   - **Description:** "How the code Gemini ran for a reply, hidden behind Show code, is copied, with its output."
   - **Values:** `callout` ("Folded callout", the default), `code-blocks` ("Code blocks") and `omit` ("Leave out").
-- [ ] **TASK-6:** Add `rewriteCodeRuns(root, context)`, run in `preprocessReply` and `preprocessReport` before `rewriteCodeBlocks`.
+- [x] **TASK-6:** Add `rewriteCodeRuns(root, context)`, run in `preprocessReply` and `preprocessReport` before `rewriteCodeBlocks`.
   - **What it finds:** each `code-block` holding `CODE_OUTPUT_SELECTOR`. Its outermost wrapper (the enclosing `response-element`, or the block itself) is the unit.
   - **What it reads:** the language with `streamdownLanguageId`, the code from `CODE_CONTENT_SELECTOR`, and the output from `CODE_OUTPUT_SELECTOR`.
   - **With `omit`:** the unit is removed.

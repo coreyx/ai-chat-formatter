@@ -13,7 +13,7 @@ import { convertConversation, convertMessage } from "../src/core/convert";
 import { buildDefaultSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 import { renderOptions } from "../src/options/options";
-import { CODE_EXECUTION_CHOICE } from "../src/sites/gemini";
+import { CODE_EXECUTION_CHOICE, geminiAdapter } from "../src/sites/gemini";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -108,6 +108,57 @@ check("setting: Gemini's Code Gemini ran starts as a folded callout, and the opt
   const select = document.querySelector<HTMLSelectElement>('section[data-site="gemini"] select[name="gemini.choices.code-execution"]')!;
   assert.deepEqual(Array.from(select.options, (option) => [option.value, option.textContent]), [["callout", "Folded callout"], ["code-blocks", "Code blocks"], ["omit", "Leave out"]]);
   assert.equal(select.value, "callout");
+});
+
+// ---------------------------------------------------------------------------
+// Code Gemini ran
+// ---------------------------------------------------------------------------
+
+/** A run of code as Gemini draws it, folded behind Show code: the code with its language header, then Code output and the output. */
+function codeRun(code: string, output: string): string {
+  return (
+    '<response-element class="no-md md-has-block-component"><code-block class="enable-luminous-code-block"><div class="code-block" style="display: none"><div><div class="animated-opacity">' +
+    '<div class="code-block-decoration header-formatted"><span>Python</span><div class="buttons"><button aria-label="Download code"></button><button aria-label="Copy code"></button></div></div>' +
+    `<pre><code class="code-container formatted" data-test-id="code-content">${code}</code></pre>` +
+    '<div class="code-block-decoration header"><span>Code output</span></div><mat-divider class="code-result-divider"></mat-divider>' +
+    `<pre><code class="code-result-container" data-test-id="code-output-stdout-stderr">${output}</code></pre>` +
+    "</div></div></div></code-block></response-element>"
+  );
+}
+
+/** An ordinary code block Gemini wrote, with its language header. */
+function writtenBlock(language: string, code: string): string {
+  return `<response-element class="no-md md-has-block-component"><code-block><div class="code-block"><div><div class="animated-opacity"><div class="code-block-decoration header-formatted"><span>${language}</span><div class="buttons"><button aria-label="Copy code"></button></div></div><pre><code class="code-container formatted" data-test-id="code-content">${code}</code></pre></div></div></div></code-block></response-element>`;
+}
+
+/** A finished Gemini reply whose text is `html`, with the Show code toggle in its header. */
+function geminiReply(html: string): Element {
+  const document = new JSDOM(
+    `<!doctype html><body><model-response><div class="response-container-header"><button class="toggle-code" data-test-id="toggle-code-button">Show code</button></div><div class="response-container-content"><div class="response-content"><model-response-content><message-content><div class="markdown markdown-main-panel">${html}</div></message-content></model-response-content></div></div></model-response></body>`,
+  ).window.document;
+  return document.querySelector("model-response")!;
+}
+
+/** Converts `reply` with Code Gemini ran set to `mode` (absent: the default). */
+function convertRuns(reply: Element, mode?: string): string {
+  return convertMessage(geminiAdapter, reply, { ...BASE, ...(mode ? { choice: (id: string) => (id === CODE_EXECUTION_CHOICE ? mode : "") } : {}) });
+}
+
+const TWO_RUNS_THEN_TEXT = `${codeRun("import json\nprint(len([1, 2]))\n", "2\n")}${codeRun("save('riff.json')", "Saved riff.json")}<h3>The riff</h3><p>Here it is.</p>${writtenBlock("JSON", '{"bpm": 120}')}`;
+
+check("runs as code blocks: each run's code is fenced with its language, then Code output and a plain fence; the toggle, headers and buttons are gone", () => {
+  assert.equal(
+    convertRuns(geminiReply(TWO_RUNS_THEN_TEXT), "code-blocks"),
+    '```python\nimport json\nprint(len([1, 2]))\n```\n\n**Code output**\n\n```\n2\n```\n\n```python\nsave(\'riff.json\')\n```\n\n**Code output**\n\n```\nSaved riff.json\n```\n\n### The riff\n\nHere it is.\n\n```json\n{"bpm": 120}\n```',
+  );
+});
+
+check("runs left out: no run or output is copied, and the rest of the reply is intact", () => {
+  assert.equal(convertRuns(geminiReply(TWO_RUNS_THEN_TEXT), "omit"), '### The riff\n\nHere it is.\n\n```json\n{"bpm": 120}\n```');
+});
+
+check("runs as code blocks: a run that printed nothing has no Code output part", () => {
+  assert.equal(convertRuns(geminiReply(codeRun("x = 1", "")), "code-blocks"), "```python\nx = 1\n```");
 });
 
 // ---------------------------------------------------------------------------
