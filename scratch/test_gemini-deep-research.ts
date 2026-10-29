@@ -734,15 +734,16 @@ check("settings: Gemini's options start on, off, off, off (the report's prompt),
   assert.equal(site.includeMoreSources, true, "stored as for any site that reads references, but never shown or used");
 });
 
-check("options page: Gemini's section has the button with its hint, then its five options, and no override or generic More", () => {
+// Since spec/gemini-chat, Gemini's replies have a Copy the override can take over, so the section offers it.
+check("options page: Gemini's section has the button with its hint, the override, then its five options, and no generic More", () => {
   const document = new JSDOM("<!doctype html><body></body>").window.document;
   const form = renderOptions(document, SITE_ADAPTERS, () => {});
   document.body.append(form.root);
   form.fill(buildDefaultSettings(SITE_ADAPTERS));
   const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('section[data-site="gemini"] fieldset.site input'), (input) => input.name).filter((name) => !name.includes(".rules."));
-  assert.deepEqual(inputs, ["gemini.showCopyButton", "gemini.options.used-sources", "gemini.options.unused-sources", "gemini.options.thinking", "gemini.options.report-prompt", "gemini.options.conversation-button"]);
+  assert.deepEqual(inputs, ["gemini.showCopyButton", "gemini.overrideNativeCopy", "gemini.options.used-sources", "gemini.options.unused-sources", "gemini.options.thinking", "gemini.options.report-prompt", "gemini.options.conversation-button"]);
   const hint = document.querySelector('input[name="gemini.showCopyButton"]')!.closest(".option")!.querySelector(".hint")!.textContent;
-  assert.equal(hint, "Adds buttons to a Deep Research report's toolbar, next to Share & Export.");
+  assert.equal(hint, "Adds a button to each reply, before Gemini's Copy, and Conversation and Report buttons to the top bar or a report's toolbar.");
 });
 
 // ---------------------------------------------------------------------------

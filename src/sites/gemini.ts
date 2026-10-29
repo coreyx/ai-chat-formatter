@@ -31,12 +31,16 @@ import {
   INLINE_SOURCE_CHIP_SELECTOR,
   MESSAGE_CONTENT_SELECTOR,
   MODEL_RESPONSE_SELECTOR,
+  NATIVE_COPY_BUTTON_SELECTOR,
   PLAN_SELECTOR,
   PLAN_STEP_DESCRIPTION_SELECTOR,
   PLAN_STEP_SELECTOR,
   PLAN_STEP_TITLE_SELECTOR,
   PLAN_TITLE_SELECTOR,
   readPromptText,
+  REPLY_COPY_SELECTOR,
+  REPLY_SHARE_SELECTOR,
+  REPLY_TOOLBAR_SELECTOR,
   readSourceList,
   REPORT_BODY_SELECTOR,
   REPORT_CARD_SELECTOR,
@@ -58,9 +62,11 @@ import {
 } from "./gemini-markup";
 
 /*
- * Gemini (gemini.google.com), for Deep Research. A finished report opens in a
- * panel beside the chat, and the panel's toolbar gets the extension's buttons.
- * The selectors are in gemini-markup.ts, which says where they come from.
+ * Gemini (gemini.google.com). Each reply gets a button in its toolbar. A
+ * finished Deep Research report opens in a panel beside the chat, and the
+ * panel's toolbar gets the Report button; the Conversation button sits there
+ * while a report is open, and in the top bar otherwise. The selectors are in
+ * gemini-markup.ts, which says where they come from.
  */
 
 /** The option ids, stored in the settings; never rename them once released. */
@@ -385,12 +391,20 @@ export function readGeminiReferences(message: Element): SourceReference[] | null
 }
 
 /**
- * The research request behind the report in `message`: the prompt of the
- * turn that first proposed the research plan, not "Start research". Null
- * unless **Copy the research request with the report** is on (it starts off),
- * for anything but the report panel, or when the request isn't in the page.
+ * The prompt the copy of `message` starts with, attachments named (see
+ * {@link readPromptText}).
+ *
+ * For a reply, the prompt of its own turn. For the report panel, the research
+ * request behind the report: the prompt of the turn that first proposed the
+ * research plan, not "Start research", and only while **Copy the research
+ * request with the report** is on (it starts off). Null for anything else, or
+ * when the prompt isn't in the page.
  */
 export function readGeminiPrompt(message: Element, isOptionEnabled?: (id: string) => boolean): string | null {
+  if (message.matches(MODEL_RESPONSE_SELECTOR)) {
+    const query = message.closest(TURN_SELECTOR)?.querySelector(USER_QUERY_SELECTOR);
+    return query ? readPromptText(query) || null : null;
+  }
   if (!message.matches(REPORT_PANEL_SELECTOR) || !(isOptionEnabled?.(REPORT_PROMPT_OPTION) ?? false)) return null;
   const reportTurn = findReportTurn(message);
   const request = reportTurn ? findResearchRequest(reportTurn) : null;
@@ -415,12 +429,25 @@ export function readGeminiTurns(message: Element): ConversationTurn[] | null {
 }
 
 /**
+ * Where a reply's button goes: just before Copy in its toolbar. An image-only
+ * reply's toolbar shows Share where others show Copy (seen on 2026-10-28), so
+ * the button goes before Share there. Null while the reply is still being
+ * written, since its toolbar comes only once it's finished.
+ */
+function findReplyButtonAnchor(reply: Element): ButtonAnchor | null {
+  const toolbar = reply.querySelector(REPLY_TOOLBAR_SELECTOR);
+  const before = reply.querySelector(REPLY_COPY_SELECTOR) ?? toolbar?.querySelector(`:scope > ${REPLY_SHARE_SELECTOR}`);
+  return before?.parentElement ? { parent: before.parentElement, before } : null;
+}
+
+/**
  * Where a button goes: in the open report panel's toolbar, the report's right
  * before Share & Export and the conversation's before the report's, so they
  * always read Conversation, Report, Share & Export. The conversation's button
  * shows only while its option is on and a report panel is open.
  */
 function findGeminiButtonAnchor(message: Element, isOptionEnabled?: (id: string) => boolean): ButtonAnchor | null {
+  if (message.matches(MODEL_RESPONSE_SELECTOR)) return findReplyButtonAnchor(message);
   const isReport = message.matches(REPORT_PANEL_SELECTOR);
   if (!isReport && !(isOptionEnabled?.(CONVERSATION_BUTTON_OPTION) ?? true)) return null;
   const panel = isReport ? message : message.ownerDocument.querySelector(REPORT_PANEL_SELECTOR);
@@ -435,14 +462,16 @@ export const geminiAdapter: SiteAdapter = {
   name: "Gemini",
   // Covers the /u/<n>/ paths of a second signed-in account too.
   matches: ["https://gemini.google.com/*"],
-  // The report panel, and the conversation in the left pane, which gets a copy button of its own.
-  messageSelector: `${REPORT_PANEL_SELECTOR}, infinite-scroller[data-test-id="chat-history-container"]`,
-  // In the panel: the report, its source lists and its thinking. In the conversation: each reply.
+  // The report panel, the conversation in the left pane, and each reply in it, each with a copy button of its own.
+  messageSelector: `${REPORT_PANEL_SELECTOR}, ${HISTORY_SELECTOR}, ${MODEL_RESPONSE_SELECTOR}`,
+  // In the panel: the report, its source lists and its thinking. In a reply, or each turn of the conversation: the reply.
   contentSelector: ".response-container-content",
-  // Gemini's Copy contents is in a pop-up menu, outside the report, so there's nothing for the override to stand in for.
+  // A reply's own Copy. A report's Copy contents is in a pop-up menu outside the report, and a generated image's Copy copies the image, so neither is taken over.
+  nativeCopyButtonSelector: NATIVE_COPY_BUTTON_SELECTOR,
   findButtonAnchor: findGeminiButtonAnchor,
-  buttonLabel: (message) => (message.matches(REPORT_PANEL_SELECTOR) ? REPORT_LABEL : CONVERSATION_LABEL),
-  copyButtonDescription: "Adds buttons to a Deep Research report's toolbar, next to Share & Export.",
+  // Replies get the plain icon button, like the other sites; the two toolbar buttons need telling apart.
+  buttonLabel: (message) => (message.matches(REPORT_PANEL_SELECTOR) ? REPORT_LABEL : message.matches(HISTORY_SELECTOR) ? CONVERSATION_LABEL : null),
+  copyButtonDescription: "Adds a button to each reply, before Gemini's Copy, and Conversation and Report buttons to the top bar or a report's toolbar.",
   // The preprocess step keeps only what the copy needs, so there's nothing to strip first.
   stripSelectors: [],
   preprocess: preprocessGemini,

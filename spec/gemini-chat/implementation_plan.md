@@ -149,7 +149,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
     - any other `video-player`: `<em>Generated video</em>`.
   - **Items outside `message-content`** are kept after it, in page order.
 - [x] **TASK-7:** In `preprocessReply`, also remove `source-inline-chip`, alongside the citation markers it already drops. Update the doc comment to say that chips and markers carry no link in a chat.
-- [ ] **TASK-8:** Make each reply a message.
+- [x] **TASK-8:** Make each reply a message.
   - **`messageSelector`:** add `model-response`.
   - **`findGeminiButtonAnchor`:**
     - **For a `model-response`:** the anchor is `{ parent: copyButton.parentElement, before: copyButton }` for its `REPLY_COPY_SELECTOR`.

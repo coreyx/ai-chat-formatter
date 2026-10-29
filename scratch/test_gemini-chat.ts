@@ -11,10 +11,10 @@ import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
-import { buildDefaultSettings } from "../src/core/settings";
+import { buildDefaultSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 import { readPromptText } from "../src/sites/gemini-markup";
-import { geminiAdapter } from "../src/sites/gemini";
+import { geminiAdapter, readGeminiPrompt } from "../src/sites/gemini";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -168,6 +168,81 @@ check("sources: source chips and citation markers without links are dropped; ord
   message.querySelector(".chip-here")!.replaceWith(holder.firstElementChild!);
   const markdown = convertReply(message);
   assert.equal(markdown, "Tune low. See [the docs](https://docs.example/tuning).\n\n| Key |\n| --- |\n| E |");
+});
+
+// ---------------------------------------------------------------------------
+// A button for each reply
+// ---------------------------------------------------------------------------
+
+/** One turn of a chat: a prompt holding `prompt`, and a reply (see {@link reply}) whose toolbar is `toolbar`, or none while it's being written. */
+function turnHtml(prompt: string, replyHtml: string, toolbar: string | null): string {
+  const actions = toolbar === null ? "" : `<message-actions><div class="buttons-container-v2">${toolbar}</div></message-actions>`;
+  return `<div class="conversation-container"><user-query><div class="query-text"><span class="cdk-visually-hidden">You said</span><p class="query-text-line">${prompt}</p></div></user-query><model-response><div class="response-container-content"><message-content><div class="markdown">${replyHtml}</div></message-content></div>${actions}</model-response></div>`;
+}
+
+const COPY_TOOLBAR = '<thumb-up-button></thumb-up-button><copy-button><gem-icon-button><button aria-label="Copy"></button></gem-icon-button></copy-button><div class="menu"></div>';
+const IMAGE_TOOLBAR = '<thumb-up-button></thumb-up-button><div><regenerate-button></regenerate-button></div><share-button><gem-icon-button><button aria-label="Share image"></button></gem-icon-button></share-button><div class="menu"></div>';
+
+/** A chat page with the extension running on it, recording what's copied. */
+function startChat(turns: string, edit: (settings: Settings) => void = () => {}) {
+  const document = new JSDOM(`<!doctype html><body><div class="buttons-container"><conversation-actions-icon><button aria-label="Open menu for conversation"></button></conversation-actions-icon></div><infinite-scroller data-test-id="chat-history-container">${turns}</infinite-scroller></body>`).window.document;
+  const settings = buildDefaultSettings([geminiAdapter]);
+  edit(settings);
+  const copied: string[] = [];
+  const controller = new ContentController(geminiAdapter, settings, { document, writeClipboard: async (text) => void copied.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  const replyButtons = () => Array.from(document.querySelectorAll<HTMLButtonElement>("model-response [data-acf-injected]"));
+  return { document, controller, settings, copied, replyButtons };
+}
+
+check("reply buttons: each finished reply gets the plain icon button just before Copy, or before Share when an image-only reply has no Copy", () => {
+  const page = startChat(turnHtml("One", "<p>A.</p>", COPY_TOOLBAR) + turnHtml("Two", "<p>B.</p>", IMAGE_TOOLBAR));
+  const [first, second] = page.replyButtons();
+  assert.equal(page.replyButtons().length, 2);
+  assert.equal(first.nextElementSibling?.nodeName, "COPY-BUTTON");
+  assert.equal(second.nextElementSibling?.nodeName, "SHARE-BUTTON");
+  assert.equal(first.getAttribute("aria-label"), "Copy as Markdown");
+  assert.ok(!first.classList.contains("acf-labelled"));
+});
+
+check("reply buttons: a reply still being written gets none until its toolbar appears", () => {
+  const page = startChat(turnHtml("One", "<p>Writing…</p>", null));
+  assert.equal(page.replyButtons().length, 0);
+  page.document.querySelector("model-response")!.insertAdjacentHTML("beforeend", `<message-actions><div class="buttons-container-v2">${COPY_TOOLBAR}</div></message-actions>`);
+  page.controller.sync();
+  assert.equal(page.replyButtons().length, 1);
+});
+
+check("reply prompt: a reply's prompt is its own turn's, attachments and all", () => {
+  const page = startChat(turnHtml("First", "<p>A.</p>", COPY_TOOLBAR) + turnHtml("Second", "<p>B.</p>", COPY_TOOLBAR));
+  const replies = page.document.querySelectorAll("model-response");
+  assert.equal(readGeminiPrompt(replies[1]), "Second");
+  assert.equal(readGeminiPrompt(replies[0], () => false), "First", "no Gemini option governs a reply's prompt");
+});
+
+await checkAsync("reply buttons: a click copies the reply with its prompt, or alone with the prompt setting off", async () => {
+  const page = startChat(turnHtml("What is it?", "<p>It is <strong>this</strong>.</p>", COPY_TOOLBAR));
+  page.replyButtons()[0].click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(page.copied[0], "## What is it?\n\nIt is **this**.");
+  const alone = startChat(turnHtml("What is it?", "<p>It is.</p>", COPY_TOOLBAR), (settings) => (settings.includePrompt = false));
+  alone.replyButtons()[0].click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(alone.copied[0], "It is.");
+});
+
+await checkAsync("override: with it on, a reply toolbar's Copy copies Markdown; a generated image's own Copy is left alone, and so is everything with it off", async () => {
+  const imageReply = `<p>Here.</p>${GENERATED_IMAGE}`;
+  for (const on of [true, false]) {
+    const page = startChat(turnHtml("Draw", imageReply, COPY_TOOLBAR), (settings) => (settings.sites.gemini.overrideNativeCopy = on));
+    let reachedGemini = 0;
+    page.document.addEventListener("click", () => reachedGemini++);
+    page.document.querySelector<HTMLButtonElement>("message-actions copy-button button")!.click();
+    page.document.querySelector<HTMLButtonElement>(".generated-image-controls copy-button button")!.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.deepEqual(page.copied, on ? ["## Draw\n\nHere.\n\n*Generated image*"] : []);
+    assert.equal(reachedGemini, on ? 1 : 2, "only the reply's Copy is stopped before Gemini's handler");
+  }
 });
 
 // ---------------------------------------------------------------------------
