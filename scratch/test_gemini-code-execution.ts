@@ -157,6 +157,44 @@ check("runs left out: no run or output is copied, and the rest of the reply is i
   assert.equal(convertRuns(geminiReply(TWO_RUNS_THEN_TEXT), "omit"), '### The riff\n\nHere it is.\n\n```json\n{"bpm": 120}\n```');
 });
 
+const TWO_RUN_CALLOUT = [
+  "> [!example]- Code Gemini ran",
+  "> ```python",
+  "> import json",
+  "> print(len([1, 2]))",
+  "> ```",
+  ">",
+  "> **Code output**",
+  ">",
+  "> ```",
+  "> 2",
+  "> ```",
+  ">",
+  "> ```python",
+  "> save('riff.json')",
+  "> ```",
+  ">",
+  "> **Code output**",
+  ">",
+  "> ```",
+  "> Saved riff.json",
+  "> ```",
+].join("\n");
+
+check("runs as a callout (the default): runs next to each other share one folded callout, before the text; written code stays a plain block", () => {
+  assert.equal(convertRuns(geminiReply(TWO_RUNS_THEN_TEXT)), `${TWO_RUN_CALLOUT}\n\n### The riff\n\nHere it is.\n\n\`\`\`json\n{"bpm": 120}\n\`\`\``);
+  assert.equal(convertRuns(geminiReply(TWO_RUNS_THEN_TEXT), "callout"), convertRuns(geminiReply(TWO_RUNS_THEN_TEXT)));
+  assert.equal(convertRuns(geminiReply(TWO_RUNS_THEN_TEXT), "unknown-value"), convertRuns(geminiReply(TWO_RUNS_THEN_TEXT)), "an unknown value reads as the default");
+});
+
+check("runs as a callout: a run apart from the others gets its own callout in place; one that printed nothing has no Code output; backticks lengthen the fence", () => {
+  const markdown = convertRuns(geminiReply(`${codeRun("a = 1", "1")}<p>Between.</p>${codeRun('s = """\n```\n"""', "")}<p>After.</p>`));
+  assert.equal(
+    markdown,
+    "> [!example]- Code Gemini ran\n> ```python\n> a = 1\n> ```\n>\n> **Code output**\n>\n> ```\n> 1\n> ```\n\nBetween.\n\n> [!example]- Code Gemini ran\n> ````python\n> s = \"\"\"\n> ```\n> \"\"\"\n> ````\n\nAfter.",
+  );
+});
+
 check("runs as code blocks: a run that printed nothing has no Code output part", () => {
   assert.equal(convertRuns(geminiReply(codeRun("x = 1", "")), "code-blocks"), "```python\nx = 1\n```");
 });

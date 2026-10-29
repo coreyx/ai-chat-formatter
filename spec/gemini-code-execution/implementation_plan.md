@@ -107,7 +107,7 @@ None at this time.
   - **With `callout`:** the unit becomes a `div[data-acf-gemini-code-run]`.
     - **What it holds:** the runs as JSON in a data attribute, each as `{ language, code, output }`.
     - **A unit straight after such a div** (ignoring whitespace) joins it instead of starting another.
-- [ ] **TASK-7:** Add `codeRunCalloutRule()` to `turndownRules`. It writes each `div[data-acf-gemini-code-run]` as the callout shown above.
+- [x] **TASK-7:** Add `codeRunCalloutRule()` to `turndownRules`. It writes each `div[data-acf-gemini-code-run]` as the callout shown above.
   - **The first line:** `> [!example]- Code Gemini ran`.
   - **Each run:**
     1. its code fence;

@@ -288,6 +288,39 @@ function rewriteCodeRuns(root: Element, context: ConversionContext): void {
   }
 }
 
+/** A code fence long enough to hold `text`: three backticks, or one more than the longest run of backticks in it. */
+function fenceFor(text: string): string {
+  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
+  return "`".repeat(Math.max(3, longest + 1));
+}
+
+/**
+ * Turndown rule for the placeholders {@link rewriteCodeRuns} makes: each is an
+ * Obsidian callout that starts folded, `> [!example]- Code Gemini ran`,
+ * holding each run's code in a fence tagged with its language and, when it
+ * printed anything, `**Code output**` and the output in a plain fence. Runs
+ * are separated by an empty quoted line, and every line is quoted, so the
+ * code stays inside the callout.
+ */
+function codeRunCalloutRule(): TurndownService.Rule {
+  return {
+    filter: (node) => node.nodeName === "DIV" && (node as HTMLElement).hasAttribute(CODE_RUN_ATTRIBUTE),
+    replacement: (_content, node) => {
+      const lines = ["[!example]- Code Gemini ran"];
+      readCodeRuns(node as HTMLElement).forEach((run, index) => {
+        if (index > 0) lines.push("");
+        const fence = fenceFor(run.code);
+        lines.push(`${fence}${run.language}`, ...run.code.split("\n"), fence);
+        if (run.output) {
+          const outputFence = fenceFor(run.output);
+          lines.push("", "**Code output**", "", outputFence, ...run.output.split("\n"), outputFence);
+        }
+      });
+      return `\n\n${lines.map((line) => (line ? `> ${line}` : ">")).join("\n")}\n\n`;
+    },
+  };
+}
+
 /** `<pre><code>` holding `text`, tagged with `language` when there is one, for Turndown to fence. */
 function codeFence(document: Document, language: string, text: string): HTMLPreElement {
   const pre = document.createElement("pre");
@@ -579,7 +612,7 @@ export const geminiAdapter: SiteAdapter = {
   // The preprocess step keeps only what the copy needs, so there's nothing to strip first.
   stripSelectors: [],
   preprocess: preprocessGemini,
-  turndownRules: (context) => ({ geminiCitation: geminiCitationRule(context) }),
+  turndownRules: (context) => ({ geminiCitation: geminiCitationRule(context), geminiCodeRunCallout: codeRunCalloutRule() }),
   readReferences: readGeminiReferences,
   readPrompt: readGeminiPrompt,
   readTurns: readGeminiTurns,
