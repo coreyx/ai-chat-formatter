@@ -97,7 +97,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/test_duckai-read-more-style.ts`
-- [ ] **TASK-5:** Add a regression script covering the checks under Automated Tests, using the existing `scratch/fixtures/duckai-message.html` with the fake React fiber setup from `scratch/test_duck-ai-adapter.ts`. If the options-page expectations in `scratch/test_duck-ai-adapter.ts` change with Duck.ai's new option, update them there.
+- [x] **TASK-5:** Add a regression script covering the checks under Automated Tests, using the existing `scratch/fixtures/duckai-message.html` with the fake React fiber setup from `scratch/test_duck-ai-adapter.ts`. If the options-page expectations in `scratch/test_duck-ai-adapter.ts` change with Duck.ai's new option, update them there.
 
 ## Verification Plan
 

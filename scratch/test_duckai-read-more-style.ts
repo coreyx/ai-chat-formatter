@@ -9,7 +9,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
+import { ContentController } from "../src/content/controller";
 import { convertMessage, type ConversionOptions } from "../src/core/convert";
+import { buildDefaultSettings, type Settings } from "../src/core/settings";
+import { renderOptions } from "../src/options/options";
+import { SITE_ADAPTERS } from "../src/sites/index";
 import { CITATION_STYLES, type CitationStyle } from "../src/core/types";
 import { installDuckAiPageScript } from "../src/page/duckai";
 import { duckAiAdapter, READ_MORE_STYLE_OPTION, readDuckAiReferences } from "../src/sites/duckai";
@@ -20,6 +24,16 @@ const results: { name: string; error?: unknown }[] = [];
 function check(name: string, fn: () => void): void {
   try {
     fn();
+    results.push({ name });
+  } catch (error) {
+    results.push({ name, error });
+  }
+}
+
+/** Runs an async check, recording its result like {@link check}. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
     results.push({ name });
   } catch (error) {
     results.push({ name, error });
@@ -148,6 +162,53 @@ check("read more: a card without a title shows its domain once, one without a we
 
 check("read more: with the option off, there's no Read More section", () => {
   assert.ok(!convert(replies()[1], { duckAiStyle: false }).includes("Read More"));
+});
+
+// ---------------------------------------------------------------------------
+// Settings and the options page
+// ---------------------------------------------------------------------------
+
+/** The options page filled with `settings`. */
+function optionsPage(settings: Settings) {
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const form = renderOptions(document, SITE_ADAPTERS, () => {});
+  document.body.append(form.root);
+  form.fill(settings);
+  const input = (name: string) => document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+  return { document, input };
+}
+
+check("options page: Duck.ai's setting starts off, and turning it on greys out More sources, saying why", () => {
+  const settings = buildDefaultSettings(SITE_ADAPTERS);
+  assert.equal(settings.sites.duckai.options[READ_MORE_STYLE_OPTION], false);
+  const off = optionsPage(settings);
+  assert.equal(off.input("duckai.options.read-more-style").checked, false);
+  assert.equal(off.input("duckai.includeMoreSources").disabled, false);
+  settings.sites.duckai.options[READ_MORE_STYLE_OPTION] = true;
+  const on = optionsPage(settings);
+  const more = on.input("duckai.includeMoreSources");
+  assert.equal(more.disabled, true);
+  assert.equal(more.closest(".option")!.querySelector(".hint")!.textContent, `Not used while "Cite sources as Duck.ai does" is on.`);
+});
+
+await checkAsync("controller: with the setting on, Copy as Markdown and the overridden Duck.ai Copy both copy Duck.ai's style", async () => {
+  const document = duckAiPage();
+  const settings = buildDefaultSettings([duckAiAdapter]);
+  settings.includePrompt = false;
+  settings.sites.duckai.options[READ_MORE_STYLE_OPTION] = true;
+  settings.sites.duckai.overrideNativeCopy = true;
+  const copied: string[] = [];
+  new ContentController(duckAiAdapter, settings, { document, writeClipboard: async (text) => void copied.push(text), requestFrame: (callback) => callback() }).start();
+  const [first] = replies(document);
+  first.querySelector<HTMLButtonElement>("[data-acf-injected]")!.click();
+  first.querySelector<HTMLButtonElement>("button[data-copyairesponse]")!.click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(copied.length, 2);
+  for (const markdown of copied) {
+    assert.ok(markdown.includes("[Widget](https://widget.example/releases/5.0.0) The team"), markdown);
+    assert.ok(markdown.endsWith(FIRST_READ_MORE.split("\n").at(-1)!));
+    assert.ok(!markdown.includes("## Sources"));
+  }
 });
 
 // ---------------------------------------------------------------------------
