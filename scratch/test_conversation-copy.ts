@@ -11,6 +11,8 @@ import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { buildDefaultSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
+import { renderOptions } from "../src/options/options";
+import { SITE_ADAPTERS } from "../src/sites/index";
 import { COPILOT_REPLY_SELECTOR, copilotAdapter, readCopilotTurns } from "../src/sites/copilot";
 import { DUCK_AI_REPLY_SELECTOR, duckAiAdapter, readDuckAiTurns } from "../src/sites/duckai";
 
@@ -182,6 +184,103 @@ await checkAsync("controller: a conversation copy never runs the slower source r
   document.querySelector<HTMLButtonElement>(`${COPILOT_REPLY_SELECTOR} [data-acf-injected]`)!.click();
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(slowReads, 1, "the reply's own copy keeps its fallback");
+});
+
+// ---------------------------------------------------------------------------
+// The copies
+// ---------------------------------------------------------------------------
+
+/** `markdown` with each linked-citation block-ID token, random per turn, replaced by `T`. */
+function withTokens(markdown: string): string {
+  return markdown.replace(/c-[a-z0-9]+-(\d+)/g, "c-T-$1");
+}
+
+/** Clicks the page's Conversation button and returns what it copied. */
+async function copyConversation(adapter: SiteAdapter, document: Document, edit?: (settings: Settings) => void): Promise<string> {
+  const page = start(adapter, document, edit);
+  page.conversationButtons()[0].click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  return page.copied[0];
+}
+
+const DUCK_AI_CONVERSATION = [
+  "## What is new in Widget 5?",
+  "",
+  "Widget 5 adds a faster engine.[[#^c-T-1|⁽¹⁾]]",
+  "",
+  "### Sources",
+  "",
+  "#### Citations",
+  "",
+  "1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-T-1",
+  "",
+  "#### More",
+  "",
+  "- [Widget 5 hands-on](https://news.example/widget-5) — news.example",
+  "",
+  "## And the old engine?",
+  "",
+  "> Keep it short.",
+  "",
+  "It still works, but it is slower.",
+  "",
+  "## Thanks!",
+  "",
+  "You're welcome.",
+].join("\n");
+
+await checkAsync("duck.ai: the Conversation copy has each prompt over its reply, each reply's own Sources, the active version only, even with prompts off", async () => {
+  assert.equal(withTokens(await copyConversation(duckAiAdapter, duckAiConversationPage())), DUCK_AI_CONVERSATION);
+  assert.equal(withTokens(await copyConversation(duckAiAdapter, duckAiConversationPage(), (settings) => (settings.includePrompt = false))), DUCK_AI_CONVERSATION);
+});
+
+await checkAsync("duck.ai: with Duck.ai's style on, each reply keeps its chip link and ends with its own Read More, before the next turn", async () => {
+  const markdown = await copyConversation(duckAiAdapter, duckAiConversationPage(), (settings) => (settings.sites.duckai.options["read-more-style"] = true));
+  assert.ok(
+    markdown.startsWith(
+      "## What is new in Widget 5?\n\nWidget 5 adds a faster engine. [Widget](https://widget.example/releases/5.0.0)\n\n### Read More\n\n" +
+        "- ![|16](https://external-content.example/ip3/widget.example.ico) [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n" +
+        "- ![|16](https://external-content.example/ip3/news.example.ico) [Widget 5 hands-on](https://news.example/widget-5) — news.example\n\n## And the old engine?",
+    ),
+    markdown,
+  );
+  assert.ok(!markdown.includes("Sources"));
+});
+
+await checkAsync("copilot: the Conversation copy has both turns, each prompt over its reply, the first reply with its own Sources", async () => {
+  const markdown = withTokens(await copyConversation(copilotAdapter, copilotConversationPage()));
+  assert.equal(
+    markdown,
+    "## What is new in Widget 5?\n\nWidget 5 adds a faster engine.[[#^c-T-1|⁽¹⁾]]\n\n### Sources\n\n#### Citations\n\n1. [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example ^c-T-1\n\n## And the old engine?\n\n> Keep it short.\n\nIt still works, but it is slower.",
+  );
+});
+
+await checkAsync("override: Copy on a reply, taken over, copies that reply alone, not the conversation, on both sites", async () => {
+  for (const [adapter, document, copySelector] of [
+    [duckAiAdapter, duckAiConversationPage(), "button[data-copyairesponse]"],
+    [copilotAdapter, copilotConversationPage(), 'button[data-testid="CopyButtonTestId"]'],
+  ] as const) {
+    const page = start(adapter, document, (settings) => {
+      settings.sites[adapter.id].overrideNativeCopy = true;
+      settings.includePrompt = false;
+    });
+    document.querySelectorAll<HTMLButtonElement>(copySelector)[1].click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.deepEqual(page.copied, ["It still works, but it is slower."], adapter.id);
+  }
+});
+
+check("settings: the Conversation button starts on for Duck.ai and Copilot, and Duck.ai lists it after its citation style", () => {
+  const defaults = buildDefaultSettings(SITE_ADAPTERS);
+  assert.equal(defaults.sites.duckai.options["conversation-button"], true);
+  assert.equal(defaults.sites.copilot.options["conversation-button"], true);
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const form = renderOptions(document, SITE_ADAPTERS, () => {});
+  document.body.append(form.root);
+  form.fill(defaults);
+  const names = (site: string) => Array.from(document.querySelectorAll<HTMLInputElement>(`input[name^="${site}.options."]`), (input) => input.name);
+  assert.deepEqual(names("duckai"), ["duckai.options.read-more-style", "duckai.options.conversation-button"]);
+  assert.deepEqual(names("copilot"), ["copilot.options.conversation-button"]);
 });
 
 // ---------------------------------------------------------------------------

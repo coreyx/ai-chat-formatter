@@ -117,7 +117,7 @@ None at this time.
   - **The conversation:** a `MessageListContainer` with a `role="feed"` of two turns, in the article markup of `copilot-message.html`. One reply has a citation chip.
 
 #### [NEW] `scratch/test_conversation-copy.ts`
-- [ ] **TASK-8:** Add a regression script covering the checks under Automated Tests.
+- [x] **TASK-8:** Add a regression script covering the checks under Automated Tests.
   - **Existing scripts:** update any whose expectations change with Copilot and Duck.ai gaining options, such as `test_search-assist-explore-more.ts`'s "Copilot has no options" check, with a comment pointing here.
   - **The suite:** run `pnpm test`.
 
