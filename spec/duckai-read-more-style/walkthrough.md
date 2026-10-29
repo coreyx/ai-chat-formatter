@@ -58,6 +58,18 @@ While writing the script, two of its first checks were wrong, not the code:
 
 Both checks were corrected before the TASK-3 commit.
 
+### Fixed after manual testing
+
+**What failed:** manual step 3.4. The Read More lines had no icons.
+
+**The cause:** on duck.ai, each card's icon address leaves out the scheme (`//external-content.duckduckgo.com/…`). The code accepted only addresses starting with `http(s)://`, so it dropped them all. The fixtures used full `https://` addresses, which is why the tests passed.
+
+**The fix (commit `f31bca6`):**
+- **`cardIconUrl`:** resolves the icon's address against the page, or against duck.ai where the page has no web address of its own, as in the tests. An address that isn't http(s), such as `data:`, still gets no icon.
+- **The fixtures:** `duckai-message.html` and `duckai-conversation.html` now use the scheme-less form, as on the live site.
+
+**Checked:** with the new fixtures, 4 of the 11 checks in `test_duckai-read-more-style.ts` fail on the old code and all 11 pass with the fix. All 16 test scripts pass.
+
 `tsc --noEmit` is clean.
 
 ### Regression Testing
