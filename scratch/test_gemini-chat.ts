@@ -8,13 +8,16 @@
  * process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
-import { convertMessage, type ConversionOptions } from "../src/core/convert";
+import { convertConversation, convertMessage, type ConversionOptions } from "../src/core/convert";
 import { buildDefaultSettings, type Settings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 import { readPromptText } from "../src/sites/gemini-markup";
-import { geminiAdapter, readGeminiPrompt } from "../src/sites/gemini";
+import { geminiAdapter, readGeminiPrompt, readGeminiTurns } from "../src/sites/gemini";
+import { renderOptions } from "../src/options/options";
+import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -277,6 +280,104 @@ check("conversation button: in the top bar before ⋮ with no report open; into 
   page.controller.applySettings(off);
   assert.equal(conversationButtons().length, 0);
   assert.equal(page.replyButtons().length, 1, "the reply's button stays");
+});
+
+// ---------------------------------------------------------------------------
+// The fixture: a whole chat
+// ---------------------------------------------------------------------------
+
+const FIXTURE = readFileSync("scratch/fixtures/gemini-chat.html", "utf8");
+
+/** The fixture page with the extension running on it, recording what's copied. */
+function fixturePage(edit: (settings: Settings) => void = () => {}) {
+  const document = new JSDOM(`<!doctype html><body>${FIXTURE}</body>`).window.document;
+  const settings = buildDefaultSettings([geminiAdapter]);
+  edit(settings);
+  const copied: string[] = [];
+  const controller = new ContentController(geminiAdapter, settings, { document, writeClipboard: async (text) => void copied.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  return { document, controller, copied, replies: Array.from(document.querySelectorAll("model-response")) };
+}
+
+const FIRST_REPLY = [
+  "## Write a script that oils a widget.",
+  "",
+  "> Use the attached guides.",
+  ">",
+  "> Attached: *Widget\\_Guide* (PDF), *Spare Parts* (PDF)",
+  "",
+  "Here is a script that oils a widget.",
+  "",
+  "```python",
+  "def oil(widget):",
+  "    widget.oil(drops=2)",
+  "```",
+  "",
+  "Two drops are enough.",
+  "",
+  "See [the oiling page](https://widgets.example/oil) for more.",
+  "",
+  "| Part | Drops |",
+  "| --- | --- |",
+  "| Gear | 2 |",
+].join("\n");
+
+const SECOND_REPLY = [
+  "## Make a parts list, a picture and a jingle for this widget.",
+  "",
+  "> Attached: *image*",
+  "",
+  "Here is the parts list.",
+  "",
+  "Generated file: *widget\\_parts* (JSON)",
+  "",
+  "*Generated image*",
+  "",
+  "And a jingle:",
+  "",
+  "*Generated music*",
+  "",
+  "*Generated video*",
+].join("\n");
+
+check("fixture: the two finished replies get buttons, the one still being written doesn't, and Conversation is in the top bar", () => {
+  const page = fixturePage();
+  assert.deepEqual(page.replies.map((reply) => reply.querySelectorAll("[data-acf-injected]").length), [1, 1, 0]);
+  assert.equal(page.document.querySelector('[title="Copy conversation as Markdown"]')?.nextElementSibling?.nodeName, "CONVERSATION-ACTIONS-ICON");
+});
+
+await checkAsync("fixture: each reply's copy has its prompt and attachments, fenced code, no chips, and its generated items named without addresses", async () => {
+  const page = fixturePage();
+  for (const reply of page.replies.slice(0, 2)) reply.querySelector<HTMLButtonElement>("[data-acf-injected]")!.click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(page.copied[0], FIRST_REPLY);
+  assert.equal(page.copied[1], SECOND_REPLY);
+  assert.ok(!/https:\/\/(images|media)\.example|blob:|gstatic/.test(page.copied.join("\n")), "no address of a generated item or attachment");
+});
+
+check("fixture: the Conversation copy holds all three turns, attachments named, replies rewritten", () => {
+  const page = fixturePage();
+  const turns = readGeminiTurns(page.document.querySelector('infinite-scroller[data-test-id="chat-history-container"]')!)!;
+  const markdown = convertConversation(geminiAdapter, turns, {
+    style: "linked-citations",
+    includeMoreSources: false,
+    isRuleEnabled: () => true,
+    idToken: "t",
+    promptFormat: { format: "heading", headingLevel: 2 },
+    referencesFor: () => null,
+  });
+  assert.equal(markdown, `${FIRST_REPLY}\n\n${SECOND_REPLY}\n\n## Thanks! One more?\n\nWorking on it`);
+});
+
+check("options page: Gemini offers the override now, still without the generic More, and its hint names the reply buttons", () => {
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const form = renderOptions(document, SITE_ADAPTERS, () => {});
+  document.body.append(form.root);
+  form.fill(buildDefaultSettings(SITE_ADAPTERS));
+  const names = Array.from(document.querySelectorAll<HTMLInputElement>('section[data-site="gemini"] fieldset.site input'), (input) => input.name);
+  assert.ok(names.includes("gemini.overrideNativeCopy"));
+  assert.ok(!names.includes("gemini.includeMoreSources"));
+  assert.match(document.querySelector('input[name="gemini.showCopyButton"]')!.closest(".option")!.querySelector(".hint")!.textContent!, /each reply/);
 });
 
 // ---------------------------------------------------------------------------

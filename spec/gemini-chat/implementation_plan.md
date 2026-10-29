@@ -169,7 +169,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
 ### Tests
 
 #### [NEW] `scratch/fixtures/gemini-chat.html`
-- [ ] **TASK-10:** Add a synthetic fixture with made-up names, structured as inspected:
+- [x] **TASK-10:** Add a synthetic fixture with made-up names, structured as inspected:
   - **The top bar:** a `div.buttons-container` with `conversation-actions-icon`.
   - **The history**, with three turns:
     1. **First turn:**
@@ -190,7 +190,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
     3. **Third turn:** a reply still being written, with no `message-actions`.
 
 #### [NEW] `scratch/test_gemini-chat.ts`
-- [ ] **TASK-11:** Add a regression script covering the checks under Automated Tests below.
+- [x] **TASK-11:** Add a regression script covering the checks under Automated Tests below.
   - **The Deep Research tests:** update `scratch/test_gemini-deep-research.ts` where its replies now get buttons of their own. Its fixture's replies have toolbars.
   - **The suite:** run all `scratch/test_*.ts` with `pnpm test`.
 

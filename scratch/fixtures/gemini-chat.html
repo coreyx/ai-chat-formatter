@@ -1,0 +1,152 @@
+<!--
+  An ordinary Gemini chat reduced to the structure observed on
+  gemini.google.com on 2026-10-28: the top bar with its conversation menu,
+  then the history with three turns.
+
+  1. A two-line prompt with two PDFs attached, and a reply holding a code
+     block with a language header, a source chip and a citation marker (both
+     without links, as they were for uploaded files), a plain link and a
+     table, then its toolbar with Copy.
+  2. A prompt with an attached picture (assumed: a preview with an image and
+     no filename label), and a reply holding a generated file, a generated
+     image with its own buttons, generated music and a lone video player
+     (assumed to be a generated video), then a toolbar with Share in place of
+     Copy, as on an image-only reply.
+  3. A prompt whose reply is still being written: no toolbar yet.
+
+  Angular's generated attributes and most wrapper elements are left out; every
+  element and attribute the adapter relies on is kept as observed. All names,
+  text and URLs are made up. A chip holds a <div>, which the HTML parser won't
+  leave inside a <p>, so the chip here sits in a <span> paragraph wrapper of
+  its own, as Gemini's response elements do.
+-->
+<div id="app">
+  <div class="top-bar">
+    <div class="buttons-container">
+      <conversation-actions-icon><button aria-label="Open menu for conversation"><mat-icon>more_vert</mat-icon></button></conversation-actions-icon>
+    </div>
+  </div>
+  <infinite-scroller class="chat-history" data-test-id="chat-history-container">
+    <div class="conversation-container">
+      <user-query>
+        <span class="user-query-container">
+          <user-query-content>
+            <div class="user-query-container">
+              <div class="file-preview-container">
+                <user-query-file-carousel>
+                  <user-query-file-preview><div class="new-file-preview-container" data-test-id="uploaded-file"><button class="new-file-preview-file" aria-label="Widget_Guide.pdf"><div class="extension-label" data-test-id="extension-label">PDF</div><div class="filename-label" data-test-id="filename-label">Widget_Guide</div></button></div></user-query-file-preview>
+                  <user-query-file-preview><div class="new-file-preview-container" data-test-id="uploaded-file"><button class="new-file-preview-file" aria-label="Spare Parts.pdf"><div class="extension-label" data-test-id="extension-label">PDF</div><div class="filename-label" data-test-id="filename-label">Spare Parts</div></button></div></user-query-file-preview>
+                </user-query-file-carousel>
+              </div>
+              <div class="query-text"><span class="cdk-visually-hidden">You said</span><p class="query-text-line">Write a script that oils a widget.</p><p class="query-text-line">Use the attached guides.</p></div>
+            </div>
+          </user-query-content>
+        </span>
+      </user-query>
+      <model-response>
+        <div class="response-container-content has-thoughts">
+          <div class="response-content">
+            <thinking-overlay></thinking-overlay>
+            <div class="model-response-label-announcer"><h6 class="cdk-visually-hidden">Gemini said</h6></div>
+            <model-response-content>
+              <structured-content-container class="model-response-text has-thoughts">
+                <div class="container">
+                  <message-content>
+                    <div class="markdown markdown-main-panel">
+                      <p>Here is a script that oils a widget.</p>
+                      <code-block><div class="code-block"><div class="code-block-decoration header-formatted"><span>Python</span><div class="buttons"><button aria-label="Download code"><mat-icon>download</mat-icon></button><button aria-label="Copy code"><mat-icon>content_copy</mat-icon></button></div></div><div class="formatted-code-block-internal-container"><div class="animated-opacity"><pre><code class="code-container formatted" data-test-id="code-content"><span class="hljs-keyword">def</span> oil(widget):
+    widget.oil(drops=<span class="hljs-number">2</span>)</code></pre></div></div></div></code-block>
+                      <span class="chip-paragraph">Two drops are enough.<source-inline-chip><div class="source-inline-chip-container"><button class="button multiple-button" aria-label="View source details for Widget_Guide"><span class="source-title">Widget_Guide</span><span class="source-count">+ 1</span></button></div></source-inline-chip><source-footnote><sup class="superscript" data-turn-source-index="2"></sup></source-footnote></span>
+                      <p>See <a href="https://widgets.example/oil">the oiling page</a> for more.</p>
+                      <table><thead><tr><th><p>Part</p></th><th><p>Drops</p></th></tr></thead><tbody><tr><td><p>Gear</p></td><td><p>2</p></td></tr></tbody></table>
+                    </div>
+                  </message-content>
+                </div>
+              </structured-content-container>
+            </model-response-content>
+            <div class="response-footer complete"><sources-list><overview-carousel><div></div></overview-carousel></sources-list></div>
+          </div>
+        </div>
+        <div class="response-container-footer">
+          <message-actions>
+            <div class="actions-container-v2">
+              <div class="buttons-container-v2">
+                <thumb-up-button><gem-icon-button><button aria-label="Good response"></button></gem-icon-button></thumb-up-button>
+                <thumb-down-button><gem-icon-button><button aria-label="Bad response"></button></gem-icon-button></thumb-down-button>
+                <div><regenerate-button><button aria-label="Redo"></button></regenerate-button></div>
+                <copy-button><gem-icon-button><button aria-label="Copy"></button></gem-icon-button></copy-button>
+                <div><div class="menu-button-wrapper"><button aria-label="Show more options"></button></div></div>
+              </div>
+            </div>
+          </message-actions>
+        </div>
+      </model-response>
+    </div>
+
+    <div class="conversation-container">
+      <user-query>
+        <span class="user-query-container">
+          <user-query-content>
+            <div class="user-query-container">
+              <div class="file-preview-container">
+                <user-query-file-carousel>
+                  <user-query-file-preview><div class="new-file-preview-container" data-test-id="uploaded-file"><button class="new-file-preview-file" aria-label="Uploaded image"><img src="blob:https://gemini.google.com/00000000-0000-4000-8000-000000000000" alt=""></button></div></user-query-file-preview>
+                </user-query-file-carousel>
+              </div>
+              <div class="query-text"><span class="cdk-visually-hidden">You said</span><p class="query-text-line">Make a parts list, a picture and a jingle for this widget.</p></div>
+            </div>
+          </user-query-content>
+        </span>
+      </user-query>
+      <model-response>
+        <div class="response-container-content">
+          <div class="response-content">
+            <thinking-overlay></thinking-overlay>
+            <model-response-content>
+              <structured-content-container class="model-response-text">
+                <div class="container">
+                  <message-content>
+                    <div class="markdown markdown-main-panel">
+                      <p>Here is the parts list.</p>
+                      <generated-file><div class="chip-lr"><img class="file-icon-lr" src="https://www.gstatic.example/icons/json.svg" alt=""><div class="file-name-lr">widget_parts</div><div class="file-type-lr">JSON</div><button aria-label="Open">Open</button></div></generated-file>
+                      <div class="attachment-container generated-images"><response-element class="no-md"><generated-image><div class="loader"></div><single-image class="generated-image large"><div class="image-container"><div class="overlay-container"><button class="image-button"><img class="image" src="https://images.example/generated/widget.png" alt="A shiny brass widget on a workbench"></button><div class="generated-image-controls hide-from-message-actions"><share-button><gem-icon-button><button aria-label="Share image"></button></gem-icon-button></share-button><copy-button><gem-icon-button><button aria-label="Copy image"></button></gem-icon-button></copy-button><download-generated-image-button><gem-icon-button data-test-id="download-generated-image-button"><button aria-label="Download image"></button></gem-icon-button></download-generated-image-button></div></div></div></single-image></generated-image></response-element></div>
+                      <p>And a jingle:</p>
+                      <generated-music><video-player><video src="https://media.example/generated/jingle.mp4"></video><button aria-label="Play"></button></video-player></generated-music>
+                      <video-player><video src="https://media.example/generated/spin.mp4"></video><button aria-label="Play"></button></video-player>
+                    </div>
+                  </message-content>
+                </div>
+              </structured-content-container>
+            </model-response-content>
+          </div>
+        </div>
+        <div class="response-container-footer">
+          <message-actions>
+            <div class="actions-container-v2">
+              <div class="buttons-container-v2">
+                <thumb-up-button><gem-icon-button><button aria-label="Good response"></button></gem-icon-button></thumb-up-button>
+                <thumb-down-button><gem-icon-button><button aria-label="Bad response"></button></gem-icon-button></thumb-down-button>
+                <div><regenerate-button><button aria-label="Redo"></button></regenerate-button></div>
+                <share-button><gem-icon-button><button aria-label="Share image"></button></gem-icon-button></share-button>
+                <div><div class="menu-button-wrapper"><button aria-label="Show more options"></button></div></div>
+              </div>
+            </div>
+          </message-actions>
+        </div>
+      </model-response>
+    </div>
+
+    <div class="conversation-container">
+      <user-query>
+        <span class="user-query-container"><user-query-content><div class="user-query-container"><div class="query-text"><span class="cdk-visually-hidden">You said</span><p class="query-text-line">Thanks! One more?</p></div></div></user-query-content></span>
+      </user-query>
+      <model-response>
+        <div class="response-container-content">
+          <div class="response-content">
+            <model-response-content><structured-content-container class="model-response-text"><div class="container"><message-content><div class="markdown markdown-main-panel"><p>Working on it</p></div></message-content></div></structured-content-container></model-response-content>
+          </div>
+        </div>
+      </model-response>
+    </div>
+  </infinite-scroller>
+</div>
