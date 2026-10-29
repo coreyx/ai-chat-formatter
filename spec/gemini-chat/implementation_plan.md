@@ -148,7 +148,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
     - a `generated-music`: `<em>Generated music</em>`;
     - any other `video-player`: `<em>Generated video</em>`.
   - **Items outside `message-content`** are kept after it, in page order.
-- [ ] **TASK-7:** In `preprocessReply`, also remove `source-inline-chip`, alongside the citation markers it already drops. Update the doc comment to say that chips and markers carry no link in a chat.
+- [x] **TASK-7:** In `preprocessReply`, also remove `source-inline-chip`, alongside the citation markers it already drops. Update the doc comment to say that chips and markers carry no link in a chat.
 - [ ] **TASK-8:** Make each reply a message.
   - **`messageSelector`:** add `model-response`.
   - **`findGeminiButtonAnchor`:**

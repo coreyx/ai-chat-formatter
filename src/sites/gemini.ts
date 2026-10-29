@@ -28,6 +28,7 @@ import {
   findResearchRequest,
   type GeminiSource,
   HISTORY_SELECTOR,
+  INLINE_SOURCE_CHIP_SELECTOR,
   MESSAGE_CONTENT_SELECTOR,
   MODEL_RESPONSE_SELECTOR,
   PLAN_SELECTOR,
@@ -329,8 +330,9 @@ function rewriteGeneratedItems(root: Element): void {
  * Prepares a copy of one reply in the left pane: only its text is kept, with
  * the things Gemini made named in it (see {@link rewriteGeneratedItems}; any
  * outside the text follow it, in page order), and Gemini's own "Show
- * thinking", the source carousels, citation markers (which carry no link
- * outside a report) and buttons dropped. The research plan card
+ * thinking", the source carousels, buttons, and citation markers and source
+ * chips dropped: outside a report they carry no link (in the chats inspected,
+ * they pointed to uploaded files). The research plan card
  * and the report card are rewritten (see {@link rewritePlan} and
  * {@link rewriteReportCard}).
  */
@@ -341,7 +343,7 @@ function preprocessReply(root: HTMLElement): void {
     const outside = Array.from(root.querySelectorAll(`[${GENERATED_ATTRIBUTE}]`)).filter((item) => !content.contains(item));
     root.replaceChildren(content, ...outside);
   }
-  for (const selector of [THINKING_OVERLAY_SELECTOR, SOURCES_CAROUSEL_SELECTOR, CITATION_SELECTOR, "button", "gem-button"]) {
+  for (const selector of [THINKING_OVERLAY_SELECTOR, SOURCES_CAROUSEL_SELECTOR, CITATION_SELECTOR, INLINE_SOURCE_CHIP_SELECTOR, "button", "gem-button"]) {
     root.querySelectorAll(selector).forEach((element) => element.remove());
   }
   root.querySelectorAll(PLAN_SELECTOR).forEach((plan) => plan.replaceWith(rewritePlan(plan)));

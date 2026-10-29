@@ -158,6 +158,18 @@ check("generated: an item beside the reply's text, rather than in it, follows th
   assert.equal(convertReply(reply("<p>Made it.</p>", GENERATED_IMAGE)), "Made it.\n\n*Generated image*");
 });
 
+check("sources: source chips and citation markers without links are dropped; ordinary links and tables stay", () => {
+  const chip = '<source-inline-chip><div class="source-inline-chip-container"><button class="button multiple-button" aria-label="View source details for Manual"><span class="source-title">Manual</span><span class="source-count">+ 2</span></button></div></source-inline-chip>';
+  const marker = '<source-footnote><sup class="superscript" data-turn-source-index="2"></sup></source-footnote>';
+  const message = reply(`<p>Tune low.<span class="chip-here"></span>${marker} See <a href="https://docs.example/tuning">the docs</a>.</p><table><thead><tr><th><p>Key</p></th></tr></thead><tbody><tr><td><p>E</p></td></tr></tbody></table>`);
+  // The chip holds a <div>, which the HTML parser won't leave inside a <p>; Gemini builds it there through the DOM, so the test does too.
+  const holder = message.ownerDocument.createElement("div");
+  holder.innerHTML = chip;
+  message.querySelector(".chip-here")!.replaceWith(holder.firstElementChild!);
+  const markdown = convertReply(message);
+  assert.equal(markdown, "Tune low. See [the docs](https://docs.example/tuning).\n\n| Key |\n| --- |\n| E |");
+});
+
 // ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
