@@ -27,7 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - **Use for Gemini's own Copy button**, off by default, covers the Copy icon in a reply's toolbar. A generated image's own Copy is left alone.
   - Files attached to a prompt are named under it (`Attached: *name* (PDF)`), and the files, images, music and video Gemini makes are named where they appear (`Generated file: *name* (JSON)`, `*Generated image*`). None is linked or embedded.
   - Code blocks are fenced with the language their header shows. Source chips and citation markers, which carry no link in a chat, are left out.
-- Site adapters can label some of their buttons and leave others as the plain icon (`buttonLabel` may return null), and a button moves when the adapter's anchor for it moves.
+- **Cite sources as Duck.ai does**, off by default: Duck.ai copies keep each source chip in place as a link with its label (one link per source for a chip that stands for several), and end with `## Read More`, a line for each Read More card with its icon, linked title and site, instead of numbered citations and a Sources section. **Include "More" sources** is greyed out while it's on.
+- Site adapters can label some of their buttons and leave others as the plain icon (`buttonLabel` may return null), and a button moves when the adapter's anchor for it moves. A site's `preprocess` step also gets the whole message, for parts of a reply outside its text.
 - Site adapters can:
   - place a button outside its message, hide it while an option is off, and give it a visible label (`findButtonAnchor`, `buttonLabel`);
   - copy a conversation turn by turn (`readTurns`);

@@ -39,6 +39,22 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 
 Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different markup, and isn't supported yet.
 
+### Duck.ai
+
+Each reply's sources become citations in your citation style, titled from its **Read More** cards (see [Where the titles and links come from](#where-the-titles-and-links-come-from)). To copy them the way Duck.ai shows them instead, turn on **Cite sources as Duck.ai does** (off by default):
+
+```markdown
+Widget 5 was released in May. [Widget](https://widget.example/releases/5.0.0) The team announced it on its blog. [blog.widget.example](https://blog.widget.example/widget-5)
+
+## Read More
+
+- ![|16](https://external-content.duckduckgo.com/ip3/widget.example.ico) [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example
+```
+
+- **Each chip stays where it is**, as a link with the label Duck.ai shows. A chip that stands for several sources becomes one link per source, labelled with its domain.
+- **Read More** ends the copy: every card, in page order, with its icon at 16px, its linked title and its site. `|16` is Obsidian's image-size syntax, as in Search Assist's chips, and the icon loads from DuckDuckGo's image server each time the note is shown. A reply with no cards has no Read More section.
+- **No numbered citations or Sources section**, so **Include "More" sources** is greyed out while this is on.
+
 ### Search Assist
 
 Search Assist answers only some searches. Where it does, its answer gets the **Copy as Markdown** button, just left of its own Copy button.
@@ -195,8 +211,10 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Enable on _site_**
   - **Show a "Copy as Markdown" button**: on by default.
   - **Use for _site_'s own Copy button**: off by default. On Gemini, it covers the Copy icon in a reply's toolbar only.
-  - **Include "More" sources**: on by default, except for Search Assist. Greyed out for Search Assist while its inline chips are on, since there's no Sources section. Not offered for Gemini, where **Include "Sources used in the report"** covers it.
+  - **Include "More" sources**: on by default, except for Search Assist. Greyed out for Search Assist while its inline chips are on, and for Duck.ai while **Cite sources as Duck.ai does** is on, since there's no Sources section. Not offered for Gemini, where **Include "Sources used in the report"** covers it.
   - **Formatting rules**: one switch per clean-up rule.
+- Duck.ai only (see [Duck.ai](#duckai)):
+  - **Cite sources as Duck.ai does**: off by default.
 - Search Assist only (see [Search Assist](#search-assist)):
   - **Include expanded Explore More answers**: on by default.
   - **Include More Search Results links**: off by default, and greyed out while Explore More is off.
@@ -289,6 +307,7 @@ ai-chat-formatter/
     ├── test_copy-user-prompt.ts
     ├── test_copilot-source-details.ts
     ├── test_duck-ai-adapter.ts
+    ├── test_duckai-read-more-style.ts
     ├── test_duckduckgo-search-assist.ts
     ├── test_gemini-chat.ts
     ├── test_gemini-deep-research.ts
