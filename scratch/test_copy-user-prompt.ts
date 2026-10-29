@@ -17,7 +17,7 @@ import { buildDefaultSettings, mergeSettings, type Settings } from "../src/core/
 import type { SiteAdapter } from "../src/core/types";
 import { renderOptions } from "../src/options/options";
 import { copilotAdapter } from "../src/sites/copilot";
-import { duckAiAdapter } from "../src/sites/duckai";
+import { DUCK_AI_REPLY_SELECTOR, duckAiAdapter } from "../src/sites/duckai";
 import { duckDuckGoAdapter } from "../src/sites/duckduckgo";
 import { SITE_ADAPTERS } from "../src/sites/index";
 
@@ -287,7 +287,7 @@ check("Copilot: null when the article before is another reply, or there's none",
 
 check("Duck.ai: each reply gets its own prompt, without the 'You said' label, icon or buttons", () => {
   const page = fixture("duckai-message.html");
-  const messages = Array.from(page.querySelectorAll(duckAiAdapter.messageSelector));
+  const messages = Array.from(page.querySelectorAll(DUCK_AI_REPLY_SELECTOR));
   assert.deepEqual(
     messages.map((message) => duckAiAdapter.readPrompt!(message)),
     ["What is new in Widget 5?", "Any other reading?\n\nList two."],
@@ -296,7 +296,7 @@ check("Duck.ai: each reply gets its own prompt, without the 'You said' label, ic
 
 check("Duck.ai: a second reply to the same prompt gets that prompt; null with no prompt before", () => {
   const page = fixture("duckai-message.html");
-  const [first] = Array.from(page.querySelectorAll(duckAiAdapter.messageSelector));
+  const [first] = Array.from(page.querySelectorAll(DUCK_AI_REPLY_SELECTOR));
   const variant = first.cloneNode(true) as Element;
   variant.id = variant.id.replace(/-0-1$/, "-0-2");
   first.after(variant);

@@ -3,7 +3,7 @@ import { encodeLinkDestination, escapeLinkText, normalizeCitationUrl, sourceDoma
 import { promptText } from "../core/prompt";
 import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT, type RawChipSource } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import type { ConversionContext, SiteAdapter, SourceReference } from "../core/types";
+import type { ButtonLabel, ConversationTurn, ConversionContext, SiteAdapter, SourceReference } from "../core/types";
 import { rewriteStreamdownCodeBlocks, rewriteStreamdownStrong, streamdownLanguageId } from "./streamdown";
 
 /*
@@ -22,6 +22,21 @@ const CONTENT_SELECTOR = "[data-dark-theme]";
 
 /** The cards in a reply's Read More section, a `<section>` headed by an `<h4>`. */
 const READ_MORE_CARD_SELECTOR = "section:has(> h4) a[data-handled-by-react]";
+
+/** A reply. Each reply's id ends in "-assistant-message-<turn>-<variant>"; its heading reuses the id with a "heading-" prefix. */
+export const DUCK_AI_REPLY_SELECTOR = 'div[id*="-assistant-message-"]:not([id^="heading-"])';
+
+/**
+ * The conversation: the element whose children are the turns. As inspected on
+ * 2026-10-28, each turn is a wrapper `<div>` holding its user message and its
+ * reply, and the wrappers share a parent (the first half). The 2026-10-24
+ * layout had the user messages and replies side by side in `<main>`, with no
+ * wrappers (the second half); it's kept so that layout still works.
+ */
+const CONVERSATION_SELECTOR = 'div:has(> div > [data-testid="user-message"]), :not(div):has(> [data-testid="user-message"])';
+
+/** How the conversation's button names itself; the replies' buttons keep the plain icon. */
+const CONVERSATION_LABEL: ButtonLabel = { title: "Copy conversation as Markdown", text: "Conversation" };
 
 /** The id of the option that cites sources as Duck.ai shows them; stored in the settings, so never rename it. */
 export const READ_MORE_STYLE_OPTION = "read-more-style";
@@ -296,17 +311,31 @@ export function readDuckAiPrompt(message: Element): string | null {
   return prompt ? promptText(prompt, "h1, h2, h3, h4, h5, h6") : null;
 }
 
+/**
+ * The conversation in `message`, one turn per reply, in page order, each with
+ * the prompt before it (see {@link readDuckAiPrompt}). A reply Duck.ai marks
+ * as not the active one, a regenerated version off screen, is left out. Null
+ * for a reply, which is copied on its own.
+ */
+export function readDuckAiTurns(message: Element): ConversationTurn[] | null {
+  if (!message.matches(CONVERSATION_SELECTOR)) return null;
+  return Array.from(message.querySelectorAll(DUCK_AI_REPLY_SELECTOR))
+    .filter((reply) => reply.getAttribute("data-activeresponse") !== "false")
+    .map((reply) => ({ prompt: readDuckAiPrompt(reply), reply }));
+}
+
 export const duckAiAdapter: SiteAdapter = {
   id: "duckai",
   name: "Duck.ai",
   // duckduckgo.com/?ia=chat redirects here, so Duck.ai opened from a search is covered too.
   matches: ["https://duck.ai/*"],
-  // Each reply's id ends in "-assistant-message-<turn>-<variant>"; its heading reuses the id with a "heading-" prefix.
-  messageSelector: 'div[id*="-assistant-message-"]:not([id^="heading-"])',
+  // Each reply, and the conversation, which gets a copy button of its own.
+  messageSelector: `${DUCK_AI_REPLY_SELECTOR}, ${CONVERSATION_SELECTOR}`,
   contentSelector: CONTENT_SELECTOR,
   nativeCopyButtonSelector: COPY_BUTTON_SELECTOR,
   // Every toolbar item has its own wrapper div in a flex row; the button goes in the row, right after Copy's wrapper.
   findButtonAnchor(message) {
+    if (message.matches(CONVERSATION_SELECTOR)) return null;
     const wrapper = message.querySelector(COPY_BUTTON_SELECTOR)?.parentElement;
     return wrapper?.parentElement ? { parent: wrapper.parentElement, before: wrapper.nextSibling } : null;
   },
@@ -315,6 +344,8 @@ export const duckAiAdapter: SiteAdapter = {
   turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context), duckAiPopupChip: popupChipRule(context), duckAiReadMoreIcon: readMoreIconRule() }),
   readReferences: readDuckAiReferences,
   readPrompt: readDuckAiPrompt,
+  readTurns: readDuckAiTurns,
+  buttonLabel: (message) => (message.matches(CONVERSATION_SELECTOR) ? CONVERSATION_LABEL : null),
   moreSources: { defaultEnabled: true, description: "Adds the Read More cards that the reply doesn't cite." },
   options: [
     {

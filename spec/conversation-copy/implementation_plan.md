@@ -61,7 +61,7 @@ None at this time.
 ### Duck.ai
 
 #### [MODIFY] `src/sites/duckai.ts`
-- [ ] **TASK-1:** Make the conversation a message of its own.
+- [x] **TASK-1:** Make the conversation a message of its own.
   - **`CONVERSATION_SELECTOR`:** the parent of the turn wrappers, with a fallback for the older, flat layout. It's `div:has(> div > [data-testid="user-message"]), :not(div):has(> [data-testid="user-message"])`, with a comment saying why each half exists.
   - **`messageSelector`:** add `CONVERSATION_SELECTOR` to it.
   - **`readTurns`:** returns null for a reply. For the conversation, it returns one turn per reply that isn't `data-activeresponse="false"`, in page order, each with `readDuckAiPrompt(reply)` as its prompt.

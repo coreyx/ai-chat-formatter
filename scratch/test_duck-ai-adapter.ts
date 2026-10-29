@@ -15,7 +15,7 @@ import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT } from "../src/core/references
 import { buildDefaultSettings } from "../src/core/settings";
 import type { CitationStyle } from "../src/core/types";
 import { extractDuckAiChipSources, installDuckAiPageScript } from "../src/page/duckai";
-import { duckAiAdapter, duckAiLanguageId, parseChipSources, readDuckAiReferences } from "../src/sites/duckai";
+import { DUCK_AI_REPLY_SELECTOR, duckAiAdapter, duckAiLanguageId, parseChipSources, readDuckAiReferences } from "../src/sites/duckai";
 import { findAdapterForUrl, SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -78,7 +78,7 @@ function duckAiPage({ pageScript = true } = {}): Document {
 
 /** The fixture's replies: the first with link and popup chips and four Read More cards, the second with cards and no chips. */
 function replies(page = duckAiPage()): Element[] {
-  return Array.from(page.querySelectorAll(duckAiAdapter.messageSelector));
+  return Array.from(page.querySelectorAll(DUCK_AI_REPLY_SELECTOR));
 }
 
 /** Converts `message` the way the extension does, reading its Read More cards first, with a fixed block-ID token. */

@@ -16,7 +16,7 @@ import { renderOptions } from "../src/options/options";
 import { SITE_ADAPTERS } from "../src/sites/index";
 import { CITATION_STYLES, type CitationStyle } from "../src/core/types";
 import { installDuckAiPageScript } from "../src/page/duckai";
-import { duckAiAdapter, READ_MORE_STYLE_OPTION, readDuckAiReferences } from "../src/sites/duckai";
+import { DUCK_AI_REPLY_SELECTOR, duckAiAdapter, READ_MORE_STYLE_OPTION, readDuckAiReferences } from "../src/sites/duckai";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -65,7 +65,7 @@ function duckAiPage(popupSources: unknown = POPUP_SOURCES): Document {
 
 /** The fixture's replies: the first with link and popup chips and four Read More cards, the second with two cards and no chips. */
 function replies(page = duckAiPage()): Element[] {
-  return Array.from(page.querySelectorAll(duckAiAdapter.messageSelector));
+  return Array.from(page.querySelectorAll(DUCK_AI_REPLY_SELECTOR));
 }
 
 /** Converts `message` as the extension does, with Duck.ai's style on unless `style` says otherwise. */
