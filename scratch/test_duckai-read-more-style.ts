@@ -106,6 +106,51 @@ check("chips: with the option off, the copy is as before, in every citation styl
 });
 
 // ---------------------------------------------------------------------------
+// The Read More section
+// ---------------------------------------------------------------------------
+
+const FIRST_READ_MORE =
+  "## Read More\n\n" +
+  "- ![|16](https://external-content.example/ip3/widget.example.ico) [Widget 5.0.0 (Current)](https://widget.example/releases/5.0.0) — widget.example\n" +
+  "- ![|16](https://external-content.example/ip3/docs.widget.example.ico) [PathMatcher - API Reference | Widget Docs](https://docs.widget.example/api/path-matcher) — docs.widget.example\n" +
+  "- ![|16](https://external-content.example/ip3/blog.widget.example.ico) [Widget 5 is now available | Widget Blog](https://blog.widget.example/widget-5) — blog.widget.example\n" +
+  "- ![|16](https://external-content.example/ip3/news.example.ico) [Widget 5 hands-on | News Example](https://news.example/widget-5-hands-on) — news.example";
+
+check("read more: every card, cited or not, in page order, as icon, linked title and domain, after the reply", () => {
+  assert.equal(convert(replies()[0]), `${FIRST_BODY}\n\n${FIRST_READ_MORE}`);
+});
+
+check("read more: the heading shifts with the minimum heading level and sits below a prompt heading", () => {
+  assert.ok(convert(replies()[0], { minHeadingLevel: 3 }).endsWith(FIRST_READ_MORE.replace("## Read More", "### Read More")));
+  const withPrompt = convert(replies()[0], { prompt: { text: "What is new?", format: "heading", headingLevel: 2 } });
+  assert.ok(withPrompt.startsWith("## What is new?\n\n"));
+  assert.ok(withPrompt.includes("\n\n### Read More\n\n"), withPrompt);
+});
+
+check("read more: a reply without Read More cards gets its links and no section", () => {
+  const page = duckAiPage();
+  page.querySelectorAll("section:has(> h4)").forEach((section) => section.remove());
+  const markdown = convert(replies(page)[0]);
+  assert.ok(markdown.includes("[Widget](https://widget.example/releases/5.0.0)"));
+  assert.ok(!markdown.includes("Read More"));
+});
+
+check("read more: a card without a title shows its domain once, one without a web icon has none, and brackets in a title are escaped", () => {
+  const page = duckAiPage();
+  const [first, second] = Array.from(replies(page)[1].querySelectorAll<HTMLElement>("section:has(> h4) a"));
+  first.querySelector(":scope > span")!.firstChild!.textContent = "";
+  second.querySelector("img")!.setAttribute("src", "data:image/png;base64,AAAA");
+  second.querySelector(":scope > span")!.firstChild!.textContent = "Getting [started]";
+  assert.ok(convert(replies(page)[1]).endsWith(
+    "## Read More\n\n- ![|16](https://external-content.example/ip3/news.example.ico) [news.example](https://news.example/widget-5-review)\n- [Getting \\[started\\]](https://www.tutorials.example/widget-5) — tutorials.example",
+  ));
+});
+
+check("read more: with the option off, there's no Read More section", () => {
+  assert.ok(!convert(replies()[1], { duckAiStyle: false }).includes("Read More"));
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 

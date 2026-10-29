@@ -53,11 +53,69 @@ function removeUnreadablePopupChips(root: HTMLElement): void {
   }
 }
 
-/** Rewrites the reply body's Streamdown markup into HTML that Turndown converts faithfully. */
-function preprocessDuckAi(root: HTMLElement): void {
+/**
+ * Rewrites the reply body's Streamdown markup into HTML that Turndown converts
+ * faithfully. While sources are cited as Duck.ai shows them, the reply's Read
+ * More section (see {@link readMoreSection}) is added at the end.
+ */
+function preprocessDuckAi(root: HTMLElement, context: ConversionContext, message: Element): void {
   rewriteStreamdownCodeBlocks(root);
   rewriteStreamdownStrong(root);
   removeUnreadablePopupChips(root);
+  const readMore = context.isOptionEnabled(READ_MORE_STYLE_OPTION) ? readMoreSection(message) : null;
+  if (readMore) root.append(readMore);
+}
+
+/** Marks the icon of a Read More line, for {@link readMoreIconRule}. */
+const READ_MORE_ICON_ATTRIBUTE = "data-acf-read-more-icon";
+
+/**
+ * `message`'s Read More cards as the copy's Read More section: an `<h2>`, then
+ * a list with a line for each card, in page order. Each line is the card's
+ * icon (when it's a web address), its title linked to the page (its domain
+ * when it has no title), then the domain after a dash, unless that's what the
+ * title already says. Null when the message has no cards.
+ */
+function readMoreSection(message: Element): HTMLElement | null {
+  const document = message.ownerDocument;
+  const cards = Array.from(message.querySelectorAll(READ_MORE_CARD_SELECTOR)).filter((card) => /^https?:\/\//i.test(card.getAttribute("href") ?? ""));
+  if (cards.length === 0) return null;
+  const list = document.createElement("ul");
+  for (const card of cards) {
+    const { url, title, domain } = readCard(card);
+    const item = document.createElement("li");
+    const icon = card.querySelector(":scope > img")?.getAttribute("src") ?? "";
+    if (/^https?:\/\//i.test(icon)) {
+      const image = document.createElement("img");
+      image.setAttribute(READ_MORE_ICON_ATTRIBUTE, "");
+      image.setAttribute("src", icon);
+      item.append(image, " ");
+    }
+    const link = document.createElement("a");
+    link.href = url ?? "";
+    link.textContent = title || domain;
+    item.append(link);
+    if (title && title.toLowerCase() !== domain.toLowerCase()) item.append(` — ${domain}`);
+    list.append(item);
+  }
+  const section = document.createElement("div");
+  const heading = document.createElement("h2");
+  heading.textContent = "Read More";
+  section.append(heading, list);
+  return section;
+}
+
+/**
+ * Turndown rule for a Read More line's icon: `![|16](icon)`, Obsidian's
+ * image-size syntax for 16px, as in Search Assist's chips. Turndown's own
+ * image rule would write the alt text as given, but a rule of its own keeps
+ * the `|` from ever being escaped and the address encoded for a link.
+ */
+function readMoreIconRule(): TurndownService.Rule {
+  return {
+    filter: (node) => node.nodeName === "IMG" && (node as HTMLElement).hasAttribute(READ_MORE_ICON_ATTRIBUTE),
+    replacement: (_content, node) => `![|16](${encodeLinkDestination((node as HTMLElement).getAttribute("src") ?? "")})`,
+  };
 }
 
 /**
@@ -254,7 +312,7 @@ export const duckAiAdapter: SiteAdapter = {
   },
   stripSelectors: ['[data-streamdown="code-block-header"]', '[data-streamdown="code-block-actions"]', "[aria-live]"],
   preprocess: preprocessDuckAi,
-  turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context), duckAiPopupChip: popupChipRule(context) }),
+  turndownRules: (context) => ({ duckAiCitationChip: citationChipRule(context), duckAiPopupChip: popupChipRule(context), duckAiReadMoreIcon: readMoreIconRule() }),
   readReferences: readDuckAiReferences,
   readPrompt: readDuckAiPrompt,
   moreSources: { defaultEnabled: true, description: "Adds the Read More cards that the reply doesn't cite." },

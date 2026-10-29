@@ -83,7 +83,7 @@ None at this time.
   - **`citationChipRule`, with the option on:** returns `[label](url)` instead of registering a citation. The label is the chip's text, escaped with `escapeLinkText`, and the address goes through `encodeLinkDestination`.
   - **`popupChipRule`, with the option on:** returns one such link per source, labelled with the source's domain and joined with spaces.
   - **Doc comments:** both rules' comments describe the two behaviors.
-- [ ] **TASK-4:** Add `readMoreSection(message)` and call it from `preprocessDuckAi` while the option is on.
+- [x] **TASK-4:** Add `readMoreSection(message)` and call it from `preprocessDuckAi` while the option is on.
   - **What `readMoreSection` builds:** an `<h2>Read More</h2>` followed by a `<ul>`.
     - **The cards:** each Read More card (`READ_MORE_CARD_SELECTOR`, http(s) only, in page order) becomes an `<li>`.
     - **Each item holds:**
