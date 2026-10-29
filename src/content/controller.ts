@@ -284,6 +284,7 @@ export class ContentController {
       includeMoreSources: site?.includeMoreSources ?? false,
       isRuleEnabled: (ruleId: string) => site?.rules[ruleId] ?? true,
       isOptionEnabled: (optionId: string) => site?.options[optionId] ?? this.adapter.options?.find((option) => option.id === optionId)?.defaultEnabled ?? false,
+      choice: (choiceId: string) => site?.choices[choiceId] ?? this.adapter.choices?.find((choice) => choice.id === choiceId)?.defaultValue ?? "",
       minHeadingLevel: this.settings.minHeadingLevel,
     };
     const turns = this.adapter.readTurns?.(message);

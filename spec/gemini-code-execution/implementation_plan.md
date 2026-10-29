@@ -84,7 +84,7 @@ None at this time.
   - **In `convertConversation`:** passes the reader through for each turn, with the other shared options.
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-3:** In `convert()`'s shared options, pass `choice: (id) => site?.choices[id] ?? adapter default`, mirroring `isOptionEnabled`.
+- [x] **TASK-3:** In `convert()`'s shared options, pass `choice: (id) => site?.choices[id] ?? adapter default`, mirroring `isOptionEnabled`.
   - **What reaches it:** the reply copy, the Conversation copy and the native Copy override, since they all go through `convert()`.
 
 ### Gemini

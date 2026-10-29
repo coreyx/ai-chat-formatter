@@ -8,7 +8,9 @@
  */
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
+import { ContentController } from "../src/content/controller";
 import { convertConversation, convertMessage } from "../src/core/convert";
+import { buildDefaultSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -17,6 +19,16 @@ const results: { name: string; error?: unknown }[] = [];
 function check(name: string, fn: () => void): void {
   try {
     fn();
+    results.push({ name });
+  } catch (error) {
+    results.push({ name, error });
+  }
+}
+
+/** Runs an async check, recording its result like {@link check}. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
     results.push({ name });
   } catch (error) {
     results.push({ name, error });
@@ -63,6 +75,21 @@ check("choices: a conversation passes the reader to every turn", () => {
     choice: (id) => (id === "mode" ? "b" : ""),
   });
   assert.equal(markdown, "mode=b other=(none)\n\nmode=b other=(none)");
+});
+
+await checkAsync("choices: the controller passes a site's stored drop-down value to its copy, and the default when none is stored", async () => {
+  const document = new JSDOM('<!doctype html><body><div class="message"><div class="bar"></div><div class="reply"><p>x</p></div></div></body>').window.document;
+  const adapter: SiteAdapter = { ...TOY, findButtonAnchor: (message) => ({ parent: message.querySelector(".bar")!, before: null }) };
+  for (const [stored, expected] of [[undefined, "mode=a"], ["b", "mode=b"]] as const) {
+    const settings = buildDefaultSettings([adapter]);
+    settings.includePrompt = false;
+    if (stored) settings.sites.toy.choices.mode = stored;
+    else delete settings.sites.toy.choices.mode;
+    const copied: string[] = [];
+    const controller = new ContentController(adapter, settings, { document, writeClipboard: async (text) => void copied.push(text), requestFrame: (callback) => callback() });
+    await controller.copy(document.querySelector(".message")!);
+    assert.equal(copied[0], `${expected} other=(none)`);
+  }
 });
 
 // ---------------------------------------------------------------------------
