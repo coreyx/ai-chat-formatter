@@ -106,6 +106,22 @@ Each finished reply gets the **Copy as Markdown** button, just left of Gemini's 
 - **Attachments:** the files you attached to a prompt are named in a last paragraph of the prompt: `Attached: *Widget_Guide* (PDF), *Spare Parts* (PDF)`. An attached picture with no name shown is `*image*`.
 - **What Gemini made** is named where it appears: `Generated file: *widget_parts* (JSON)`, `*Generated image*`, `*Generated music*` or `*Generated video*`. None of these is linked or embedded: their addresses are on Google's servers and may need your sign-in or stop working.
 - **Code blocks** are fenced with the language their header shows.
+- **Code Gemini ran**, which Gemini folds behind **Show code**, is copied by default as an Obsidian callout that starts folded, with the code and its output. Runs next to each other share one callout:
+
+  ````markdown
+  > [!example]- Code Gemini ran
+  > ```python
+  > print(len(notes))
+  > ```
+  >
+  > **Code output**
+  >
+  > ```
+  > 2
+  > ```
+  ````
+
+  Other Markdown apps show it as a quote starting `[!example]-`. The **Code Gemini ran** setting can make them plain code blocks instead, or leave them out.
 - **Source chips and citation markers** in a chat carry no link (in the chats checked, they pointed to uploaded files), so they're left out. Ordinary links stay links.
 - **Thinking** isn't copied for a chat reply: once the reply is finished, Gemini no longer has it in the page.
 
@@ -240,6 +256,7 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Include "Show thinking"**: off by default.
   - **Copy the research request with the report**: off by default. It also needs **Copy the prompt with the response** on. The Conversation copy always has its prompts.
   - **Show a Copy conversation button**: on by default. The button sits in the top bar, or in a report's toolbar while one is open.
+  - **Code Gemini ran**: **Folded callout** (the default), **Code blocks** or **Leave out**.
 
 ## Installation
 
@@ -324,6 +341,7 @@ ai-chat-formatter/
     ├── test_duckai-read-more-style.ts
     ├── test_duckduckgo-search-assist.ts
     ├── test_gemini-chat.ts
+    ├── test_gemini-code-execution.ts
     ├── test_gemini-deep-research.ts
     ├── test_message-next-to-button.ts
     ├── test_min-heading-level.ts
