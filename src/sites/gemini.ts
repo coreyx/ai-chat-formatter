@@ -25,6 +25,7 @@ import {
   GENERATED_FILE_TYPE_SELECTOR,
   GENERATED_IMAGE_SELECTOR,
   GENERATED_MUSIC_SELECTOR,
+  GENERATED_VIDEO_SELECTOR,
   findReportTurn,
   findResearchRequest,
   type GeminiSource,
@@ -309,8 +310,9 @@ const GENERATED_ATTRIBUTE = "data-acf-gemini-generated";
  * text: a file as `Generated file: *name* (TYPE)`, and an image, music or a
  * video as `*Generated image*`, `*Generated music*` or `*Generated video*`.
  * Nothing is linked or embedded: the addresses are Google's, and may need a
- * sign-in or stop working. Music plays in a `video-player` of its own, so
- * it's named before any player left over is taken for a video.
+ * sign-in or stop working. Music and video each play in a `video-player` of
+ * their own, so they're named first; any player left over is taken for a
+ * video too.
  */
 function rewriteGeneratedItems(root: Element): void {
   const document = root.ownerDocument;
@@ -330,7 +332,7 @@ function rewriteGeneratedItems(root: Element): void {
   }
   root.querySelectorAll(GENERATED_IMAGE_SELECTOR).forEach((image) => image.replaceWith(line("", "Generated image")));
   root.querySelectorAll(GENERATED_MUSIC_SELECTOR).forEach((music) => music.replaceWith(line("", "Generated music")));
-  root.querySelectorAll(VIDEO_PLAYER_SELECTOR).forEach((video) => video.replaceWith(line("", "Generated video")));
+  root.querySelectorAll(`${GENERATED_VIDEO_SELECTOR}, ${VIDEO_PLAYER_SELECTOR}`).forEach((video) => video.replaceWith(line("", "Generated video")));
 }
 
 /**

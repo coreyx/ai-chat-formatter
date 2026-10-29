@@ -150,11 +150,16 @@ const GENERATED_FILE = '<generated-file><div class="chip-lr"><img class="file-ic
 const GENERATED_IMAGE =
   '<div class="attachment-container generated-images"><response-element class="no-md"><generated-image><single-image class="generated-image large"><div class="image-container"><div class="overlay-container"><button class="image-button"><img class="image" src="blob:https://gemini.google.com/abc" alt="A brass widget"></button><div class="generated-image-controls hide-from-message-actions"><share-button><button aria-label="Share"></button></share-button><copy-button><button aria-label="Copy image"></button></copy-button><download-generated-image-button><button aria-label="Download"></button></download-generated-image-button></div></div></div></single-image></generated-image></response-element></div>';
 const GENERATED_MUSIC = '<generated-music><video-player><video src="https://media.example/track.mp4"></video><button aria-label="Play"></button></video-player></generated-music>';
-const GENERATED_VIDEO = '<video-player><video src="https://media.example/clip.mp4"></video><button aria-label="Play"></button></video-player>';
+const GENERATED_VIDEO = '<generated-video><video-player><video src="https://media.example/clip.mp4"></video><div class="controls"><span class="time">0:00 / 0:08</span></div></video-player></generated-video>';
+const LONE_PLAYER = '<video-player><video src="https://media.example/other.mp4"></video><button aria-label="Play"></button></video-player>';
 
 check("generated: files, images, music and video are named in place, with no links, addresses or buttons", () => {
   const markdown = convertReply(reply(`<p>Here you go.</p>${GENERATED_FILE}${GENERATED_IMAGE}<p>And sound:</p>${GENERATED_MUSIC}${GENERATED_VIDEO}`));
   assert.equal(markdown, "Here you go.\n\nGenerated file: *riff* (JSON)\n\n*Generated image*\n\nAnd sound:\n\n*Generated music*\n\n*Generated video*");
+});
+
+check("generated: a player outside music and video is taken for a video too", () => {
+  assert.equal(convertReply(reply(LONE_PLAYER)), "*Generated video*");
 });
 
 check("generated: an item beside the reply's text, rather than in it, follows the text", () => {

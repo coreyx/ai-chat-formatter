@@ -135,7 +135,10 @@ export const GENERATED_IMAGE_SELECTOR = "generated-image";
 /** Music Gemini made: a `video-player` inside it plays the track. */
 export const GENERATED_MUSIC_SELECTOR = "generated-music";
 
-/** A video player; outside `generated-music`, a video Gemini made. */
+/** A video Gemini made, playing in a `video-player` of its own, with its own Share and Download buttons (seen on 2026-10-28). */
+export const GENERATED_VIDEO_SELECTOR = "generated-video";
+
+/** A video player. One outside `generated-music` and `generated-video` is taken for a video Gemini made too. */
 export const VIDEO_PLAYER_SELECTOR = "video-player";
 
 /** One entry of a source list or a browsing step, as Gemini shows it. */

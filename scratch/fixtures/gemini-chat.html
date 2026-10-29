@@ -9,9 +9,9 @@
      table, then its toolbar with Copy.
   2. A prompt with an attached picture (assumed: a preview with an image and
      no filename label), and a reply holding a generated file, a generated
-     image with its own buttons, generated music and a lone video player
-     (assumed to be a generated video), then a toolbar with Share in place of
-     Copy, as on an image-only reply.
+     image with its own buttons, generated music and a generated video (as
+     seen on a live video reply), then a toolbar with Share in place of Copy,
+     as on image-only and video-only replies.
   3. A prompt whose reply is still being written: no toolbar yet.
 
   Angular's generated attributes and most wrapper elements are left out; every
@@ -112,7 +112,7 @@
                       <div class="attachment-container generated-images"><response-element class="no-md"><generated-image><div class="loader"></div><single-image class="generated-image large"><div class="image-container"><div class="overlay-container"><button class="image-button"><img class="image" src="https://images.example/generated/widget.png" alt="A shiny brass widget on a workbench"></button><div class="generated-image-controls hide-from-message-actions"><share-button><gem-icon-button><button aria-label="Share image"></button></gem-icon-button></share-button><copy-button><gem-icon-button><button aria-label="Copy image"></button></gem-icon-button></copy-button><download-generated-image-button><gem-icon-button data-test-id="download-generated-image-button"><button aria-label="Download image"></button></gem-icon-button></download-generated-image-button></div></div></div></single-image></generated-image></response-element></div>
                       <p>And a jingle:</p>
                       <generated-music><video-player><video src="https://media.example/generated/jingle.mp4"></video><button aria-label="Play"></button></video-player></generated-music>
-                      <video-player><video src="https://media.example/generated/spin.mp4"></video><button aria-label="Play"></button></video-player>
+                      <div class="attachment-container"><response-element class="no-md"><generated-video><video-player class="luminous"><video src="https://media.example/generated/spin.mp4"></video><div class="controls"><div class="action-buttons"><share-button><gem-icon-button><button aria-label="Share video"></button></gem-icon-button></share-button><gem-icon-button><button aria-label="Download video"></button></gem-icon-button></div><gem-icon-button class="lm-play-pause"><button aria-label="Play"></button></gem-icon-button><span class="time" aria-label="Duration">0:00 / 0:08</span></div></video-player></generated-video></response-element></div>
                     </div>
                   </message-content>
                 </div>
