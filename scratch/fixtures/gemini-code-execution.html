@@ -1,0 +1,68 @@
+<!--
+  A Gemini chat whose reply includes code Gemini ran, reduced to the structure
+  observed on gemini.google.com on 2026-10-28. The reply's header holds the
+  Show code toggle. Each run is a code-block (in a response-element) holding
+  the code under a language header, then a second header reading "Code
+  output", a divider and the output; while folded, its div.code-block is
+  display: none, but everything is in the page.
+
+  The reply's text, in order:
+  1. Two runs in a row, each with output.
+  2. A heading and a paragraph.
+  3. An ordinary JSON code block Gemini wrote.
+  4. A third run that printed nothing, whose code holds a line of three
+     backticks.
+  5. A closing paragraph.
+
+  Angular's generated attributes and most wrapper elements are left out;
+  every element and attribute the adapter relies on is kept as observed. All
+  code, text and names are made up.
+-->
+<div id="app">
+  <div class="top-bar"><div class="buttons-container"><conversation-actions-icon><button aria-label="Open menu for conversation"></button></conversation-actions-icon></div></div>
+  <infinite-scroller class="chat-history" data-test-id="chat-history-container">
+    <div class="conversation-container">
+      <user-query><span class="user-query-container"><user-query-content><div class="user-query-container"><div class="query-text"><span class="cdk-visually-hidden">You said</span><p class="query-text-line">Make a short riff file.</p></div></div></user-query-content></span></user-query>
+      <model-response>
+        <response-container>
+          <div class="response-container">
+            <div class="response-container-header"><div class="response-container-header-controls"><div class="tts"><div class="single-draft-response-container"><button class="toggle-code" data-test-id="toggle-code-button">Show code <mat-icon>code</mat-icon></button></div></div></div></div>
+            <div class="presented-response-container">
+              <div class="response-container-content has-thoughts">
+                <div class="response-content">
+                  <thinking-overlay></thinking-overlay>
+                  <model-response-content>
+                    <structured-content-container class="model-response-text has-thoughts">
+                      <div class="container">
+                        <message-content>
+                          <div class="markdown markdown-main-panel">
+                            <response-element class="no-md md-has-block-component"><code-block class="enable-luminous-code-block"><div class="code-block" style="display: none"><div><div class="animated-opacity"><div class="code-block-decoration header-formatted"><span>Python</span><div class="buttons"><gem-icon-button class="download-button"><button aria-label="Download code"></button></gem-icon-button><gem-icon-button class="copy-button"><button aria-label="Copy code"></button></gem-icon-button></div></div><pre><code class="code-container formatted" data-test-id="code-content"><span class="hljs-keyword">import</span> json
+notes = [<span class="hljs-number">40</span>, <span class="hljs-number">43</span>]
+<span class="hljs-built_in">print</span>(<span class="hljs-built_in">len</span>(notes))
+</code></pre><div class="code-block-decoration header"><span>Code output</span></div><mat-divider class="code-result-divider"></mat-divider><pre><code class="code-result-container" data-test-id="code-output-stdout-stderr">2
+</code></pre></div></div></div></code-block></response-element>
+                            <response-element class="no-md md-has-block-component"><code-block class="enable-luminous-code-block"><div class="code-block" style="display: none"><div><div class="animated-opacity"><div class="code-block-decoration header-formatted"><span>Python</span><div class="buttons"><gem-icon-button class="download-button"><button aria-label="Download code"></button></gem-icon-button><gem-icon-button class="copy-button"><button aria-label="Copy code"></button></gem-icon-button></div></div><pre><code class="code-container formatted" data-test-id="code-content">save(<span class="hljs-string">'riff.json'</span>, notes)</code></pre><div class="code-block-decoration header"><span>Code output</span></div><mat-divider class="code-result-divider"></mat-divider><pre><code class="code-result-container" data-test-id="code-output-stdout-stderr">Saved riff.json</code></pre></div></div></div></code-block></response-element>
+                            <h3>The riff</h3>
+                            <p>Here are the two notes.</p>
+                            <response-element class="no-md md-has-block-component"><code-block class="enable-luminous-code-block"><div class="code-block"><div><div class="animated-opacity"><div class="code-block-decoration header-formatted"><span>JSON</span><div class="buttons"><gem-icon-button class="copy-button"><button aria-label="Copy code"></button></gem-icon-button></div></div><pre><code class="code-container formatted" data-test-id="code-content">{"notes": [40, 43]}</code></pre></div></div></div></code-block></response-element>
+                            <response-element class="no-md md-has-block-component"><code-block class="enable-luminous-code-block"><div class="code-block" style="display: none"><div><div class="animated-opacity"><div class="code-block-decoration header-formatted"><span>Python</span><div class="buttons"><gem-icon-button class="copy-button"><button aria-label="Copy code"></button></gem-icon-button></div></div><pre><code class="code-container formatted" data-test-id="code-content">fence = """
+```
+"""</code></pre><div class="code-block-decoration header"><span>Code output</span></div><mat-divider class="code-result-divider"></mat-divider><pre><code class="code-result-container" data-test-id="code-output-stdout-stderr"></code></pre></div></div></div></code-block></response-element>
+                            <p>Play it slowly.</p>
+                          </div>
+                        </message-content>
+                      </div>
+                    </structured-content-container>
+                  </model-response-content>
+                </div>
+              </div>
+            </div>
+            <div class="response-container-footer">
+              <message-actions><div class="actions-container-v2"><div class="buttons-container-v2"><thumb-up-button><gem-icon-button><button aria-label="Good response"></button></gem-icon-button></thumb-up-button><copy-button><gem-icon-button><button aria-label="Copy"></button></gem-icon-button></copy-button><div><div class="menu-button-wrapper"><button aria-label="Show more options"></button></div></div></div></div></message-actions>
+            </div>
+          </div>
+        </response-container>
+      </model-response>
+    </div>
+  </infinite-scroller>
+</div>

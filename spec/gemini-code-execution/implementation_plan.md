@@ -120,7 +120,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/fixtures/gemini-code-execution.html`
-- [ ] **TASK-8:** Add a synthetic Gemini chat with one finished reply, structured as inspected.
+- [x] **TASK-8:** Add a synthetic Gemini chat with one finished reply, structured as inspected.
   - **The header:** the reply's header holds the **Show code** toggle.
   - **The reply's text, in order:**
     1. two runs in a row (Python, each with output), hidden as Gemini hides them;
@@ -131,7 +131,7 @@ None at this time.
   - **The toolbar:** with Copy.
 
 #### [NEW] `scratch/test_gemini-code-execution.ts`
-- [ ] **TASK-9:** Add a regression script covering the checks under Automated Tests.
+- [x] **TASK-9:** Add a regression script covering the checks under Automated Tests.
   - **The existing Gemini scripts:** run them; their fixtures have no runs, so they must be unchanged.
   - **The suite:** run `pnpm test`.
 

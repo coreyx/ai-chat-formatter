@@ -7,6 +7,7 @@
  * PASS or FAIL, and the process exits non-zero if any failed.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { convertConversation, convertMessage } from "../src/core/convert";
@@ -197,6 +198,85 @@ check("runs as a callout: a run apart from the others gets its own callout in pl
 
 check("runs as code blocks: a run that printed nothing has no Code output part", () => {
   assert.equal(convertRuns(geminiReply(codeRun("x = 1", "")), "code-blocks"), "```python\nx = 1\n```");
+});
+
+// ---------------------------------------------------------------------------
+// The fixture
+// ---------------------------------------------------------------------------
+
+/** The fixture page: one turn whose reply holds three runs of code around its text. */
+function fixturePage(): Document {
+  return new JSDOM(`<!doctype html><body>${readFileSync("scratch/fixtures/gemini-code-execution.html", "utf8")}</body>`).window.document;
+}
+
+const FIXTURE_REPLY = [
+  "> [!example]- Code Gemini ran",
+  "> ```python",
+  "> import json",
+  "> notes = [40, 43]",
+  "> print(len(notes))",
+  "> ```",
+  ">",
+  "> **Code output**",
+  ">",
+  "> ```",
+  "> 2",
+  "> ```",
+  ">",
+  "> ```python",
+  "> save('riff.json', notes)",
+  "> ```",
+  ">",
+  "> **Code output**",
+  ">",
+  "> ```",
+  "> Saved riff.json",
+  "> ```",
+  "",
+  "### The riff",
+  "",
+  "Here are the two notes.",
+  "",
+  "```json",
+  '{"notes": [40, 43]}',
+  "```",
+  "",
+  "> [!example]- Code Gemini ran",
+  "> ````python",
+  '> fence = """',
+  "> ```",
+  '> """',
+  "> ````",
+  "",
+  "Play it slowly.",
+].join("\n");
+
+check("fixture: the default copy folds the two runs into one callout and the third into its own, with the text and the written block untouched", () => {
+  const markdown = convertRuns(fixturePage().querySelector("model-response")!);
+  assert.equal(markdown, FIXTURE_REPLY);
+  for (const leak of ["Show code", "Download code", "Copy code"]) assert.ok(!markdown.includes(leak), leak);
+});
+
+await checkAsync("fixture: the setting reaches the reply button, the Conversation copy and the native Copy override", async () => {
+  for (const [mode, expectRun] of [["callout", "> [!example]- Code Gemini ran"], ["code-blocks", "**Code output**\n\n```\nSaved riff.json\n```"], ["omit", null]] as const) {
+    const document = fixturePage();
+    const settings = buildDefaultSettings([geminiAdapter]);
+    settings.includePrompt = false;
+    settings.sites.gemini.choices[CODE_EXECUTION_CHOICE] = mode;
+    settings.sites.gemini.overrideNativeCopy = true;
+    const copied: string[] = [];
+    new ContentController(geminiAdapter, settings, { document, writeClipboard: async (text) => void copied.push(text), requestFrame: (callback) => callback() }).start();
+    document.querySelector<HTMLButtonElement>("model-response [data-acf-injected]")!.click();
+    document.querySelector<HTMLButtonElement>('[title="Copy conversation as Markdown"]')!.click();
+    document.querySelector<HTMLButtonElement>("message-actions copy-button button")!.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(copied.length, 3, mode);
+    for (const markdown of copied) {
+      if (expectRun) assert.ok(markdown.includes(expectRun), `${mode}: ${markdown}`);
+      else assert.ok(!markdown.includes("riff.json") && !markdown.includes("Code output"), `${mode}: ${markdown}`);
+      assert.ok(markdown.includes("### The riff\n\nHere are the two notes."), `${mode}: the text around the runs is kept`);
+    }
+  }
 });
 
 // ---------------------------------------------------------------------------
