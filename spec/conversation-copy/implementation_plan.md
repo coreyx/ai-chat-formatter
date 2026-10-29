@@ -15,7 +15,9 @@ Adds a **Conversation** button to Duck.ai and Copilot, like Gemini's. It copies 
 
 > [!IMPORTANT]
 > **Where the button goes:**
-> - **Duck.ai:** in the chat's header, just left of the ⋮ menu beside the chat's title.
+> - **Duck.ai:** in the chat's header, on a line of its own under the title and the privacy line. (Revised after manual testing: the plan first said "just left of the ⋮".)
+>   - **Why it's on its own line:** Duck.ai lays the header out as a grid, with the title and privacy line in a wide column and the ⋮ in a narrow one. The button is placed just before the ⋮ in the page, so the grid gives it a new row.
+>   - **Why it was kept there:** you chose to keep it. It's easy to find and never covers the title.
 >   - **It scrolls with the chat:** Duck.ai's header scrolls away with the conversation, and the button goes with it. Scroll to the top to find it.
 >   - **No header** (such as a new chat that hasn't started): no button.
 > - **Copilot:** in the top bar, just left of **Share** (the icon before **Settings and more**). This bar stays in place while you scroll.
@@ -73,9 +75,13 @@ None at this time.
     - **Replies:** keep their current anchor.
   - **`CONVERSATION_BUTTON_OPTION`:** `"conversation-button"`, added to `options` after the citation-style option.
     - **Name:** "Show a Copy conversation button".
-    - **Description:** "Adds a Conversation button beside the chat's title, before its ⋮ menu, that copies the whole conversation: each prompt and its reply."
+    - **Description:** "Adds a Conversation button to the chat's header, under its title, that copies the whole conversation: each prompt and its reply."
     - **`defaultEnabled`:** true.
   - **`copyButtonDescription`:** not added. Duck.ai's button setting keeps its usual hint.
+- [ ] **TASK-9:** Match the code to the revised placement. Added in revision, after manual testing; nothing about where the button goes changes.
+  - **The option's description:** the new wording above.
+  - **`findConversationButtonAnchor`'s doc comment:** say that the button is placed before the ⋮ in the page, and that Duck.ai's header grid shows it on a line of its own under the title.
+  - **README, CHANGELOG and walkthrough:** describe it the same way.
 
 ### Copilot
 
@@ -127,7 +133,7 @@ None at this time.
 
 `scratch/test_conversation-copy.ts` checks that:
 1. **Duck.ai button placement:**
-   - The Conversation button goes right before the header's ⋮ wrapper, labelled "Conversation", one per page over many passes.
+   - The Conversation button goes in the header, right before the ⋮ wrapper in the page, labelled "Conversation", one per page over many passes.
    - Each reply keeps its own icon button.
 2. **The Duck.ai copy:**
    - It has three turns, in order, each prompt as a heading above its reply. The two-line prompt follows the Heading format's quote rule.
@@ -149,7 +155,7 @@ None at this time.
 ### Manual Verification
 1. Run `pnpm run build`, then click the reload icon on the extension in `chrome://extensions`, then reload a Duck.ai and a Copilot tab.
 2. **Duck.ai:**
-   1. Open a conversation with several turns and scroll to the top. **Conversation** should sit left of the ⋮ beside the chat title.
+   1. Open a conversation with several turns and scroll to the top. **Conversation** should sit on its own line under the chat title and the privacy line.
    2. Click it and paste into Obsidian. Every turn should be there in order, each with its own sources.
 3. **Duck.ai's style:** turn on **Cite sources as Duck.ai does** and copy the conversation again. Each reply should end with its own Read More list.
 4. **Copilot:**
