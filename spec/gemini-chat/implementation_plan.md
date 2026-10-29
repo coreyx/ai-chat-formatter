@@ -103,7 +103,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
 - [x] **TASK-1:** Let `SiteAdapter.buttonLabel(message)` return `ButtonLabel | null`, documented as: null gives that message the default icon-only button. Gemini's reply buttons need this, since the adapter's report and conversation buttons are labelled.
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-2:** In `sync()`, move a tracked button whose anchor has moved.
+- [x] **TASK-2:** In `sync()`, move a tracked button whose anchor has moved.
   - **When:** the button is connected, the adapter still gives an anchor, and `button.parentElement !== anchor.parent`.
   - **What:** re-insert it with `anchor.parent.insertBefore(button, anchor.before)` instead of leaving it.
   - **Why:** the Conversation button moves between the top bar and the report toolbar.

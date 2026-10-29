@@ -119,7 +119,9 @@ export class ContentController {
    * pass once the toolbar appears. A button can sit outside its message, so
    * each message's button is tracked rather than looked for inside it; when
    * the adapter no longer gives a message an anchor (an option that shows the
-   * button was turned off), its button is removed.
+   * button was turned off), its button is removed, and when the anchor is now
+   * somewhere else (Gemini's Conversation button, between the top bar and an
+   * open report's toolbar), the button moves there.
    */
   sync(): void {
     const document = this.env.document;
@@ -140,6 +142,7 @@ export class ContentController {
       const tracked = this.buttons.get(message);
       if (tracked?.isConnected) {
         if (!anchor) tracked.remove();
+        else if (tracked.parentElement !== anchor.parent) anchor.parent.insertBefore(tracked, anchor.before);
         continue;
       }
       // A button left inside the message by an earlier run of the extension still counts; one of this run's own, for another message placed inside this one, doesn't.
