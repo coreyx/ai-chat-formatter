@@ -83,6 +83,20 @@ check("duck.ai: no header, no Conversation button; a reply's heading isn't taken
   assert.equal(page.conversationButtons().length, 0);
 });
 
+/** The Duck.ai conversation fixture in the 2026-10-28 layout. */
+function duckAiConversationPage(): Document {
+  return new JSDOM(readFileSync("scratch/fixtures/duckai-conversation.html", "utf8")).window.document;
+}
+
+check("duck.ai fixture: the conversation is the turns' parent, not the sidebar; three turns, the inactive version left out", () => {
+  const page = duckAiConversationPage();
+  const conversations = Array.from(page.querySelectorAll(duckAiAdapter.messageSelector)).filter((message) => !message.matches(DUCK_AI_REPLY_SELECTOR));
+  assert.equal(conversations.length, 1);
+  const turns = readDuckAiTurns(conversations[0])!;
+  assert.deepEqual(turns.map((turn) => turn.prompt), ["What is new in Widget 5?", "And the old engine?\n\nKeep it short.", "Thanks!"]);
+  assert.deepEqual(turns.map((turn) => turn.reply.id.slice(-3)), ["0-1", "1-1", "2-2"]);
+});
+
 // ---------------------------------------------------------------------------
 // Copilot: the conversation as a message
 // ---------------------------------------------------------------------------

@@ -103,7 +103,7 @@ None at this time.
 ### Tests
 
 #### [NEW] `scratch/fixtures/duckai-conversation.html`
-- [ ] **TASK-6:** Add a synthetic Duck.ai page in the live layout.
+- [x] **TASK-6:** Add a synthetic Duck.ai page in the live layout.
   - **The header:** the chat title `h1`, the ⋮ menu wrapper and the privacy line, inside the first turn wrapper.
   - **Three turn wrappers:**
     1. a prompt and a reply with one link chip and two Read More cards;

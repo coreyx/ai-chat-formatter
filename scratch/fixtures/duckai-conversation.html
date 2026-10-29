@@ -1,0 +1,67 @@
+<!--
+  A Duck.ai conversation reduced to the structure observed on duck.ai on
+  2026-10-28: each turn is a wrapper <div> holding its user message and its
+  reply, and the wrappers share a parent. The first wrapper also holds the
+  chat's header: the title <h1>, the ⋮ menu (aria-label="menu",
+  aria-haspopup="menu") two <div>s down, and the privacy line.
+
+  1. A prompt, and a reply with one link chip and two Read More cards.
+  2. A two-line prompt, and a reply with no sources.
+  3. A prompt with two versions of its reply: an earlier one Duck.ai marks
+     data-activeresponse="false", then the active one.
+
+  Each reply's toolbar holds Copy. Class names imitate Duck.ai's generated
+  hashes and are never relied on; every attribute the adapter relies on is
+  kept as observed. All names, text and URLs are made up.
+-->
+<div id="app">
+  <main>
+    <section data-testid="duckai-sidebar"><div><button type="button" aria-label="menu" aria-haspopup="menu"></button></div></section>
+    <section>
+      <div class="Ab12Cd34Ef56Gh78Ij90">
+        <div class="Tq3Rw5Ex7Yz9Ua1Sb2Dc">
+          <div class="Hd4Fg6Hj8Kl0Zx2Cv4Bn">
+            <h1>Widget questions</h1>
+            <div><div><button type="button" aria-label="menu" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></button></div></div>
+            <div><span>Privacy protected. No AI training.</span></div>
+          </div>
+          <div data-testid="user-message" tabindex="0"><h3>You said</h3><div><div style="white-space: pre-wrap"><p>What is new in Widget 5?</p></div></div><div><div><button type="button" aria-label="Copy to clipboard"></button></div><div><button type="button" aria-label="Edit"></button></div></div></div>
+          <h3 id="heading-00000000-0000-4000-8000-000000000000-assistant-message-0-1" tabindex="-1">Assistant</h3>
+          <div id="00000000-0000-4000-8000-000000000000-assistant-message-0-1" data-activeresponse="true">
+            <div><div data-dark-theme=""><div><p>Widget 5 adds a faster engine. <a target="_blank" rel="noopener noreferrer" href="https://widget.example/releases/5.0.0" aria-label="Widget" tabindex="0"><span>Widget</span></a></p></div></div></div>
+            <div><section><h4>Read More</h4><ul>
+              <li><a href="https://widget.example/releases/5.0.0" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/widget.example.ico" alt=""><span>Widget 5.0.0 (Current)<span>widget.example</span></span></a></li>
+              <li><a href="https://news.example/widget-5" rel="noopener" target="_blank" data-handled-by-react="true"><img src="https://external-content.example/ip3/news.example.ico" alt=""><span>Widget 5 hands-on<span>news.example</span></span></a></li>
+            </ul></section></div>
+            <div data-message-actions="true"><div><button type="button" aria-label="Share"></button></div><div><button type="button" aria-label="Copy to clipboard" data-copyairesponse="true"></button><button type="button"></button></div></div>
+          </div>
+        </div>
+
+        <div class="Tq3Rw5Ex7Yz9Ua1Sb2Dc">
+          <div data-testid="user-message" tabindex="0"><h3>You said</h3><div><div style="white-space: pre-wrap"><p>And the old engine?
+
+Keep it short.</p></div></div></div>
+          <h3 id="heading-00000000-0000-4000-8000-000000000000-assistant-message-1-1" tabindex="-1">Assistant</h3>
+          <div id="00000000-0000-4000-8000-000000000000-assistant-message-1-1" data-activeresponse="true">
+            <div><div data-dark-theme=""><div><p>It still works, but it is slower.</p></div></div></div>
+            <div data-message-actions="true"><div><button type="button" aria-label="Copy to clipboard" data-copyairesponse="true"></button><button type="button"></button></div></div>
+          </div>
+        </div>
+
+        <div class="Tq3Rw5Ex7Yz9Ua1Sb2Dc">
+          <div data-testid="user-message" tabindex="0"><h3>You said</h3><div><div style="white-space: pre-wrap"><p>Thanks!</p></div></div></div>
+          <h3 id="heading-00000000-0000-4000-8000-000000000000-assistant-message-2-1" tabindex="-1">Assistant</h3>
+          <div id="00000000-0000-4000-8000-000000000000-assistant-message-2-1" data-activeresponse="false">
+            <div><div data-dark-theme=""><div><p>An earlier answer.</p></div></div></div>
+            <div data-message-actions="true"><div><button type="button" aria-label="Copy to clipboard" data-copyairesponse="true"></button><button type="button"></button></div></div>
+          </div>
+          <h3 id="heading-00000000-0000-4000-8000-000000000000-assistant-message-2-2" tabindex="-1">Assistant</h3>
+          <div id="00000000-0000-4000-8000-000000000000-assistant-message-2-2" data-activeresponse="true">
+            <div><div data-dark-theme=""><div><p>You're welcome.</p></div></div></div>
+            <div data-message-actions="true"><div><button type="button" aria-label="Copy to clipboard" data-copyairesponse="true"></button><button type="button"></button></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
