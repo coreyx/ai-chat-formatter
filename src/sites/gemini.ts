@@ -18,6 +18,7 @@ import {
   CODE_BLOCK_SELECTOR,
   CODE_CONTENT_SELECTOR,
   CODE_LANGUAGE_SELECTOR,
+  CONVERSATION_MENU_SELECTOR,
   END_OF_REPORT_SELECTOR,
   GENERATED_FILE_NAME_SELECTOR,
   GENERATED_FILE_SELECTOR,
@@ -441,16 +442,22 @@ function findReplyButtonAnchor(reply: Element): ButtonAnchor | null {
 }
 
 /**
- * Where a button goes: in the open report panel's toolbar, the report's right
- * before Share & Export and the conversation's before the report's, so they
- * always read Conversation, Report, Share & Export. The conversation's button
- * shows only while its option is on and a report panel is open.
+ * Where a button goes. A reply's is in its toolbar (see
+ * {@link findReplyButtonAnchor}). The report's is in the open report panel's
+ * toolbar, right before Share & Export. The conversation's goes before the
+ * report's while a report is open, so they always read Conversation, Report,
+ * Share & Export, and otherwise in the top bar, before the ⋮ conversation
+ * menu. The conversation's button shows only while its option is on.
  */
 function findGeminiButtonAnchor(message: Element, isOptionEnabled?: (id: string) => boolean): ButtonAnchor | null {
   if (message.matches(MODEL_RESPONSE_SELECTOR)) return findReplyButtonAnchor(message);
   const isReport = message.matches(REPORT_PANEL_SELECTOR);
   if (!isReport && !(isOptionEnabled?.(CONVERSATION_BUTTON_OPTION) ?? true)) return null;
   const panel = isReport ? message : message.ownerDocument.querySelector(REPORT_PANEL_SELECTOR);
+  if (!panel) {
+    const menu = message.ownerDocument.querySelector(CONVERSATION_MENU_SELECTOR);
+    return menu?.parentElement ? { parent: menu.parentElement, before: menu } : null;
+  }
   const share = panel?.querySelector(`${TOOLBAR_ACTIONS_SELECTOR} ${SHARE_EXPORT_SELECTOR}`);
   if (!share?.parentElement) return null;
   const reportButton = isReport ? null : share.parentElement.querySelector(`:scope > [data-acf-injected][title="${REPORT_LABEL.title}"]`);
@@ -508,7 +515,7 @@ export const geminiAdapter: SiteAdapter = {
     {
       id: CONVERSATION_BUTTON_OPTION,
       name: "Show a Copy conversation button",
-      description: "Adds a Conversation button before Report that copies the whole conversation on the left: your prompts, the research plan and Gemini's replies.",
+      description: "Adds a Conversation button that copies the whole conversation on the left: your prompts, their attachments and Gemini's replies. It sits in the top bar, or before Report while a report is open.",
       defaultEnabled: true,
     },
   ],

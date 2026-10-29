@@ -668,7 +668,7 @@ await checkAsync("buttons: Conversation, then Report, before Share & Export; eac
   assert.equal(page.copied[1], convertGeminiConversation());
 });
 
-check("buttons: the conversation's button goes before Report whichever is added first, leaves with its option, and needs an open report", () => {
+check("buttons: the conversation's button goes before Report whichever is added first, leaves with its option, and needs an open report (or, since spec/gemini-chat, the top bar's menu, which this fixture lacks)", () => {
   const page = startGemini((settings) => (settings.sites.gemini.options["conversation-button"] = false));
   assert.deepEqual(page.toolbar().slice(1, 3), ["Copy report as Markdown", "export-menu-button"]);
   page.controller.applySettings(buildDefaultSettings([geminiAdapter]));

@@ -161,7 +161,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
     - **The report's prompt:** still governed by **Copy the research request with the report**.
   - **`readGeminiReferences`:** stays null for a reply, so a reply has no Sources section.
   - **`copyButtonDescription`:** "Adds a button to each reply, before Gemini's Copy, and Conversation and Report buttons to the top bar or a report's toolbar."
-- [ ] **TASK-9:** Show the Conversation button with no report open.
+- [x] **TASK-9:** Show the Conversation button with no report open.
   - **Where:** with no `deep-research-immersive-panel` in the page, `findGeminiButtonAnchor` puts the history's button before `CONVERSATION_MENU_SELECTOR`.
   - **When it's hidden:** null while that isn't in the page, or while **Show a Copy conversation button** is off.
   - **Option description:** "Adds a Conversation button that copies the whole conversation on the left: your prompts, their attachments and Gemini's replies. It sits in the top bar, or before Report while a report is open."

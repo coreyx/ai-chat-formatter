@@ -246,6 +246,40 @@ await checkAsync("override: with it on, a reply toolbar's Copy copies Markdown; 
 });
 
 // ---------------------------------------------------------------------------
+// The Conversation button
+// ---------------------------------------------------------------------------
+
+/** A report panel's toolbar, as in the Deep Research fixture, for the Conversation button to move into. */
+const REPORT_PANEL = '<deep-research-immersive-panel><h2 class="title-text">A report</h2><div class="action-buttons"><button data-test-id="export-menu-button">Share &amp; Export</button></div><div class="response-container-content"><div id="extended-response-markdown-content"><p>Report.</p></div></div></deep-research-immersive-panel>';
+
+check("conversation button: in the top bar before ⋮ with no report open; into the report's toolbar and back as a report opens and closes; gone with its option", () => {
+  const page = startChat(turnHtml("One", "<p>A.</p>", COPY_TOOLBAR));
+  const conversationButtons = () => Array.from(page.document.querySelectorAll<HTMLButtonElement>('[title="Copy conversation as Markdown"]'));
+  assert.equal(conversationButtons().length, 1);
+  const [button] = conversationButtons();
+  assert.equal(button.nextElementSibling?.nodeName, "CONVERSATION-ACTIONS-ICON");
+  assert.equal(button.textContent, "Conversation");
+
+  page.document.body.insertAdjacentHTML("beforeend", REPORT_PANEL);
+  page.controller.sync();
+  assert.equal(conversationButtons().length, 1);
+  const toolbar = Array.from(page.document.querySelector(".action-buttons")!.children, (child) => child.getAttribute("title") ?? child.getAttribute("data-test-id"));
+  assert.deepEqual(toolbar, ["Copy conversation as Markdown", "Copy report as Markdown", "export-menu-button"]);
+  assert.equal(conversationButtons()[0], button, "the same button, moved");
+
+  page.document.querySelector("deep-research-immersive-panel")!.remove();
+  page.controller.sync();
+  assert.equal(conversationButtons().length, 1);
+  assert.equal(conversationButtons()[0].nextElementSibling?.nodeName, "CONVERSATION-ACTIONS-ICON");
+
+  const off = buildDefaultSettings([geminiAdapter]);
+  off.sites.gemini.options["conversation-button"] = false;
+  page.controller.applySettings(off);
+  assert.equal(conversationButtons().length, 0);
+  assert.equal(page.replyButtons().length, 1, "the reply's button stays");
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 
