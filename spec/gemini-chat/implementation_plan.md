@@ -100,7 +100,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
 ### Shared code
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Let `SiteAdapter.buttonLabel(message)` return `ButtonLabel | null`, documented as: null gives that message the default icon-only button. Gemini's reply buttons need this, since the adapter's report and conversation buttons are labelled.
+- [x] **TASK-1:** Let `SiteAdapter.buttonLabel(message)` return `ButtonLabel | null`, documented as: null gives that message the default icon-only button. Gemini's reply buttons need this, since the adapter's report and conversation buttons are labelled.
 
 #### [MODIFY] `src/content/controller.ts`
 - [ ] **TASK-2:** In `sync()`, move a tracked button whose anchor has moved.

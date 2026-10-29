@@ -235,8 +235,12 @@ export interface SiteAdapter {
    * off; absent, every option takes its default.
    */
   findButtonAnchor(message: Element, isOptionEnabled?: (id: string) => boolean): ButtonAnchor | null;
-  /** How `message`'s button names itself. Absent means "Copy as Markdown", without a visible label. */
-  buttonLabel?(message: Element): ButtonLabel;
+  /**
+   * How `message`'s button names itself. Absent, or null for a given message,
+   * means "Copy as Markdown", without a visible label: a site can label some of
+   * its buttons and leave the rest as the plain icon.
+   */
+  buttonLabel?(message: Element): ButtonLabel | null;
   /** The options page's hint for the button setting, for a site whose button isn't next to each reply's own Copy. */
   copyButtonDescription?: string;
   /** Page chrome inside the reply body (buttons, labels, live regions) removed before conversion. */
