@@ -95,7 +95,7 @@ None at this time.
   - `RESPONSE_ELEMENT_SELECTOR` (`response-element`).
 
 #### [MODIFY] `src/sites/gemini.ts`
-- [ ] **TASK-5:** Add the drop-down: `CODE_EXECUTION_CHOICE = "code-execution"` in a new `choices` array.
+- [x] **TASK-5:** Add the drop-down: `CODE_EXECUTION_CHOICE = "code-execution"` in a new `choices` array.
   - **Name:** "Code Gemini ran".
   - **Description:** "How the code Gemini ran for a reply, hidden behind Show code, is copied, with its output."
   - **Values:** `callout` ("Folded callout", the default), `code-blocks` ("Code blocks") and `omit` ("Leave out").

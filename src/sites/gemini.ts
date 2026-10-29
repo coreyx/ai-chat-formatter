@@ -78,6 +78,12 @@ export const THINKING_OPTION = "thinking";
 export const CONVERSATION_BUTTON_OPTION = "conversation-button";
 export const REPORT_PROMPT_OPTION = "report-prompt";
 
+/** The id of the drop-down for the code Gemini ran, and its values; all stored in the settings, so never rename them. */
+export const CODE_EXECUTION_CHOICE = "code-execution";
+export const CODE_RUNS_AS_CALLOUT = "callout";
+export const CODE_RUNS_AS_CODE_BLOCKS = "code-blocks";
+export const CODE_RUNS_OMITTED = "omit";
+
 /** How the two buttons name themselves. The report's title also finds its button, which the conversation's goes before. */
 const REPORT_LABEL: ButtonLabel = { title: "Copy report as Markdown", text: "Report" };
 const CONVERSATION_LABEL: ButtonLabel = { title: "Copy conversation as Markdown", text: "Conversation" };
@@ -519,6 +525,19 @@ export const geminiAdapter: SiteAdapter = {
       name: "Show a Copy conversation button",
       description: "Adds a Conversation button that copies the whole conversation on the left: your prompts, their attachments and Gemini's replies. It sits in the top bar, or before Report while a report is open.",
       defaultEnabled: true,
+    },
+  ],
+  choices: [
+    {
+      id: CODE_EXECUTION_CHOICE,
+      name: "Code Gemini ran",
+      description: "How the code Gemini ran for a reply, hidden behind Show code, is copied, with its output.",
+      defaultValue: CODE_RUNS_AS_CALLOUT,
+      values: [
+        { value: CODE_RUNS_AS_CALLOUT, label: "Folded callout" },
+        { value: CODE_RUNS_AS_CODE_BLOCKS, label: "Code blocks" },
+        { value: CODE_RUNS_OMITTED, label: "Leave out" },
+      ],
     },
   ],
   rules: [invisibleCharactersRule, collapseBlankLinesRule],

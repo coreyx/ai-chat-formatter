@@ -12,6 +12,9 @@ import { ContentController } from "../src/content/controller";
 import { convertConversation, convertMessage } from "../src/core/convert";
 import { buildDefaultSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
+import { renderOptions } from "../src/options/options";
+import { CODE_EXECUTION_CHOICE } from "../src/sites/gemini";
+import { SITE_ADAPTERS } from "../src/sites/index";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -90,6 +93,21 @@ await checkAsync("choices: the controller passes a site's stored drop-down value
     await controller.copy(document.querySelector(".message")!);
     assert.equal(copied[0], `${expected} other=(none)`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// The setting
+// ---------------------------------------------------------------------------
+
+check("setting: Gemini's Code Gemini ran starts as a folded callout, and the options page offers its three choices", () => {
+  assert.equal(buildDefaultSettings(SITE_ADAPTERS).sites.gemini.choices[CODE_EXECUTION_CHOICE], "callout");
+  const document = new JSDOM("<!doctype html><body></body>").window.document;
+  const form = renderOptions(document, SITE_ADAPTERS, () => {});
+  document.body.append(form.root);
+  form.fill(buildDefaultSettings(SITE_ADAPTERS));
+  const select = document.querySelector<HTMLSelectElement>('section[data-site="gemini"] select[name="gemini.choices.code-execution"]')!;
+  assert.deepEqual(Array.from(select.options, (option) => [option.value, option.textContent]), [["callout", "Folded callout"], ["code-blocks", "Code blocks"], ["omit", "Leave out"]]);
+  assert.equal(select.value, "callout");
 });
 
 // ---------------------------------------------------------------------------
