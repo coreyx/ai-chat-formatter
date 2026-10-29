@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-28
+
 ### Added
 
 - **Explore More on Search Assist**, on by default: the Explore More questions you've expanded are copied after the extended answer, under `### Explore More`, each as an H4 with its answer and inline source chips. Unexpanded questions are left out. Turn it off with **Include expanded Explore More answers**.
@@ -116,7 +118,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Options page with a master switch, citation style, and per-site button, override and rule settings; changes apply to open tabs without a reload.
 - Pluggable site adapters: a site's match patterns go into the manifest automatically at build time.
 
-[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/coreyx/ai-chat-formatter/compare/0.6.0...HEAD
+[0.6.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/coreyx/ai-chat-formatter/compare/0.2.0...0.3.0

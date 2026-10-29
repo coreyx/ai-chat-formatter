@@ -1,5 +1,50 @@
 # Release Notes
 
+## 0.6.0 (2026-10-28)
+
+AI Chat Formatter now works on **Gemini**, and Copilot, Duck.ai and Gemini can copy a **whole conversation** at once. Duck.ai can cite sources the way it shows them, and Search Assist copies its Explore More answers.
+
+### Gemini
+
+Gemini (`gemini.google.com`) is the fourth supported site.
+
+- **Each reply** gets a **Copy as Markdown** button just left of Gemini's own Copy icon, and Gemini's Copy can copy Markdown too.
+  - **Code blocks** keep their language.
+  - **Files you attached** to a prompt are named under it: `Attached: *Widget_Guide* (PDF)`.
+  - **Files, images, music and video Gemini made** are named where they appear: `Generated file: *riff* (JSON)`, `*Generated image*`. They aren't linked, since their addresses are Google's and may need your sign-in.
+- **Code Gemini ran**, which Gemini folds behind **Show code**, is copied as an Obsidian callout that starts folded, with the code and its output. You can have it copied as plain code blocks or left out instead.
+- **Deep Research reports:** a finished report's toolbar gets a **Report** button.
+  - **Citations:** the report's markers become citations in your citation style, titled from **Sources used in the report**. The sources it used without citing go under **More**.
+  - **Two optional sections,** off by default: **Sources browsed but not used** and Gemini's **Show thinking**.
+  - **Your research request** can come first, with **Copy the research request with the report**.
+  - **The research plan** in the conversation becomes a numbered list of its steps.
+
+### Copy the whole conversation
+
+A **Conversation** button copies every turn in the page: each prompt, then its reply with its own Sources section. Prompts are included even when **Copy the prompt with the response** is off.
+- **Copilot:** in the top bar, left of **Share**.
+- **Duck.ai:** in the chat's header, under its title. Only the version of a regenerated reply that's on screen is copied.
+- **Gemini:** in the top bar, or in a report's toolbar while one is open.
+
+Turn it off per site with **Show a Copy conversation button**. Only turns already loaded in the page are copied, so scroll to the top of a long conversation first.
+
+### Duck.ai's own citation style
+
+Turn on **Cite sources as Duck.ai does** to copy sources the way Duck.ai shows them:
+- **Chips:** each source chip stays where it is, as a link.
+- **Read More:** the copy ends with a list of the cards, each with its icon, linked title and site.
+- **No Sources section:** with this on, there are no numbered citations or Sources section.
+
+### Search Assist
+
+- **Explore More:** the Explore More questions you've expanded come after the extended answer, each with its answer.
+- **Inline source chips:** chips stay inline by default, written as Search Assist shows them, icon and name linked, with no Sources section. Turn off **Keep Search Assist's inline source chips** for numbered citations, as in 0.5.0.
+- **Automatic clicks,** both off by default. **Press More automatically** expands the answer and presses More. **Expand Explore More questions automatically** opens each Explore More question in turn. **Click pacing** sets how far apart the clicks come.
+
+### Fixed
+
+- **Tables with linked citations** no longer lose their cells, on every site.
+
 ## 0.5.0 (2026-10-27)
 
 AI Chat Formatter now works on **DuckDuckGo Search Assist**. Copies can also start with your prompt, and their headings can sit below your note's own.
