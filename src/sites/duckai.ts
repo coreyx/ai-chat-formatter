@@ -1,5 +1,5 @@
 import type TurndownService from "turndown";
-import { normalizeCitationUrl, sourceDomain } from "../core/citations";
+import { encodeLinkDestination, escapeLinkText, normalizeCitationUrl, sourceDomain } from "../core/citations";
 import { promptText } from "../core/prompt";
 import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT, type RawChipSource } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
@@ -22,6 +22,14 @@ const CONTENT_SELECTOR = "[data-dark-theme]";
 
 /** The cards in a reply's Read More section, a `<section>` headed by an `<h4>`. */
 const READ_MORE_CARD_SELECTOR = "section:has(> h4) a[data-handled-by-react]";
+
+/** The id of the option that cites sources as Duck.ai shows them; stored in the settings, so never rename it. */
+export const READ_MORE_STYLE_OPTION = "read-more-style";
+
+/** `[label](url)`, a link written where a chip was, while sources are cited as Duck.ai shows them. */
+function inlineLink(label: string, url: string): string {
+  return `[${escapeLinkText(label)}](${encodeLinkDestination(url)})`;
+}
 
 /**
  * The fence info string for a Duck.ai code block's `data-language` value.
@@ -70,11 +78,12 @@ function isCitationChip(node: HTMLElement): boolean {
 }
 
 /**
- * Turndown rule for Duck.ai's source chips. Each chip is registered as a
- * citation and replaced by its placeholder. The chip shows only a short site
- * name ("GitHub", "widget.example"), so the page title comes from the reply's
- * Read More card for the same URL, when the caller read them; otherwise the
- * chip's label stands in.
+ * Turndown rule for Duck.ai's source chips. While sources are cited as Duck.ai
+ * shows them, a chip stays where it is as a link with its label. Otherwise
+ * it's registered as a citation and replaced by its placeholder. The chip
+ * shows only a short site name ("GitHub", "widget.example"), so the
+ * citation's page title comes from the reply's Read More card for the same
+ * URL, when the caller read them; otherwise the chip's label stands in.
  */
 function citationChipRule(context: ConversionContext): TurndownService.Rule {
   return {
@@ -83,6 +92,7 @@ function citationChipRule(context: ConversionContext): TurndownService.Rule {
       const element = node as HTMLElement;
       const url = element.getAttribute("href") ?? "";
       const name = (element.textContent ?? "").trim();
+      if (context.isOptionEnabled(READ_MORE_STYLE_OPTION)) return inlineLink(name || sourceDomain(url), url);
       const title = context.findReference(url)?.title.trim() || (element.getAttribute("aria-label") ?? "").trim() || name;
       return context.registerCitation({ url, title, sourceName: name });
     },
@@ -130,7 +140,9 @@ export function parseChipSources(json: string | null): RawChipSource[] | null {
 /**
  * Turndown rule for Duck.ai's popup chips. Each source behind the chip is
  * registered as its own citation, titled from its Read More card when there is
- * one, otherwise from Duck.ai's own title for it. A chip with no readable
+ * one, otherwise from Duck.ai's own title for it. While sources are cited as
+ * Duck.ai shows them, each source is instead a link labelled with its domain,
+ * the links separated by spaces, so none is lost. A chip with no readable
  * sources becomes nothing: its visible text is only a domain and a count, which
  * would otherwise run into the sentence ("widget.example1").
  */
@@ -139,6 +151,9 @@ function popupChipRule(context: ConversionContext): TurndownService.Rule {
     filter: (node) => isPopupChip(node),
     replacement: (_content, node) => {
       const sources = parseChipSources((node as HTMLElement).getAttribute(CHIP_SOURCES_ATTRIBUTE)) ?? [];
+      if (context.isOptionEnabled(READ_MORE_STYLE_OPTION)) {
+        return sources.map((source) => inlineLink(source.domain.trim() || sourceDomain(source.url), source.url)).join(" ");
+      }
       return sources
         .map((source) => {
           const domain = source.domain.trim() || sourceDomain(source.url);
@@ -243,6 +258,15 @@ export const duckAiAdapter: SiteAdapter = {
   readReferences: readDuckAiReferences,
   readPrompt: readDuckAiPrompt,
   moreSources: { defaultEnabled: true, description: "Adds the Read More cards that the reply doesn't cite." },
+  options: [
+    {
+      id: READ_MORE_STYLE_OPTION,
+      name: "Cite sources as Duck.ai does",
+      description: "Keeps each source chip as a link where it is, and ends with Read More: a line for each card, with its icon, title and site. Replaces the numbered citations and the Sources section.",
+      defaultEnabled: false,
+      replacesSourcesSection: true,
+    },
+  ],
   // Popup chips name their sources only in React state, which src/page/duckai.ts reads.
   pageScript: "duckai",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],

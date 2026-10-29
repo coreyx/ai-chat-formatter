@@ -74,7 +74,7 @@ None at this time.
 ### Duck.ai adapter
 
 #### [MODIFY] `src/sites/duckai.ts`
-- [ ] **TASK-3:** Add the option and the inline chips.
+- [x] **TASK-3:** Add the option and the inline chips.
   - **The option:** `READ_MORE_STYLE_OPTION = "read-more-style"`, in a new `options` array:
     - **Name:** "Cite sources as Duck.ai does".
     - **Description:** "Keeps each source chip as a link where it is, and ends with Read More: a line for each card, with its icon, title and site. Replaces the numbered citations and the Sources section."
