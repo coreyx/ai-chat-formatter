@@ -140,7 +140,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
   - **What it does:** each `code-block` becomes `<pre><code class="language-…">` with the text of its `CODE_CONTENT_SELECTOR`.
   - **The language:** read from `CODE_LANGUAGE_SELECTOR` with `streamdownLanguageId`, so it's lowercased, and "text" or "plain" give no tag.
   - **No language label** (as in reports today): the block keeps its plain fence.
-- [ ] **TASK-6:** Add `rewriteGeneratedItems(root)`.
+- [x] **TASK-6:** Add `rewriteGeneratedItems(root)`.
   - **When it runs:** in `preprocessReply`, before the reply is narrowed to `message-content`.
   - **What it writes:** each item becomes a `<p>`:
     - a `generated-file`: `Generated file: <em>name</em> (TYPE)`, from its name and type;

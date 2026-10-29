@@ -19,6 +19,11 @@ import {
   CODE_CONTENT_SELECTOR,
   CODE_LANGUAGE_SELECTOR,
   END_OF_REPORT_SELECTOR,
+  GENERATED_FILE_NAME_SELECTOR,
+  GENERATED_FILE_SELECTOR,
+  GENERATED_FILE_TYPE_SELECTOR,
+  GENERATED_IMAGE_SELECTOR,
+  GENERATED_MUSIC_SELECTOR,
   findReportTurn,
   findResearchRequest,
   type GeminiSource,
@@ -48,6 +53,7 @@ import {
   UNUSED_SOURCES_SELECTOR,
   USED_SOURCES_SELECTOR,
   USER_QUERY_SELECTOR,
+  VIDEO_PLAYER_SELECTOR,
 } from "./gemini-markup";
 
 /*
@@ -287,16 +293,54 @@ function rewriteReportCard(card: Element): HTMLElement {
   return line;
 }
 
+/** Marks the paragraphs {@link rewriteGeneratedItems} writes, so those outside a reply's text can be found again. */
+const GENERATED_ATTRIBUTE = "data-acf-gemini-generated";
+
+/**
+ * Names each thing Gemini made in `root`, in its place, as a paragraph of
+ * text: a file as `Generated file: *name* (TYPE)`, and an image, music or a
+ * video as `*Generated image*`, `*Generated music*` or `*Generated video*`.
+ * Nothing is linked or embedded: the addresses are Google's, and may need a
+ * sign-in or stop working. Music plays in a `video-player` of its own, so
+ * it's named before any player left over is taken for a video.
+ */
+function rewriteGeneratedItems(root: Element): void {
+  const document = root.ownerDocument;
+  /** A marked paragraph: `prefix`, then `name` in italics, then `suffix`. */
+  const line = (prefix: string, name: string, suffix = ""): HTMLParagraphElement => {
+    const element = paragraph(document, prefix);
+    element.setAttribute(GENERATED_ATTRIBUTE, "");
+    const emphasis = document.createElement("em");
+    emphasis.textContent = name;
+    element.append(emphasis, suffix);
+    return element;
+  };
+  for (const file of Array.from(root.querySelectorAll(GENERATED_FILE_SELECTOR))) {
+    const name = (file.querySelector(GENERATED_FILE_NAME_SELECTOR)?.textContent ?? "").trim() || "file";
+    const type = (file.querySelector(GENERATED_FILE_TYPE_SELECTOR)?.textContent ?? "").trim();
+    file.replaceWith(line("Generated file: ", name, type ? ` (${type})` : ""));
+  }
+  root.querySelectorAll(GENERATED_IMAGE_SELECTOR).forEach((image) => image.replaceWith(line("", "Generated image")));
+  root.querySelectorAll(GENERATED_MUSIC_SELECTOR).forEach((music) => music.replaceWith(line("", "Generated music")));
+  root.querySelectorAll(VIDEO_PLAYER_SELECTOR).forEach((video) => video.replaceWith(line("", "Generated video")));
+}
+
 /**
  * Prepares a copy of one reply in the left pane: only its text is kept, with
- * Gemini's own "Show thinking", the source carousels, citation markers (which
- * carry no link outside a report) and buttons dropped. The research plan card
+ * the things Gemini made named in it (see {@link rewriteGeneratedItems}; any
+ * outside the text follow it, in page order), and Gemini's own "Show
+ * thinking", the source carousels, citation markers (which carry no link
+ * outside a report) and buttons dropped. The research plan card
  * and the report card are rewritten (see {@link rewritePlan} and
  * {@link rewriteReportCard}).
  */
 function preprocessReply(root: HTMLElement): void {
+  rewriteGeneratedItems(root);
   const content = root.querySelector(MESSAGE_CONTENT_SELECTOR);
-  if (content) root.replaceChildren(content);
+  if (content) {
+    const outside = Array.from(root.querySelectorAll(`[${GENERATED_ATTRIBUTE}]`)).filter((item) => !content.contains(item));
+    root.replaceChildren(content, ...outside);
+  }
   for (const selector of [THINKING_OVERLAY_SELECTOR, SOURCES_CAROUSEL_SELECTOR, CITATION_SELECTOR, "button", "gem-button"]) {
     root.querySelectorAll(selector).forEach((element) => element.remove());
   }

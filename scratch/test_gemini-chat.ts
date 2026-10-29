@@ -142,6 +142,22 @@ check("code: a plain-text block, or one without a header, gets a fence with no l
   assert.equal(convertReply(reply(codeBlock(null, "x = 1"))), "```\nx = 1\n```");
 });
 
+/** Gemini's generated items, as inspected: a file chip, an image with its own buttons, music in a player, and a lone player. */
+const GENERATED_FILE = '<generated-file><div class="chip-lr"><img class="file-icon-lr" src="https://www.gstatic.example/json.svg"><div class="file-name-lr">riff</div><div class="file-type-lr">JSON</div><button aria-label="Open">Open</button></div></generated-file>';
+const GENERATED_IMAGE =
+  '<div class="attachment-container generated-images"><response-element class="no-md"><generated-image><single-image class="generated-image large"><div class="image-container"><div class="overlay-container"><button class="image-button"><img class="image" src="blob:https://gemini.google.com/abc" alt="A brass widget"></button><div class="generated-image-controls hide-from-message-actions"><share-button><button aria-label="Share"></button></share-button><copy-button><button aria-label="Copy image"></button></copy-button><download-generated-image-button><button aria-label="Download"></button></download-generated-image-button></div></div></div></single-image></generated-image></response-element></div>';
+const GENERATED_MUSIC = '<generated-music><video-player><video src="https://media.example/track.mp4"></video><button aria-label="Play"></button></video-player></generated-music>';
+const GENERATED_VIDEO = '<video-player><video src="https://media.example/clip.mp4"></video><button aria-label="Play"></button></video-player>';
+
+check("generated: files, images, music and video are named in place, with no links, addresses or buttons", () => {
+  const markdown = convertReply(reply(`<p>Here you go.</p>${GENERATED_FILE}${GENERATED_IMAGE}<p>And sound:</p>${GENERATED_MUSIC}${GENERATED_VIDEO}`));
+  assert.equal(markdown, "Here you go.\n\nGenerated file: *riff* (JSON)\n\n*Generated image*\n\nAnd sound:\n\n*Generated music*\n\n*Generated video*");
+});
+
+check("generated: an item beside the reply's text, rather than in it, follows the text", () => {
+  assert.equal(convertReply(reply("<p>Made it.</p>", GENERATED_IMAGE)), "Made it.\n\n*Generated image*");
+});
+
 // ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
