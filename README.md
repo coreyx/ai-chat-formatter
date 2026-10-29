@@ -39,6 +39,16 @@ AI Chat Formatter reads the reply from the page instead, where the structure and
 
 Microsoft 365 Copilot (`m365.cloud.microsoft`) is a separate app with different markup, and isn't supported yet.
 
+### Copying a whole conversation
+
+Copilot, Duck.ai and Gemini also have a **Conversation** button, which copies every turn in the page: each prompt in your prompt format, then its reply with its own Sources section. Prompts are included even with **Copy the prompt with the response** off.
+
+- **Copilot:** in the top bar, just left of **Share**.
+- **Duck.ai:** beside the chat's title, just left of its ⋮ menu. The title scrolls with the chat, so the button is at the top of the conversation. Where a reply was regenerated, only the version on screen is copied. With **Cite sources as Duck.ai does** on, each reply ends with its own Read More list.
+- **Gemini:** see [Gemini](#gemini).
+
+On Copilot, each reply's sources are read the quick way only, as with **Use for Copilot's own Copy button**; a reply's Sources panel is never opened for a conversation copy. Turn the button off with **Show a Copy conversation button**.
+
 ### Duck.ai
 
 Each reply's sources become citations in your citation style, titled from its **Read More** cards (see [Where the titles and links come from](#where-the-titles-and-links-come-from)). To copy them the way Duck.ai shows them instead, turn on **Cite sources as Duck.ai does** (off by default):
@@ -213,8 +223,11 @@ Open them from `chrome://extensions` → **AI Chat Formatter** → **Details** �
   - **Use for _site_'s own Copy button**: off by default. On Gemini, it covers the Copy icon in a reply's toolbar only.
   - **Include "More" sources**: on by default, except for Search Assist. Greyed out for Search Assist while its inline chips are on, and for Duck.ai while **Cite sources as Duck.ai does** is on, since there's no Sources section. Not offered for Gemini, where **Include "Sources used in the report"** covers it.
   - **Formatting rules**: one switch per clean-up rule.
+- Copilot only:
+  - **Show a Copy conversation button**: on by default (see [Copying a whole conversation](#copying-a-whole-conversation)).
 - Duck.ai only (see [Duck.ai](#duckai)):
   - **Cite sources as Duck.ai does**: off by default.
+  - **Show a Copy conversation button**: on by default.
 - Search Assist only (see [Search Assist](#search-assist)):
   - **Include expanded Explore More answers**: on by default.
   - **Include More Search Results links**: off by default, and greyed out while Explore More is off.
@@ -271,8 +284,8 @@ The extension writes Markdown to the clipboard as plain text only, so Obsidian p
 - **Duck.ai's popup chips depend on Duck.ai's internal data** in the same way. If reading it stops working, a popup chip falls back to the Read More card for the domain it shows, so a chip standing for several sources keeps only that one.
 - **Search Assist's chip titles and More sources depend on DuckDuckGo's internal data** in the same way. If reading it stops working, chips are titled with their domains and there are no More sources.
 - **The extension loads on every DuckDuckGo search page**, since Search Assist can appear on any of them. It does nothing on a page without a Search Assist answer.
-- **Gemini's Conversation copy takes only the turns in the page.**
-  - **Why:** Gemini loads a long conversation's earliest turns only once you scroll up, and nothing in the page shows that some are missing.
+- **A Conversation copy takes only the turns in the page.**
+  - **Why:** Gemini loads a long conversation's earliest turns only once you scroll up, Copilot can drop a long conversation's older messages, and nothing in the page shows that some are missing.
   - **What to do:** scroll to the top of the conversation before copying it.
 - **Gemini's attachments and generated files are named, not copied.** The copy records that they existed, without a link to them.
 - **Plain text only on the clipboard.** Pasting into Word or Outlook gives raw Markdown. Use the site's own Copy button (with the override off) for those apps.
@@ -305,6 +318,7 @@ ai-chat-formatter/
     ├── test_ai-chat-formatter.ts
     ├── test_block-reference-citations.ts
     ├── test_copy-user-prompt.ts
+    ├── test_conversation-copy.ts
     ├── test_copilot-source-details.ts
     ├── test_duck-ai-adapter.ts
     ├── test_duckai-read-more-style.ts
