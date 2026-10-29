@@ -22,6 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Include "Sources used in the report"** for Gemini, on by default: the report's markers become citations in your citation style, and the sources it used without citing go under **More**.
 - **Include "Sources browsed but not used"** and **Include "Show thinking"** for Gemini, both off by default. Each adds a section after the Sources section.
 - **Show a Copy conversation button** for Gemini, on by default.
+- **Gemini chats**: every finished reply gets a **Copy as Markdown** button, just left of Gemini's Copy icon (before **Share** on a reply that's only an image or a video). It copies the reply with its prompt.
+  - **Conversation** now appears on every chat, in the top bar beside the ⋮ menu, and moves into a report's toolbar while one is open.
+  - **Use for Gemini's own Copy button**, off by default, covers the Copy icon in a reply's toolbar. A generated image's own Copy is left alone.
+  - Files attached to a prompt are named under it (`Attached: *name* (PDF)`), and the files, images, music and video Gemini makes are named where they appear (`Generated file: *name* (JSON)`, `*Generated image*`). None is linked or embedded.
+  - Code blocks are fenced with the language their header shows. Source chips and citation markers, which carry no link in a chat, are left out.
+- Site adapters can label some of their buttons and leave others as the plain icon (`buttonLabel` may return null), and a button moves when the adapter's anchor for it moves.
 - Site adapters can:
   - place a button outside its message, hide it while an option is off, and give it a visible label (`findButtonAnchor`, `buttonLabel`);
   - copy a conversation turn by turn (`readTurns`);
