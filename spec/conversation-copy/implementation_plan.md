@@ -66,7 +66,7 @@ None at this time.
   - **`messageSelector`:** add `CONVERSATION_SELECTOR` to it.
   - **`readTurns`:** returns null for a reply. For the conversation, it returns one turn per reply that isn't `data-activeresponse="false"`, in page order, each with `readDuckAiPrompt(reply)` as its prompt.
   - **`buttonLabel`:** `{ title: "Copy conversation as Markdown", text: "Conversation" }` for the conversation, null for a reply.
-- [ ] **TASK-2:** Place the Conversation button, and add its option.
+- [x] **TASK-2:** Place the Conversation button, and add its option.
   - **`findButtonAnchor`:** for the conversation, the header is the parent of its `h1`.
     - **The anchor:** the direct child of the header that holds `button[aria-haspopup="menu"]`, so the button goes right before it.
     - **Null when:** there's no header or no menu, or the option is off.

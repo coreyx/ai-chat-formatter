@@ -300,12 +300,12 @@ check("escaping: inside a table cell the size's | is escaped, so the cell doesn'
 // Settings
 // ---------------------------------------------------------------------------
 
-// Duck.ai gained its first option, Duck.ai's citation style, in spec/duckai-read-more-style.
-check("settings: Explore More and inline chips start on, More Search Results links off; Copilot has no options, Duck.ai only its citation style, off", () => {
+// Duck.ai gained its citation style in spec/duckai-read-more-style, and its Conversation button in spec/conversation-copy.
+check("settings: Explore More and inline chips start on, More Search Results links off; Copilot has no options, Duck.ai its citation style (off) and Conversation button (on)", () => {
   const defaults = buildDefaultSettings(SITE_ADAPTERS);
   assert.deepEqual(defaults.sites.duckduckgo.options, { "explore-more": true, "explore-more-search-links": false, "inline-chips": true, "auto-more": false, "auto-explore-more": false });
   assert.deepEqual(defaults.sites.copilot.options, {});
-  assert.deepEqual(defaults.sites.duckai.options, { "read-more-style": false });
+  assert.deepEqual(defaults.sites.duckai.options, { "read-more-style": false, "conversation-button": true });
 });
 
 check("settings: stored values are kept, unknown or invalid ones dropped, and 0.5.0 settings get the defaults", () => {
@@ -385,10 +385,10 @@ check("options page: More Search Results links are greyed out while Explore More
   assert.equal(links.disabled, false);
 });
 
-check("options page: Copilot has no site options and Duck.ai only its citation style; with that off, their More sources stays available", () => {
+check("options page: Copilot has no site options and Duck.ai its citation style and Conversation button; with the style off, their More sources stays available", () => {
   const page = optionsPage(buildDefaultSettings(SITE_ADAPTERS));
   assert.equal(page.document.querySelectorAll('input[name^="copilot.options."]').length, 0);
-  assert.deepEqual(Array.from(page.document.querySelectorAll<HTMLInputElement>('input[name^="duckai.options."]'), (input) => input.name), ["duckai.options.read-more-style"]);
+  assert.deepEqual(Array.from(page.document.querySelectorAll<HTMLInputElement>('input[name^="duckai.options."]'), (input) => input.name), ["duckai.options.read-more-style", "duckai.options.conversation-button"]);
   for (const site of ["copilot", "duckai"]) assert.equal(page.input(`${site}.includeMoreSources`).disabled, false);
 });
 

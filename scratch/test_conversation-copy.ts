@@ -8,6 +8,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
+import { ContentController } from "../src/content/controller";
+import { buildDefaultSettings, type Settings } from "../src/core/settings";
+import type { SiteAdapter } from "../src/core/types";
 import { DUCK_AI_REPLY_SELECTOR, duckAiAdapter, readDuckAiTurns } from "../src/sites/duckai";
 
 const results: { name: string; error?: unknown }[] = [];
@@ -36,6 +39,47 @@ check("duck.ai: the older, flat layout's conversation is found and split into it
   assert.equal(readDuckAiTurns(turns[0].reply), null, "a reply isn't split into turns");
   assert.equal(duckAiAdapter.buttonLabel?.(turns[0].reply), null);
   assert.equal(duckAiAdapter.buttonLabel?.(conversations[0])?.text, "Conversation");
+});
+
+/** `adapter` running on `document` with its settings changed by `edit`, recording what's copied. */
+function start(adapter: SiteAdapter, document: Document, edit: (settings: Settings) => void = () => {}) {
+  const settings = buildDefaultSettings([adapter]);
+  edit(settings);
+  const copied: string[] = [];
+  const controller = new ContentController(adapter, settings, { document, writeClipboard: async (text) => void copied.push(text), requestFrame: (callback) => callback() });
+  controller.start();
+  const conversationButtons = () => Array.from(document.querySelectorAll<HTMLButtonElement>('[title="Copy conversation as Markdown"]'));
+  return { controller, settings, copied, conversationButtons };
+}
+
+/** A minimal Duck.ai chat in the 2026-10-28 layout: the header in the first turn wrapper, and two turns. */
+function duckAiChat(withHeader = true): Document {
+  const header = withHeader ? '<div class="hd"><h1>A chat</h1><div><div><button type="button" aria-label="menu" aria-haspopup="menu" aria-expanded="false"></button></div></div><div>Privacy line</div></div>' : "";
+  const turn = (n: number, header = "") =>
+    `<div class="turn">${header}<div data-testid="user-message"><div><div style="white-space: pre-wrap"><p>Question ${n}?</p></div></div></div><div id="00000000-0000-4000-8000-000000000000-assistant-message-${n - 1}-1" data-activeresponse="true"><div><div data-dark-theme=""><h1>Answer heading</h1><p>Answer ${n}.</p></div></div><div data-message-actions="true"><div><button type="button" aria-label="Copy to clipboard" data-copyairesponse="true"></button></div></div></div></div>`;
+  return new JSDOM(`<!doctype html><body><main><section><div class="turns">${turn(1, header)}${turn(2)}</div></section></main></body>`).window.document;
+}
+
+check("duck.ai: the Conversation button goes right before the header's ⋮, once over many passes, and replies keep theirs", () => {
+  const document = duckAiChat();
+  const page = start(duckAiAdapter, document);
+  page.controller.sync();
+  page.controller.sync();
+  assert.equal(page.conversationButtons().length, 1);
+  const [button] = page.conversationButtons();
+  assert.equal(button.parentElement, document.querySelector(".hd"));
+  assert.ok(button.nextElementSibling?.querySelector('button[aria-label="menu"]'));
+  assert.equal(button.textContent, "Conversation");
+  assert.equal(document.querySelectorAll(`${DUCK_AI_REPLY_SELECTOR} [data-acf-injected]`).length, 2);
+});
+
+check("duck.ai: no header, no Conversation button; a reply's heading isn't taken for the title; the setting off removes it", () => {
+  assert.equal(start(duckAiAdapter, duckAiChat(false)).conversationButtons().length, 0);
+  const page = start(duckAiAdapter, duckAiChat());
+  const off = buildDefaultSettings([duckAiAdapter]);
+  off.sites.duckai.options["conversation-button"] = false;
+  page.controller.applySettings(off);
+  assert.equal(page.conversationButtons().length, 0);
 });
 
 // ---------------------------------------------------------------------------

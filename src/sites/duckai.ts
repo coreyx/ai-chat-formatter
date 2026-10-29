@@ -3,7 +3,7 @@ import { encodeLinkDestination, escapeLinkText, normalizeCitationUrl, sourceDoma
 import { promptText } from "../core/prompt";
 import { CHIP_SOURCES_ATTRIBUTE, REFERENCES_EVENT, type RawChipSource } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import type { ButtonLabel, ConversationTurn, ConversionContext, SiteAdapter, SourceReference } from "../core/types";
+import type { ButtonAnchor, ButtonLabel, ConversationTurn, ConversionContext, SiteAdapter, SourceReference } from "../core/types";
 import { rewriteStreamdownCodeBlocks, rewriteStreamdownStrong, streamdownLanguageId } from "./streamdown";
 
 /*
@@ -38,8 +38,26 @@ const CONVERSATION_SELECTOR = 'div:has(> div > [data-testid="user-message"]), :n
 /** How the conversation's button names itself; the replies' buttons keep the plain icon. */
 const CONVERSATION_LABEL: ButtonLabel = { title: "Copy conversation as Markdown", text: "Conversation" };
 
-/** The id of the option that cites sources as Duck.ai shows them; stored in the settings, so never rename it. */
+/** The ids of Duck.ai's options, stored in the settings; never rename them. */
 export const READ_MORE_STYLE_OPTION = "read-more-style";
+export const CONVERSATION_BUTTON_OPTION = "conversation-button";
+
+/**
+ * Where the conversation's button goes: in the chat's header, the parent of
+ * its title `h1`, right before the header's child holding the ⋮ menu
+ * (`button[aria-haspopup="menu"]`), as seen on 2026-10-28. The header sits at
+ * the top of the first turn and scrolls with the chat. A heading inside a
+ * prompt or a reply is never taken for the title. Null while the option is
+ * off, or when there's no header with a menu, as before a chat starts.
+ */
+function findConversationButtonAnchor(conversation: Element, isOptionEnabled?: (id: string) => boolean): ButtonAnchor | null {
+  if (!(isOptionEnabled?.(CONVERSATION_BUTTON_OPTION) ?? true)) return null;
+  const title = Array.from(conversation.querySelectorAll("h1")).find((heading) => !heading.closest(`${DUCK_AI_REPLY_SELECTOR}, [data-testid="user-message"]`));
+  const header = title?.parentElement;
+  let slot: Element | null | undefined = header?.querySelector('button[aria-haspopup="menu"]');
+  while (slot && slot.parentElement !== header) slot = slot.parentElement;
+  return header && slot ? { parent: header, before: slot } : null;
+}
 
 /** `[label](url)`, a link written where a chip was, while sources are cited as Duck.ai shows them. */
 function inlineLink(label: string, url: string): string {
@@ -334,8 +352,8 @@ export const duckAiAdapter: SiteAdapter = {
   contentSelector: CONTENT_SELECTOR,
   nativeCopyButtonSelector: COPY_BUTTON_SELECTOR,
   // Every toolbar item has its own wrapper div in a flex row; the button goes in the row, right after Copy's wrapper.
-  findButtonAnchor(message) {
-    if (message.matches(CONVERSATION_SELECTOR)) return null;
+  findButtonAnchor(message, isOptionEnabled) {
+    if (message.matches(CONVERSATION_SELECTOR)) return findConversationButtonAnchor(message, isOptionEnabled);
     const wrapper = message.querySelector(COPY_BUTTON_SELECTOR)?.parentElement;
     return wrapper?.parentElement ? { parent: wrapper.parentElement, before: wrapper.nextSibling } : null;
   },
@@ -354,6 +372,12 @@ export const duckAiAdapter: SiteAdapter = {
       description: "Keeps each source chip as a link where it is, and ends with Read More: a line for each card, with its icon, title and site. Replaces the numbered citations and the Sources section.",
       defaultEnabled: false,
       replacesSourcesSection: true,
+    },
+    {
+      id: CONVERSATION_BUTTON_OPTION,
+      name: "Show a Copy conversation button",
+      description: "Adds a Conversation button beside the chat's title, before its ⋮ menu, that copies the whole conversation: each prompt and its reply.",
+      defaultEnabled: true,
     },
   ],
   // Popup chips name their sources only in React state, which src/page/duckai.ts reads.
