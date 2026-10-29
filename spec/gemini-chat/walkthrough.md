@@ -45,7 +45,7 @@ Ordinary Gemini conversations are now supported, not only Deep Research:
 ### 4. Tests
 - **`scratch/fixtures/gemini-chat.html` (new, synthetic):** a top bar and three turns:
   1. **Two PDF attachments**, and a reply with a Python code block, a chip, a marker, a link and a table.
-  2. **A picture attachment**, and a reply with a generated file, image, music and video, whose toolbar shows Share in place of Copy.
+  2. **A picture attachment** (a preview image with no name, as seen live), and a reply with a generated file, image, music and video, whose toolbar shows Share in place of Copy.
   3. **A reply still being written.**
 - **`scratch/test_gemini-chat.ts` (new):** 20 checks.
 - **`scratch/test_gemini-deep-research.ts`:**
@@ -118,7 +118,11 @@ Two Deep Research checks changed, as described under Tests above.
 - **A generated video:**
   - **Its markup:** a `video-player` inside `generated-video`, so a commit after TASK-11 matches that element by name. The fixture follows it.
   - **Its toolbar:** like an image's, it has Share and no Copy. The extension, already loaded in the browser, showed its button there before Share.
-- **An image attached to a prompt:** not seen. Gemini never answered the test prompt with a picture attached, and the prompt didn't show up in the conversation. The fixture's picture attachment is still an assumption: a preview with an image and no filename label.
+- **An image attached to a prompt:**
+  - **Its markup:** `user-query-file-preview > button.preview-image-button > img[data-test-id="uploaded-img"]`, with no name shown and none of the `uploaded-file` wrapper that a document has.
+  - **What that broke:** the reader looked only for that wrapper, so it would have missed the picture.
+  - **The fix:** a follow-up commit counts each `user-query-file-preview` as one attachment, so a picture is now named `*image*`. The fixture uses the live markup, so its checks cover this.
+  - **What I saw:** Gemini didn't answer the prompt the picture was attached to, but the prompt did stay in the conversation. The first time you tried, the prompt disappeared.
 
 ## Manual Verification
 
@@ -136,9 +140,8 @@ Two Deep Research checks changed, as described under Tests above.
    1. Open a Deep Research conversation and its report. Conversation should move into the report's toolbar, before **Report**.
    2. Close the report. Conversation should be back in the top bar.
 8. **An attached picture:**
-   1. If Gemini answers a prompt with a picture attached, copy that reply.
-   2. The prompt should end with `Attached: *image*`, or the picture's name if Gemini shows one.
-   3. If there's no `Attached:` line, the picture's preview has different markup from the guess: note it for a fix.
+   1. Click **Conversation** in a chat where you attached a picture to a prompt, and paste.
+   2. The prompt you attached a picture to should end with `Attached: *image*`.
 9. **The native Copy override:**
    1. In Options, turn on **Use for Gemini's own Copy button**.
    2. Click Gemini's Copy on a text reply and paste: you should get Markdown.
@@ -147,7 +150,6 @@ Two Deep Research checks changed, as described under Tests above.
 
 ## Follow-ups
 
-- **An image attached to a prompt:** confirm its markup (manual step 8).
 - **Thinking on chat replies:** not copied, since Gemini doesn't keep it in the page once a reply is finished. If a model is found that keeps a "Show thinking" control on finished replies, **Include "Show thinking"** could be extended to cover it.
 - **Web-search citations in chats:** none turned up in the chats checked, so their markup is unknown and they aren't handled.
 - **Links or embeds:** attachments and generated items are named without either, by your choice, since their Google addresses may need a sign-in or stop working.
