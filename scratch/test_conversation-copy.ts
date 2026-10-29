@@ -126,6 +126,37 @@ check("copilot: the Conversation button goes right before Share in the top bar's
   assert.equal(start(copilotAdapter, copilotChat(false)).conversationButtons().length, 0);
 });
 
+/** Runs an async check, recording its result like {@link check}. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+    results.push({ name });
+  } catch (error) {
+    results.push({ name, error });
+  }
+}
+
+await checkAsync("controller: a conversation copy never runs the slower source reader, which opens Copilot's Sources panel; a reply's copy still may", async () => {
+  let slowReads = 0;
+  const adapter: SiteAdapter = {
+    ...copilotAdapter,
+    readReferences: () => null,
+    readReferencesSlowly: async () => {
+      slowReads++;
+      return null;
+    },
+  };
+  const document = copilotChat();
+  const page = start(adapter, document, (settings) => (settings.sites.copilot.includeMoreSources = true));
+  page.conversationButtons()[0].click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(slowReads, 0);
+  assert.match(page.copied[0], /^## Search the web: what is new in Widget 5\?\n\n> Keep it short\.\n\n\*\*Widget 5\*\* was released/);
+  document.querySelector<HTMLButtonElement>(`${COPILOT_REPLY_SELECTOR} [data-acf-injected]`)!.click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(slowReads, 1, "the reply's own copy keeps its fallback");
+});
+
 // ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------

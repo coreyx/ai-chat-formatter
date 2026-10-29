@@ -96,7 +96,7 @@ None at this time.
 ### Shared code
 
 #### [MODIFY] `src/content/controller.ts`
-- [ ] **TASK-5:** Check that a conversation copy on these sites reads each reply's sources with the quick reader only (`readReferencesNow`), as `convert()` already does for turns.
+- [x] **TASK-5:** Check that a conversation copy on these sites reads each reply's sources with the quick reader only (`readReferencesNow`), as `convert()` already does for turns.
   - **The doc comment:** add one line saying so, that the slower reader isn't used for a whole conversation.
   - **The code:** if the check turns up something these two sites need, it's fixed here. Otherwise this task is the doc comment alone.
 

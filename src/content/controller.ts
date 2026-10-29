@@ -225,8 +225,15 @@ export class ContentController {
    * then its slower one, but only when the result would show — the More list
    * is on, or some citation has no title without it. A reader that throws
    * counts as having found nothing.
+   *
+   * A conversation (a message the adapter splits into turns) gathers nothing
+   * here: each of its replies reads its own sources with the synchronous
+   * reader as it's converted (see {@link convert}). The slower reader isn't
+   * used for a whole conversation; on Copilot it opens a reply's Sources
+   * panel, which can't be done reply after reply.
    */
   private async gatherReferences(message: Element): Promise<SourceReference[] | null> {
+    if (this.adapter.readTurns?.(message)) return null;
     const quick = this.readReferencesNow(message);
     if (quick || !this.adapter.readReferencesSlowly) return quick;
     const site = this.settings.sites[this.adapter.id];
