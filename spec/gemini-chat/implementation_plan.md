@@ -112,7 +112,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
 ### Gemini markup
 
 #### [MODIFY] `src/sites/gemini-markup.ts`
-- [ ] **TASK-3:** Add the ordinary-chat selectors from the inspection above, each with a doc comment:
+- [x] **TASK-3:** Add the ordinary-chat selectors from the inspection above, each with a doc comment:
   - `REPLY_COPY_SELECTOR` (`message-actions copy-button`);
   - `NATIVE_COPY_BUTTON_SELECTOR` (`message-actions copy-button button`);
   - `CONVERSATION_MENU_SELECTOR` (`conversation-actions-icon`);

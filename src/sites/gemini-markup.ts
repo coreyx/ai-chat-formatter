@@ -4,7 +4,8 @@ import { sourceDomain } from "../core/citations";
  * What the extension knows about Gemini's markup, shared by the report copy
  * and the conversation copy (gemini.ts). Every selector comes from
  * gemini.google.com's rendered page as inspected on 2026-10-28, on a finished
- * Deep Research conversation; none of it is a documented API. Gemini is an
+ * Deep Research conversation and, for the selectors from "A reply's toolbar"
+ * on, on ordinary chats the same day; none of it is a documented API. Gemini is an
  * Angular app: its custom element names, `data-test-id` attributes and plain
  * class names are used, never the generated `_ngcontent-*` or `ng-tns-*` ones.
  * When Gemini changes its markup, this is the file to update.
@@ -90,6 +91,52 @@ export const PLAN_STEP_DESCRIPTION_SELECTOR = ".research-step-description";
 /** The card in the chat that opens a finished report, and its title. */
 export const REPORT_CARD_SELECTOR = "immersive-entry-chip";
 export const REPORT_CARD_TITLE_SELECTOR = ".card-title";
+
+/** A reply's Copy button in its toolbar, which the extension's button goes before. An image-only reply's toolbar has none. */
+export const REPLY_COPY_SELECTOR = "message-actions copy-button";
+
+/** The button inside it, for the override. A generated image has a `copy-button` of its own, outside `message-actions`. */
+export const NATIVE_COPY_BUTTON_SELECTOR = "message-actions copy-button button";
+
+/** A reply's toolbar buttons: thumbs up and down, Redo, Copy (or Share, for an image), and the more menu. */
+export const REPLY_TOOLBAR_SELECTOR = "message-actions .buttons-container-v2";
+
+/** The toolbar's Share button, which an image-only reply shows where others show Copy. */
+export const REPLY_SHARE_SELECTOR = "share-button";
+
+/** The ⋮ "Open menu for conversation" button in the top bar, which the Conversation button goes before. */
+export const CONVERSATION_MENU_SELECTOR = "conversation-actions-icon";
+
+/** A code block: a header with the language and the download and copy buttons, then the code. */
+export const CODE_BLOCK_SELECTOR = "code-block";
+
+/** The language a code block's header shows ("Python"). */
+export const CODE_LANGUAGE_SELECTOR = ".code-block-decoration > span";
+
+/** A code block's code, with real newlines. */
+export const CODE_CONTENT_SELECTOR = 'code[data-test-id="code-content"]';
+
+/** A chip naming the source of a passage (in the chats inspected, an uploaded file), with no link. */
+export const INLINE_SOURCE_CHIP_SELECTOR = "source-inline-chip";
+
+/** A file attached to a prompt, outside the prompt's text, and its name (without its extension) and type ("PDF"). */
+export const UPLOADED_FILE_SELECTOR = '[data-test-id="uploaded-file"]';
+export const FILENAME_LABEL_SELECTOR = '[data-test-id="filename-label"]';
+export const EXTENSION_LABEL_SELECTOR = '[data-test-id="extension-label"]';
+
+/** A file Gemini made, and its name and type ("JSON"). */
+export const GENERATED_FILE_SELECTOR = "generated-file";
+export const GENERATED_FILE_NAME_SELECTOR = ".file-name-lr";
+export const GENERATED_FILE_TYPE_SELECTOR = ".file-type-lr";
+
+/** An image Gemini made, with its own Share, Copy and Download buttons. */
+export const GENERATED_IMAGE_SELECTOR = "generated-image";
+
+/** Music Gemini made: a `video-player` inside it plays the track. */
+export const GENERATED_MUSIC_SELECTOR = "generated-music";
+
+/** A video player; outside `generated-music`, a video Gemini made. */
+export const VIDEO_PLAYER_SELECTOR = "video-player";
 
 /** One entry of a source list or a browsing step, as Gemini shows it. */
 export interface GeminiSource {
