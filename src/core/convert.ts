@@ -221,7 +221,7 @@ export function convertMessage(adapter: SiteAdapter, message: Element, options: 
     findReference: (url) => referencesByUrl.get(normalizeCitationUrl(url)),
     isOptionEnabled: (id) => resolveOption(adapter, id, lookupOption),
   };
-  adapter.preprocess?.(clone, context);
+  adapter.preprocess?.(clone, context, message);
   const afterSources = takeAfterSourcesSections(clone);
 
   const service = createTurndown();

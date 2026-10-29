@@ -65,11 +65,11 @@ None at this time.
 ### Shared code
 
 #### [MODIFY] `src/core/types.ts`
-- [ ] **TASK-1:** Give `SiteAdapter.preprocess` an optional third parameter, `message: Element`, for the message the reply text was cloned from.
+- [x] **TASK-1:** Give `SiteAdapter.preprocess` an optional third parameter, `message: Element`, for the message the reply text was cloned from.
   - **Its doc comment:** the step may read that message but must not change it. A site uses it for parts of a reply that sit outside its reply text, such as Duck.ai's Read More cards.
 
 #### [MODIFY] `src/core/convert.ts`
-- [ ] **TASK-2:** In `convertMessage`, call `adapter.preprocess?.(clone, context, message)`.
+- [x] **TASK-2:** In `convertMessage`, call `adapter.preprocess?.(clone, context, message)`.
 
 ### Duck.ai adapter
 

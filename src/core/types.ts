@@ -251,10 +251,12 @@ export interface SiteAdapter {
    * that the site doesn't render with `<pre>`: Turndown collapses whitespace in
    * every other element before its rules run, so a rule would only ever see the
    * damaged text. `context` gives the copy's options; citations aren't
-   * registered here, since Turndown hasn't run yet. May throw
+   * registered here, since Turndown hasn't run yet. `message` is the message
+   * the body was cloned from, for parts of a reply that sit outside its body
+   * (Duck.ai's Read More cards); read it, but never change it. May throw
    * {@link ConversionError}.
    */
-  preprocess?(root: HTMLElement, context: ConversionContext): void;
+  preprocess?(root: HTMLElement, context: ConversionContext, message: Element): void;
   /** Turndown rules for this site's markup, keyed by rule name. */
   turndownRules(context: ConversionContext): Record<string, TurndownService.Rule>;
   /**
