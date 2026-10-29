@@ -101,6 +101,31 @@ check("copilot: the conversation feed is a message, split into one turn per repl
   assert.equal(copilotAdapter.buttonLabel?.(conversations[0])?.text, "Conversation");
 });
 
+/** A Copilot page: the top bar with Share, and the conversation feed holding the fixture's prompt and reply; `withShare` false leaves Share out. */
+function copilotChat(withShare = true): Document {
+  const articles = readFileSync("scratch/fixtures/copilot-message.html", "utf8").replace(/<!--[\s\S]*?-->/, "").replace(/<\/?main>/g, "");
+  const share = withShare ? '<div><span aria-label="Share"><button type="button" aria-label="Share chat" data-testid="share-button"></button></span></div>' : "";
+  return new JSDOM(
+    `<!doctype html><body><header role="none"><div><button id="gptModeSwitcher" type="button" aria-haspopup="menu">Auto</button></div><div><div class="row">${share}<button id="moreButton" type="button" aria-label="Settings and more" aria-haspopup="menu"></button><span></span></div></div></header><main><div data-testid="MessageListContainer"><div role="group"><div role="feed" aria-label="Chat conversation">${articles}</div></div></div></main></body>`,
+  ).window.document;
+}
+
+check("copilot: the Conversation button goes right before Share in the top bar's row; none without Share; the setting off removes it", () => {
+  const document = copilotChat();
+  const page = start(copilotAdapter, document);
+  page.controller.sync();
+  assert.equal(page.conversationButtons().length, 1);
+  const [button] = page.conversationButtons();
+  assert.equal(button.parentElement, document.querySelector(".row"));
+  assert.ok(button.nextElementSibling?.querySelector('[data-testid="share-button"]'));
+  assert.equal(document.querySelectorAll(`${COPILOT_REPLY_SELECTOR} [data-acf-injected]`).length, 1, "the reply keeps its own button");
+  const off = buildDefaultSettings([copilotAdapter]);
+  off.sites.copilot.options["conversation-button"] = false;
+  page.controller.applySettings(off);
+  assert.equal(page.conversationButtons().length, 0);
+  assert.equal(start(copilotAdapter, copilotChat(false)).conversationButtons().length, 0);
+});
+
 // ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------

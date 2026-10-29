@@ -3,7 +3,7 @@ import { parseCitationTitle, parseReferencesAttribute, sourceDomain } from "../c
 import { promptText } from "../core/prompt";
 import { REFERENCES_ATTRIBUTE, REFERENCES_EVENT } from "../core/references-protocol";
 import { collapseBlankLinesRule, invisibleCharactersRule } from "../core/rules";
-import { ConversionError, type ButtonLabel, type ConversationTurn, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
+import { ConversionError, type ButtonAnchor, type ButtonLabel, type ConversationTurn, type ConversionContext, type SiteAdapter, type SourceReference } from "../core/types";
 
 // Re-exported for the Copilot tests, which import it from this module.
 export { parseReferencesAttribute };
@@ -390,6 +390,23 @@ const CONVERSATION_SELECTOR = '[data-testid="MessageListContainer"] div[role="fe
 /** How the conversation's button names itself; the replies' buttons keep the plain icon. */
 const CONVERSATION_LABEL: ButtonLabel = { title: "Copy conversation as Markdown", text: "Conversation" };
 
+/** The id of Copilot's option for the Conversation button, stored in the settings; never rename it. */
+export const CONVERSATION_BUTTON_OPTION = "conversation-button";
+
+/**
+ * Where the conversation's button goes: in the page's top bar, right before
+ * the `div` wrapping Share (`span > button[data-testid="share-button"]`), in
+ * the row it shares with Settings and more, as seen on 2026-10-28. The bar
+ * stays in place while the chat scrolls. Null while the option is off, or
+ * when there's no Share button, as before a chat starts.
+ */
+function findConversationButtonAnchor(conversation: Element, isOptionEnabled?: (id: string) => boolean): ButtonAnchor | null {
+  if (!(isOptionEnabled?.(CONVERSATION_BUTTON_OPTION) ?? true)) return null;
+  const share = conversation.ownerDocument.querySelector('header button[data-testid="share-button"]');
+  const wrapper = share?.closest("span")?.parentElement;
+  return wrapper?.parentElement ? { parent: wrapper.parentElement, before: wrapper } : null;
+}
+
 /**
  * The conversation in `message`, one turn per reply, in page order, each with
  * the prompt before it (see {@link readCopilotPrompt}). Only the replies in the
@@ -410,8 +427,8 @@ export const copilotAdapter: SiteAdapter = {
   contentSelector: REPLY_SELECTOR,
   nativeCopyButtonSelector: 'button[data-testid="CopyButtonTestId"]',
   // Directly before the native Copy button, at the start of its flex row with the feedback buttons, so Copy as Markdown comes first.
-  findButtonAnchor(message) {
-    if (message.matches(CONVERSATION_SELECTOR)) return null;
+  findButtonAnchor(message, isOptionEnabled) {
+    if (message.matches(CONVERSATION_SELECTOR)) return findConversationButtonAnchor(message, isOptionEnabled);
     const copy = message.querySelector('button[data-testid="CopyButtonTestId"]');
     return copy?.parentElement ? { parent: copy.parentElement, before: copy } : null;
   },
@@ -433,6 +450,14 @@ export const copilotAdapter: SiteAdapter = {
     }),
   readPrompt: readCopilotPrompt,
   readTurns: readCopilotTurns,
+  options: [
+    {
+      id: CONVERSATION_BUTTON_OPTION,
+      name: "Show a Copy conversation button",
+      description: "Adds a Conversation button to the top bar, before Share, that copies the whole conversation: each prompt and its reply.",
+      defaultEnabled: true,
+    },
+  ],
   buttonLabel: (message) => (message.matches(CONVERSATION_SELECTOR) ? CONVERSATION_LABEL : null),
   pageScript: "copilot",
   rules: [invisibleCharactersRule, collapseBlankLinesRule],

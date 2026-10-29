@@ -84,7 +84,7 @@ None at this time.
   - **`CONVERSATION_SELECTOR`:** `[data-testid="MessageListContainer"] div[role="feed"]`, added to `messageSelector`.
   - **`readTurns`:** returns null for a reply. For the conversation, it returns one turn per reply article (`div[role="article"]:has([data-testid="markdown-reply"])`) in it, each with `readCopilotPrompt(reply)` as its prompt.
   - **`buttonLabel`:** as for Duck.ai.
-- [ ] **TASK-4:** Place the Conversation button, and add its option.
+- [x] **TASK-4:** Place the Conversation button, and add its option.
   - **`findButtonAnchor`:** for the conversation, the anchor is the `div` holding `span > button[data-testid="share-button"]` in the page's `header`. The button goes right before that `div`, in the same row as **Settings and more**.
     - **Null when:** there's no Share button, or the option is off.
     - **Replies:** keep their current anchor.
