@@ -123,7 +123,7 @@ Extends the Gemini adapter from Deep Research to ordinary Gemini conversations:
   - `GENERATED_IMAGE_SELECTOR`, `GENERATED_MUSIC_SELECTOR` and `VIDEO_PLAYER_SELECTOR`.
 
   Extend the file's header comment to say that the ordinary-chat selectors come from the same day's inspection of ordinary chats.
-- [ ] **TASK-4:** Add `readPromptText(userQuery)`.
+- [x] **TASK-4:** Add `readPromptText(userQuery)`.
   - **What it returns:** `readQueryText(userQuery)`, followed by a blank line and `Attached: *name* (TYPE), …` when the prompt has attachments.
   - **Where the attachments come from:** each `UPLOADED_FILE_SELECTOR` in `userQuery`.
   - **Name and type:**

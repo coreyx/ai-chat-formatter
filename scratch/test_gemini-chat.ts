@@ -12,6 +12,7 @@ import { JSDOM } from "jsdom";
 import { ContentController } from "../src/content/controller";
 import { buildDefaultSettings } from "../src/core/settings";
 import type { SiteAdapter } from "../src/core/types";
+import { readPromptText } from "../src/sites/gemini-markup";
 
 const results: { name: string; error?: unknown }[] = [];
 
@@ -78,6 +79,32 @@ check("controller: a tracked button moves when its anchor's parent changes, and 
   controller.sync();
   assert.equal(buttons().length, 1);
   assert.equal(buttons()[0].nextElementSibling, document.querySelector(".menu"));
+});
+
+// ---------------------------------------------------------------------------
+// Prompts and their attachments
+// ---------------------------------------------------------------------------
+
+/** A `user-query` holding `text` as its one line, then a preview for each of `files` (`[name, type]`, a missing name for a picture). */
+function userQuery(text: string, files: [string | null, string][]): Element {
+  const previews = files
+    .map(([name, type]) => `<user-query-file-preview><div data-test-id="uploaded-file"><button>${type ? `<div data-test-id="extension-label">${type}</div>` : ""}${name === null ? '<img src="blob:https://gemini.google.com/x">' : `<div data-test-id="filename-label">${name}</div>`}</button></div></user-query-file-preview>`)
+    .join("");
+  const document = new JSDOM(`<!doctype html><body><user-query><span class="user-query-container"><div class="file-preview-container"><user-query-file-carousel>${previews}</user-query-file-carousel></div><div class="query-text"><span class="cdk-visually-hidden">You said</span>${text ? `<p class="query-text-line">${text}</p>` : ""}</div></span></user-query></body>`).window.document;
+  return document.querySelector("user-query")!;
+}
+
+check("prompts: attached files are named after the prompt's text, with their types, and never linked", () => {
+  assert.equal(readPromptText(userQuery("Summarize these.", [["Widget_Guide", "PDF"], ["Spare Parts", "PDF"]])), "Summarize these.\n\nAttached: *Widget\\_Guide* (PDF), *Spare Parts* (PDF)");
+});
+
+check("prompts: an attachment showing only a picture is *image*, a missing type is left off, and a prompt of attachments alone is the line", () => {
+  assert.equal(readPromptText(userQuery("", [[null, ""]])), "Attached: *image*");
+  assert.equal(readPromptText(userQuery("What is this?", [[null, "PNG"], ["a*b[c]", ""]])), "What is this?\n\nAttached: *image* (PNG), *a\\*b\\[c\\]*");
+});
+
+check("prompts: a prompt with no attachments is its text alone", () => {
+  assert.equal(readPromptText(userQuery("Just text.", [])), "Just text.");
 });
 
 // ---------------------------------------------------------------------------

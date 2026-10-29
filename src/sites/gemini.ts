@@ -26,7 +26,7 @@ import {
   PLAN_STEP_SELECTOR,
   PLAN_STEP_TITLE_SELECTOR,
   PLAN_TITLE_SELECTOR,
-  readQueryText,
+  readPromptText,
   readSourceList,
   REPORT_BODY_SELECTOR,
   REPORT_CARD_SELECTOR,
@@ -321,7 +321,7 @@ export function readGeminiPrompt(message: Element, isOptionEnabled?: (id: string
   if (!message.matches(REPORT_PANEL_SELECTOR) || !(isOptionEnabled?.(REPORT_PROMPT_OPTION) ?? false)) return null;
   const reportTurn = findReportTurn(message);
   const request = reportTurn ? findResearchRequest(reportTurn) : null;
-  return request ? readQueryText(request) || null : null;
+  return request ? readPromptText(request) || null : null;
 }
 
 /**
@@ -337,7 +337,7 @@ export function readGeminiTurns(message: Element): ConversationTurn[] | null {
   if (!message.matches(HISTORY_SELECTOR)) return null;
   return Array.from(message.querySelectorAll(TURN_SELECTOR), (turn) => {
     const query = turn.querySelector(USER_QUERY_SELECTOR);
-    return { prompt: query ? readQueryText(query) || null : null, reply: turn.querySelector(MODEL_RESPONSE_SELECTOR) ?? turn };
+    return { prompt: query ? readPromptText(query) || null : null, reply: turn.querySelector(MODEL_RESPONSE_SELECTOR) ?? turn };
   });
 }
 

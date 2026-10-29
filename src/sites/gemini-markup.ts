@@ -194,6 +194,38 @@ export function readQueryText(userQuery: Element): string {
     .trim();
 }
 
+/** `text` with the characters that would start emphasis or a link in Markdown escaped. */
+function escapeInline(text: string): string {
+  return text.replace(/[\\*_[\]]/g, "\\$&");
+}
+
+/**
+ * The files attached to a prompt, as the copy names them: `*name* (TYPE)`,
+ * the name and type as Gemini shows them (the name without its extension).
+ * An attachment that shows only a picture is `*image*`; the type is left off
+ * when none is shown.
+ */
+function readAttachments(userQuery: Element): string[] {
+  return Array.from(userQuery.querySelectorAll(UPLOADED_FILE_SELECTOR), (file) => {
+    const name = shownText(file.querySelector(FILENAME_LABEL_SELECTOR)) || "image";
+    const type = shownText(file.querySelector(EXTENSION_LABEL_SELECTOR));
+    return `*${escapeInline(name)}*${type ? ` (${type})` : ""}`;
+  });
+}
+
+/**
+ * A prompt as the copy writes it: its text (see {@link readQueryText}), then,
+ * when files were attached, a paragraph naming them, `Attached: *a* (PDF),
+ * *b* (PDF)`. The files are named, not linked: their addresses are Google's
+ * and may need a sign-in. A prompt of attachments alone is that paragraph.
+ */
+export function readPromptText(userQuery: Element): string {
+  const text = readQueryText(userQuery);
+  const attachments = readAttachments(userQuery);
+  const attached = attachments.length ? `Attached: ${attachments.join(", ")}` : "";
+  return [text, attached].filter(Boolean).join("\n\n");
+}
+
 /**
  * The turn whose report card opens the report in `panel`: the card with the
  * same title as the panel's toolbar. When no title matches, the last turn
