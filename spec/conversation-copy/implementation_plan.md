@@ -112,7 +112,7 @@ None at this time.
   - **The data:** every reply has its toolbar with Copy, and all names and URLs are made up.
 
 #### [NEW] `scratch/fixtures/copilot-conversation.html`
-- [ ] **TASK-7:** Add a synthetic Copilot page.
+- [x] **TASK-7:** Add a synthetic Copilot page.
   - **The top bar:** a `header` with the model switcher and the row of Share wrapper, `#moreButton` and an empty `span`.
   - **The conversation:** a `MessageListContainer` with a `role="feed"` of two turns, in the article markup of `copilot-message.html`. One reply has a citation chip.
 

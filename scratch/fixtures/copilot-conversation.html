@@ -1,0 +1,71 @@
+<!--
+  A Copilot page reduced to the structure observed on copilot.com on
+  2026-10-28: the top bar (a <header>) with the model switcher and a row
+  holding the Share wrapper, Settings and more, and an empty <span>; then the
+  conversation, a role="feed" inside the MessageListContainer, holding an
+  article per prompt and per reply in the markup of copilot-message.html.
+
+  1. A prompt, and a reply citing one source with a citation chip.
+  2. A two-line prompt, and a reply with no citations.
+
+  Each reply's toolbar holds Copilot's Copy. Styling classes are left out;
+  every attribute the adapter relies on is kept as observed. All names, text
+  and URLs are made up.
+-->
+<div id="app">
+  <header role="none">
+    <div><button id="gptModeSwitcher" type="button" aria-haspopup="menu" aria-label="Auto, Model Selector">Auto</button></div>
+    <div>
+      <div class="row">
+        <div><span aria-label="Share"><button type="button" aria-label="Share chat" data-testid="share-button"></button></span></div>
+        <button id="moreButton" type="button" aria-label="Settings and more" aria-haspopup="menu"></button>
+        <span></span>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div data-testid="MessageListContainer">
+      <div role="group">
+        <div role="feed" aria-label="Chat conversation">
+          <div role="article" tabindex="0" aria-setsize="4" aria-posinset="1">
+            <h5 class="sr-only">You said:</h5>
+            <button type="button" aria-label="More actions" tabindex="-1"></button>
+            <div><div data-testid="chatOutput" style="white-space: pre-wrap">What is new in Widget 5?</div></div>
+          </div>
+          <div role="article" aria-setsize="4" aria-posinset="2">
+            <div id="response-id_r_301_">
+              <div data-testid="markdown-reply" data-message-id="11111111-2222-4333-8444-000000000001" data-message-type="Chat">
+                <p>Widget 5 adds a faster engine.&nbsp;<button data-citation-group-id="oai-citation-group-1" data-grouped-citations='[{"index":"1-0a0b0c","occurrence":1,"url":"https://widget.example/releases/5.0.0","name":"widget.example"}]' aria-expanded="false" aria-label="Citation: widget — Widget — Widget 5.0.0 (Current)"><span>widget</span></button></p>
+              </div>
+            </div>
+            <div><div>
+              <div data-testid="CopyButtonContainerTestId" data-stable-ignore="true">
+                <div><div><button type="button" aria-label="Copy Response" data-stable-ignore="true" data-testid="CopyButtonTestId"></button></div></div>
+              </div>
+            </div></div>
+          </div>
+          <div role="article" tabindex="0" aria-setsize="4" aria-posinset="3">
+            <h5 class="sr-only">You said:</h5>
+            <button type="button" aria-label="More actions" tabindex="-1"></button>
+            <div><div data-testid="chatOutput" style="white-space: pre-wrap">And the old engine?
+<br>
+Keep it short.
+</div></div>
+          </div>
+          <div role="article" aria-setsize="4" aria-posinset="4">
+            <div id="response-id_r_302_" data-testid="lastChatMessage">
+              <div data-testid="markdown-reply" data-message-id="11111111-2222-4333-8444-000000000002" data-message-type="Chat">
+                <p>It still works, but it is slower.</p>
+              </div>
+            </div>
+            <div><div>
+              <div data-testid="CopyButtonContainerTestId" data-stable-ignore="true">
+                <div><div><button type="button" aria-label="Copy Response" data-stable-ignore="true" data-testid="CopyButtonTestId"></button></div></div>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

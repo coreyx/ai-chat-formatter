@@ -115,6 +115,19 @@ check("copilot: the conversation feed is a message, split into one turn per repl
   assert.equal(copilotAdapter.buttonLabel?.(conversations[0])?.text, "Conversation");
 });
 
+/** The Copilot conversation fixture: the top bar, and two turns. */
+function copilotConversationPage(): Document {
+  return new JSDOM(readFileSync("scratch/fixtures/copilot-conversation.html", "utf8")).window.document;
+}
+
+check("copilot fixture: the feed splits into two turns with their prompts, and the button goes before Share", () => {
+  const document = copilotConversationPage();
+  const feed = document.querySelector('[role="feed"]')!;
+  assert.deepEqual(readCopilotTurns(feed)!.map((turn) => turn.prompt), ["What is new in Widget 5?", "And the old engine?\n\nKeep it short."]);
+  const page = start(copilotAdapter, document);
+  assert.equal(page.conversationButtons()[0].nextElementSibling?.querySelector('[data-testid="share-button"]')?.nodeName, "BUTTON");
+});
+
 /** A Copilot page: the top bar with Share, and the conversation feed holding the fixture's prompt and reply; `withShare` false leaves Share out. */
 function copilotChat(withShare = true): Document {
   const articles = readFileSync("scratch/fixtures/copilot-message.html", "utf8").replace(/<!--[\s\S]*?-->/, "").replace(/<\/?main>/g, "");
